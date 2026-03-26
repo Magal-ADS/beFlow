@@ -1,6 +1,6 @@
 <?php
 // ==========================================================
-// SEEDER - Dados iniciais do BeFlow
+// SEEDER - Dados iniciais do BeFlow (PostgreSQL)
 // ==========================================================
 // Uso no terminal: php seed.php
 //
@@ -28,30 +28,30 @@ if (file_exists($envFile)) {
     }
 }
 
-// Configuração de conexão flexível (XAMPP ou Produção)
+// Configuração de conexão flexível (Local ou Heroku)
 $databaseUrl = getenv('DATABASE_URL');
 if ($databaseUrl) {
     $url = parse_url($databaseUrl);
     $host = $url["host"];
-    $port = $url["port"] ?? 3306;
+    $port = $url["port"] ?? 5432;
     $user = $url["user"];
     $pass = $url["pass"] ?? '';
     $db   = ltrim($url["path"], "/");
 } else {
     $host = getenv('DB_HOST') ?: '127.0.0.1';
-    $port = getenv('DB_PORT') ?: 3306;
-    $user = getenv('DB_USER') ?: 'root';
-    $pass = getenv('DB_PASS') ?: '';
+    $port = getenv('DB_PORT') ?: 5432;
+    $user = getenv('DB_USER') ?: 'postgres';
+    $pass = getenv('DB_PASS') ?: 'sua_senha_local';
     $db   = getenv('DB_NAME') ?: 'beflow';
 }
 
-$dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
+$dsn = "pgsql:host=$host;port=$port;dbname=$db";
 
 try {
     $pdo = new PDO($dsn, $user, $pass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     ]);
-    echo "Conectado ao banco MySQL: $db @ $host\n";
+    echo "Conectado ao banco PostgreSQL: $db @ $host\n";
     echo str_repeat('-', 50) . "\n\n";
 } catch (PDOException $e) {
     die("ERRO ao conectar: " . $e->getMessage() . "\n");
@@ -63,8 +63,9 @@ try {
 echo "1. Configurando Empresa Base...\n";
 
 $stmt = $pdo->prepare("
-    INSERT IGNORE INTO empresa (id, nome, cnpj, telefone) 
+    INSERT INTO empresa (id, nome, cnpj, telefone) 
     VALUES (1, 'Viação BeFlow', '12.345.678/0001-99', '16999999999')
+    ON CONFLICT (id) DO NOTHING
 ");
 $stmt->execute();
 echo $stmt->rowCount() > 0 
@@ -78,8 +79,9 @@ echo $stmt->rowCount() > 0
 echo "\n2. Iniciando Estado da Viagem...\n";
 
 $stmt = $pdo->prepare("
-    INSERT IGNORE INTO viagem_atual (id, status) 
+    INSERT INTO viagem_atual (id, status) 
     VALUES (1, 'aguardando')
+    ON CONFLICT (id) DO NOTHING
 ");
 $stmt->execute();
 echo $stmt->rowCount() > 0 
@@ -107,8 +109,9 @@ $usuarios = [
 ];
 
 $stmtUsr = $pdo->prepare("
-    INSERT IGNORE INTO usuarios (nome, email, telefone, senha, tipo_usuario, empresa_id)
+    INSERT INTO usuarios (nome, email, telefone, senha, tipo_usuario, empresa_id)
     VALUES (:nome, :email, :telefone, :senha, :tipo, :empresa_id)
+    ON CONFLICT (email) DO NOTHING
 ");
 
 $usuariosCriados = [];
@@ -139,8 +142,9 @@ foreach ($usuarios as $u) {
 echo "\n4. Criando Linhas...\n";
 
 $stmtLinha = $pdo->prepare("
-    INSERT IGNORE INTO linhas (id, nome, empresa_id) 
+    INSERT INTO linhas (id, nome, empresa_id) 
     VALUES (1, 'Linha 302 - Centro', 1)
+    ON CONFLICT (id) DO NOTHING
 ");
 $stmtLinha->execute();
 echo $stmtLinha->rowCount() > 0 
@@ -160,8 +164,9 @@ $pontos = [
 ];
 
 $stmtPts = $pdo->prepare("
-    INSERT IGNORE INTO pontos (id, nome, latitude, longitude, ordem_na_linha, linha_id)
+    INSERT INTO pontos (id, nome, latitude, longitude, ordem_na_linha, linha_id)
     VALUES (:id, :nome, :lat, :lng, :ordem, 1)
+    ON CONFLICT (id) DO NOTHING
 ");
 
 foreach ($pontos as $p) {
@@ -179,8 +184,23 @@ foreach ($pontos as $p) {
         : "   [--] {$p['nome']} já existe\n";
 }
 
+// ==========================================================
+// RESET DE SEQUENCES (SERIAL)
+// ==========================================================
+// Como fizemos INSERTs manuais com IDs fixos, avisamos o Postgres 
+// para continuar a contagem a partir do último ID.
+try {
+    $pdo->exec("SELECT setval(pg_get_serial_sequence('empresa', 'id'), coalesce(max(id),0) + 1, false) FROM empresa;");
+    $pdo->exec("SELECT setval(pg_get_serial_sequence('usuarios', 'id'), coalesce(max(id),0) + 1, false) FROM usuarios;");
+    $pdo->exec("SELECT setval(pg_get_serial_sequence('linhas', 'id'), coalesce(max(id),0) + 1, false) FROM linhas;");
+    $pdo->exec("SELECT setval(pg_get_serial_sequence('pontos', 'id'), coalesce(max(id),0) + 1, false) FROM pontos;");
+} catch (Exception $e) {
+    // Ignora silenciosamente se houver erro nas sequences
+}
+
+
 echo "\n" . str_repeat('-', 50) . "\n";
-echo "Seed concluído com sucesso, Magal!\n";
+echo "Seed concluído com sucesso no PostgreSQL!\n";
 
 if (count($usuariosCriados) === 0) {
     echo "   [--] Nenhum usuário novo foi criado.\n";
