@@ -1,16 +1,24 @@
 <?php
+/**
+ * BeFlow - Controlador de Autenticação (AuthController.php)
+ */
+
 // Requisita o Model de Usuário para poder acessar o banco de dados
 require_once __DIR__ . '/../Models/Usuario.php';
 
 class AuthController {
     
-    // Método para exibir a tela de login
+    /**
+     * Exibe a tela de login
+     */
     public function index() {
         // Renderiza a View do formulário de login
         require_once __DIR__ . '/../Views/login.php';
     }
 
-    // Método que processa o formulário de login (POST)
+    /**
+     * Processa o formulário de login (POST)
+     */
     public function autenticar() {
         // Inicia a sessão para persistir os dados do usuário
         if (session_status() === PHP_SESSION_NONE) {
@@ -26,28 +34,36 @@ class AuthController {
         $usuario = $usuarioModel->buscarPorEmail($email);
 
         // Verifica se o usuário existe e se a senha confere
-        // Nota: Futuramente trocaremos para password_verify para maior segurança (RNF9)
+        // Nota: Futuramente trocaremos para password_verify para maior segurança
         if ($usuario && $usuario['senha'] === $senha) {
             
             // Define as variáveis de sessão essenciais
-            $_SESSION['usuario_id'] = $usuario['id'];
+            $_SESSION['usuario_id']   = $usuario['id'];
             $_SESSION['usuario_nome'] = $usuario['nome'];
             $_SESSION['tipo_usuario'] = $usuario['tipo_usuario'];
 
-            // Redirecionamento baseado no tipo de usuário (RNF1)
+            // --- REDIRECIONAMENTO POR TIPO DE USUÁRIO ---
+            
             if ($usuario['tipo_usuario'] == 'aluno') {
-                // Manda o aluno para a tela do mapa (Leaflet/Google Maps)
+                // Aluno vai para o mapa de embarque
                 header("Location: /beFlow/home-aluno");
                 exit; 
                 
             } else if ($usuario['tipo_usuario'] == 'motorista') {
-                // Manda o motorista direto para o painel dele
+                // Motorista vai para o painel de controle da rota
                 header("Location: /beFlow/home-motorista");
                 exit;
                 
+            } else if ($usuario['tipo_usuario'] == 'admin_empresa' || $usuario['tipo_usuario'] == 'admin_geral') {
+                // Administrador vai para o novo Dashboard da Empresa
+                header("Location: /beFlow/admin/dashboard");
+                exit;
+                
             } else {
-                // Futura tela administrativa
-                echo "<h2>Login de ADMIN com sucesso! Bem-vindo(a), " . $usuario['nome'] . "</h2>";
+                // Caso haja um tipo não mapeado, volta pro login por segurança
+                session_destroy();
+                header("Location: /beFlow/login");
+                exit;
             }
             
         } else {
@@ -56,7 +72,9 @@ class AuthController {
         }
     }
 
-    // Método para encerrar a sessão do usuário com segurança
+    /**
+     * Encerra a sessão do usuário com segurança
+     */
     public function logout() {
         // Garante que a sessão está ativa antes de destruí-la
         if (session_status() === PHP_SESSION_NONE) {
@@ -67,9 +85,8 @@ class AuthController {
         session_unset();
         session_destroy();
         
-        // Redireciona o usuário para a tela de login limpa
+        // Redireciona o usuário para a tela de login
         header("Location: /beFlow/login");
         exit;
     }
 }
-?>

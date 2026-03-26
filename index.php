@@ -3,20 +3,15 @@
  * BeFlow - Arquivo de Roteamento Principal (index.php)
  */
 
-// Requisita o controlador de autenticação (usado em quase todas as rotas de acesso)
 require_once __DIR__ . '/app/Controllers/AuthController.php';
 
-// Pega a URL que o usuário digitou
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$rota = str_ireplace('/beFlow', '', $uri);
 
-// Remove a pasta base "/beflow" para o roteamento focar apenas na funcionalidade
-$rota = str_ireplace('/beflow', '', $uri);
-
-// Switch de Roteamento
 switch ($rota) {
 
     // ==========================================
-    // ROTAS DE AUTENTICAÇÃO (LOGIN/LOGOUT)
+    // ROTAS DE AUTENTICAÇÃO
     // ==========================================
     case '':
     case '/':
@@ -37,7 +32,7 @@ switch ($rota) {
         break;
 
     // ==========================================
-    // ROTAS DO ALUNO (MAPA E CONFIRMAÇÃO)
+    // ROTAS DO ALUNO
     // ==========================================
     case '/home-aluno':
         require_once __DIR__ . '/app/Controllers/AlunoController.php';
@@ -51,14 +46,14 @@ switch ($rota) {
         $controller->confirmar();
         break;
 
-    case '/status-viagem': // <-- NOVA ROTA: Celular do aluno checa se o ônibus saiu
+    case '/status-viagem':
         require_once __DIR__ . '/app/Controllers/AlunoController.php';
         $controller = new AlunoController();
         $controller->checarStatusViagem();
         break;
 
     // ==========================================
-    // ROTAS DO MOTORISTA (PAINEL DE EMBARQUE E API)
+    // ROTAS DO MOTORISTA
     // ==========================================
     case '/home-motorista':
         require_once __DIR__ . '/app/Controllers/MotoristaController.php';
@@ -66,22 +61,55 @@ switch ($rota) {
         $controller->index();
         break;
 
-    case '/api-pontos': // Rota para o Auto-Refresh do mapa
+    case '/api-pontos':
         require_once __DIR__ . '/app/Controllers/MotoristaController.php';
         $controller = new MotoristaController();
         $controller->apiPontos();
         break;
 
-    case '/iniciar-rota': // <-- NOVA ROTA: Motorista avisa que a viagem começou
+    case '/iniciar-rota':
         require_once __DIR__ . '/app/Controllers/MotoristaController.php';
         $controller = new MotoristaController();
         $controller->iniciarRota();
         break;
 
-    case '/finalizar-rota': // Rota: Motorista finaliza a viagem
+    case '/finalizar-rota':
         require_once __DIR__ . '/app/Controllers/MotoristaController.php';
         $controller = new MotoristaController();
         $controller->finalizarRota();
+        break;
+
+    // ==========================================
+    // ROTAS DO ADMINISTRADOR (EMPRESA)
+    // ==========================================
+    case '/admin/dashboard':
+        require_once __DIR__ . '/app/Controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->index();
+        break;
+
+    case '/admin/usuarios':
+        require_once __DIR__ . '/app/Controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->usuarios();
+        break;
+
+    case '/admin/salvar-usuario':
+        require_once __DIR__ . '/app/Controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->salvarUsuario();
+        break;
+
+    case '/admin/editar-usuario':
+        require_once __DIR__ . '/app/Controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->editarUsuario();
+        break;
+
+    case '/admin/deletar-usuario':
+        require_once __DIR__ . '/app/Controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->deletarUsuario();
         break;
 
     // ==========================================
@@ -92,9 +120,7 @@ switch ($rota) {
         echo "<div style='font-family: sans-serif; text-align: center; padding-top: 50px;'>";
         echo "<h1 style='color: #4A7DDF;'>Erro 404</h1>";
         echo "<p>Página não encontrada no BeFlow.</p>";
-        echo "<p>Caminho interpretado: <b>" . htmlspecialchars($rota) . "</b></p>";
         echo "<a href='/beFlow/login' style='color: #4A7DDF;'>Voltar para o início</a>";
         echo "</div>";
         break;
 }
-?>
