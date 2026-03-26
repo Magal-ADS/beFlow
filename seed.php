@@ -1,0 +1,193 @@
+<?php
+// ==========================================================
+// SEEDER - Dados iniciais do BeFlow
+// ==========================================================
+// Uso no terminal: php seed.php
+//
+// Insere os dados essenciais para o sistema rodar:
+// - Empresa
+// - Estado inicial da viagem
+// - Linhas e Pontos
+// - Usuários (Admin, Motoristas e Alunos)
+// ==========================================================
+
+// Carrega .env (se existir)
+$envFile = __DIR__ . '/.env';
+if (file_exists($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if ($line === '' || $line[0] === '#') continue;
+        if (strpos($line, '=') === false) continue;
+        list($key, $value) = explode('=', $line, 2);
+        $key = trim($key);
+        $value = trim($value);
+        if (!getenv($key)) {
+            putenv("$key=$value");
+        }
+    }
+}
+
+// Configuração de conexão flexível (XAMPP ou Produção)
+$databaseUrl = getenv('DATABASE_URL');
+if ($databaseUrl) {
+    $url = parse_url($databaseUrl);
+    $host = $url["host"];
+    $port = $url["port"] ?? 3306;
+    $user = $url["user"];
+    $pass = $url["pass"] ?? '';
+    $db   = ltrim($url["path"], "/");
+} else {
+    $host = getenv('DB_HOST') ?: '127.0.0.1';
+    $port = getenv('DB_PORT') ?: 3306;
+    $user = getenv('DB_USER') ?: 'root';
+    $pass = getenv('DB_PASS') ?: '';
+    $db   = getenv('DB_NAME') ?: 'beflow';
+}
+
+$dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
+
+try {
+    $pdo = new PDO($dsn, $user, $pass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    ]);
+    echo "Conectado ao banco MySQL: $db @ $host\n";
+    echo str_repeat('-', 50) . "\n\n";
+} catch (PDOException $e) {
+    die("ERRO ao conectar: " . $e->getMessage() . "\n");
+}
+
+// ==========================================================
+// 1. Empresa Principal
+// ==========================================================
+echo "1. Configurando Empresa Base...\n";
+
+$stmt = $pdo->prepare("
+    INSERT IGNORE INTO empresa (id, nome, cnpj, telefone) 
+    VALUES (1, 'Viação BeFlow', '12.345.678/0001-99', '16999999999')
+");
+$stmt->execute();
+echo $stmt->rowCount() > 0 
+    ? "   [OK] Empresa Viação BeFlow criada\n" 
+    : "   [--] Empresa já existe\n";
+
+
+// ==========================================================
+// 2. Estado Global da Viagem
+// ==========================================================
+echo "\n2. Iniciando Estado da Viagem...\n";
+
+$stmt = $pdo->prepare("
+    INSERT IGNORE INTO viagem_atual (id, status) 
+    VALUES (1, 'aguardando')
+");
+$stmt->execute();
+echo $stmt->rowCount() > 0 
+    ? "   [OK] Viagem_atual definida como 'aguardando'\n" 
+    : "   [--] Estado da viagem já configurado\n";
+
+
+// ==========================================================
+// 3. Usuários do Sistema
+// ==========================================================
+echo "\n3. Povoando Usuários...\n";
+
+$usuarios = [
+    // O Admin que vamos usar na próxima etapa do TCC
+    ['nome' => 'Admin BeFlow', 'email' => 'admin@beflow.com', 'senha' => 'admin123', 'telefone' => '', 'tipo' => 'admin_empresa', 'empresa_id' => 1],
+    
+    // Motoristas
+    ['nome' => 'Carlos Motorista', 'email' => 'motorista@beflow.com', 'senha' => '123', 'telefone' => '', 'tipo' => 'motorista', 'empresa_id' => 1],
+    ['nome' => 'Ricardo Oliveira', 'email' => 'ricardo@beflow.com', 'senha' => '123', 'telefone' => '16991112233', 'tipo' => 'motorista', 'empresa_id' => 1],
+    
+    // Alunos
+    ['nome' => 'Amanda Amorin', 'email' => 'amandaaluno@gmail.com', 'senha' => '123456', 'telefone' => '16997435710', 'tipo' => 'aluno', 'empresa_id' => 1],
+    ['nome' => 'João Vitor', 'email' => 'joao@gmail.com', 'senha' => '123456', 'telefone' => '16997547649', 'tipo' => 'aluno', 'empresa_id' => 1],
+    ['nome' => 'Isabela Silva', 'email' => 'isabela@gmail.com', 'senha' => '123456', 'telefone' => '16988444111', 'tipo' => 'aluno', 'empresa_id' => 1],
+];
+
+$stmtUsr = $pdo->prepare("
+    INSERT IGNORE INTO usuarios (nome, email, telefone, senha, tipo_usuario, empresa_id)
+    VALUES (:nome, :email, :telefone, :senha, :tipo, :empresa_id)
+");
+
+$usuariosCriados = [];
+
+foreach ($usuarios as $u) {
+    $stmtUsr->execute([
+        ':nome'       => $u['nome'],
+        ':email'      => $u['email'],
+        ':telefone'   => $u['telefone'],
+        ':senha'      => $u['senha'], // Futuramente: password_hash($u['senha'], PASSWORD_DEFAULT)
+        ':tipo'       => $u['tipo'],
+        ':empresa_id' => $u['empresa_id'],
+    ]);
+    
+    $inserted = $stmtUsr->rowCount() > 0;
+    if ($inserted) {
+        $usuariosCriados[] = "{$u['nome']} ({$u['tipo']})";
+    }
+    echo $inserted
+        ? "   [OK] {$u['email']} criado\n"
+        : "   [--] {$u['email']} já existe\n";
+}
+
+
+// ==========================================================
+// 4. Linhas de Ônibus
+// ==========================================================
+echo "\n4. Criando Linhas...\n";
+
+$stmtLinha = $pdo->prepare("
+    INSERT IGNORE INTO linhas (id, nome, empresa_id) 
+    VALUES (1, 'Linha 302 - Centro', 1)
+");
+$stmtLinha->execute();
+echo $stmtLinha->rowCount() > 0 
+    ? "   [OK] Linha 302 - Centro\n" 
+    : "   [--] Linha já existe\n";
+
+
+// ==========================================================
+// 5. Pontos de Parada
+// ==========================================================
+echo "\n5. Adicionando Pontos...\n";
+
+$pontos = [
+    ['id' => 1, 'nome' => 'Ponto Praça Central', 'lat' => '-21.40590000', 'lng' => '-48.50520000', 'ordem' => 1],
+    ['id' => 2, 'nome' => 'Ponto Escola Objetivo', 'lat' => '-21.41000000', 'lng' => '-48.51000000', 'ordem' => 2],
+    ['id' => 3, 'nome' => 'Ponto Hospital Unimed', 'lat' => '-21.41500000', 'lng' => '-48.52000000', 'ordem' => 3],
+];
+
+$stmtPts = $pdo->prepare("
+    INSERT IGNORE INTO pontos (id, nome, latitude, longitude, ordem_na_linha, linha_id)
+    VALUES (:id, :nome, :lat, :lng, :ordem, 1)
+");
+
+foreach ($pontos as $p) {
+    $stmtPts->execute([
+        ':id'    => $p['id'],
+        ':nome'  => $p['nome'],
+        ':lat'   => $p['lat'],
+        ':lng'   => $p['lng'],
+        ':ordem' => $p['ordem'],
+    ]);
+    
+    $inserted = $stmtPts->rowCount() > 0;
+    echo $inserted
+        ? "   [OK] {$p['nome']}\n"
+        : "   [--] {$p['nome']} já existe\n";
+}
+
+echo "\n" . str_repeat('-', 50) . "\n";
+echo "Seed concluído com sucesso, Magal!\n";
+
+if (count($usuariosCriados) === 0) {
+    echo "   [--] Nenhum usuário novo foi criado.\n";
+} else {
+    echo "Novos usuários habilitados no sistema:\n";
+    foreach ($usuariosCriados as $usuarioCriado) {
+        echo "   - $usuarioCriado\n";
+    }
+}
+echo str_repeat('-', 50) . "\n";
