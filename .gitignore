@@ -1,0 +1,12 @@
+# Ignorar arquivos do sistema
+.DS_Store
+Thumbs.db
+.env
+
+# Ignorar dependências (se usar composer/npm no futuro)
+/vendor/
+/node_modules/
+
+# Ignorar configurações locais com senhas reais
+# Se o seu includes/db.php tem senha real, descomente a linha abaixo:
+# includes/db.php
