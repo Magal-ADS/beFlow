@@ -1,0 +1,11 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Se o que o usuário digitou não for um arquivo existente...
+    RewriteCond %{REQUEST_FILENAME} !-f
+    # ...e também não for uma pasta existente...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    
+    # ...então manda tudo pro index.php assumir o controle!
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>
