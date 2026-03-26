@@ -1,14 +1,9 @@
 <?php
 // ==========================================================
 // SEEDER - Dados iniciais do BeFlow (PostgreSQL)
+// ATUALIZADO: Povoando tabela usuarios E alunos (Herança)
 // ==========================================================
 // Uso no terminal: php seed.php
-//
-// Insere os dados essenciais para o sistema rodar:
-// - Empresa
-// - Estado inicial da viagem
-// - Linhas e Pontos
-// - Usuários (Admin, Motoristas e Alunos)
 // ==========================================================
 
 // Carrega .env (se existir)
@@ -74,44 +69,36 @@ echo $stmt->rowCount() > 0
 
 
 // ==========================================================
-// 2. Estado Global da Viagem
+// 2. Usuários do Sistema E Alunos (Herança)
 // ==========================================================
-echo "\n2. Iniciando Estado da Viagem...\n";
-
-$stmt = $pdo->prepare("
-    INSERT INTO viagem_atual (id, status) 
-    VALUES (1, 'aguardando')
-    ON CONFLICT (id) DO NOTHING
-");
-$stmt->execute();
-echo $stmt->rowCount() > 0 
-    ? "   [OK] Viagem_atual definida como 'aguardando'\n" 
-    : "   [--] Estado da viagem já configurado\n";
-
-
-// ==========================================================
-// 3. Usuários do Sistema
-// ==========================================================
-echo "\n3. Povoando Usuários...\n";
+echo "\n2. Povoando Usuários e Alunos...\n";
 
 $usuarios = [
-    // O Admin que vamos usar na próxima etapa do TCC
+    // O Admin
     ['nome' => 'Admin BeFlow', 'email' => 'admin@beflow.com', 'senha' => 'admin123', 'telefone' => '', 'tipo' => 'admin_empresa', 'empresa_id' => 1],
     
     // Motoristas
     ['nome' => 'Carlos Motorista', 'email' => 'motorista@beflow.com', 'senha' => '123', 'telefone' => '', 'tipo' => 'motorista', 'empresa_id' => 1],
     ['nome' => 'Ricardo Oliveira', 'email' => 'ricardo@beflow.com', 'senha' => '123', 'telefone' => '16991112233', 'tipo' => 'motorista', 'empresa_id' => 1],
     
-    // Alunos
-    ['nome' => 'Amanda Amorin', 'email' => 'amandaaluno@gmail.com', 'senha' => '123456', 'telefone' => '16997435710', 'tipo' => 'aluno', 'empresa_id' => 1],
-    ['nome' => 'João Vitor', 'email' => 'joao@gmail.com', 'senha' => '123456', 'telefone' => '16997547649', 'tipo' => 'aluno', 'empresa_id' => 1],
-    ['nome' => 'Isabela Silva', 'email' => 'isabela@gmail.com', 'senha' => '123456', 'telefone' => '16988444111', 'tipo' => 'aluno', 'empresa_id' => 1],
+    // Alunos (Adicionado dados específicos do aluno)
+    ['nome' => 'Amanda Amorin', 'email' => 'amandaaluno@gmail.com', 'senha' => '123456', 'telefone' => '16997435710', 'tipo' => 'aluno', 'empresa_id' => 1, 'turno' => 'Matutino', 'escola' => 'Objetivo'],
+    ['nome' => 'João Vitor', 'email' => 'joao@gmail.com', 'senha' => '123456', 'telefone' => '16997547649', 'tipo' => 'aluno', 'empresa_id' => 1, 'turno' => 'Noturno', 'escola' => 'FATEC'],
+    ['nome' => 'Isabela Silva', 'email' => 'isabela@gmail.com', 'senha' => '123456', 'telefone' => '16988444111', 'tipo' => 'aluno', 'empresa_id' => 1, 'turno' => 'Matutino', 'escola' => 'SESI'],
 ];
 
 $stmtUsr = $pdo->prepare("
     INSERT INTO usuarios (nome, email, telefone, senha, tipo_usuario, empresa_id)
     VALUES (:nome, :email, :telefone, :senha, :tipo, :empresa_id)
     ON CONFLICT (email) DO NOTHING
+    RETURNING id
+");
+
+// Prepara a query de inserir na tabela de alunos
+$stmtAluno = $pdo->prepare("
+    INSERT INTO alunos (usuario_id, turno, escola)
+    VALUES (:usuario_id, :turno, :escola)
+    ON CONFLICT (usuario_id) DO NOTHING
 ");
 
 $usuariosCriados = [];
@@ -121,25 +108,40 @@ foreach ($usuarios as $u) {
         ':nome'       => $u['nome'],
         ':email'      => $u['email'],
         ':telefone'   => $u['telefone'],
-        ':senha'      => $u['senha'], // Futuramente: password_hash($u['senha'], PASSWORD_DEFAULT)
+        ':senha'      => $u['senha'], 
         ':tipo'       => $u['tipo'],
         ':empresa_id' => $u['empresa_id'],
     ]);
     
     $inserted = $stmtUsr->rowCount() > 0;
+    
     if ($inserted) {
         $usuariosCriados[] = "{$u['nome']} ({$u['tipo']})";
+        
+        // Pega o ID que acabou de ser gerado pelo banco
+        $novoUsuarioId = $stmtUsr->fetchColumn();
+
+        // Se o tipo for aluno, insere os dados dele na tabela ALUNOS
+        if ($u['tipo'] === 'aluno' && $novoUsuarioId) {
+            $stmtAluno->execute([
+                ':usuario_id' => $novoUsuarioId,
+                ':turno'      => $u['turno'] ?? 'Não informado',
+                ':escola'     => $u['escola'] ?? 'Não informada'
+            ]);
+            echo "   [OK] {$u['email']} criado e vinculado como Aluno\n";
+        } else {
+            echo "   [OK] {$u['email']} criado\n";
+        }
+    } else {
+        echo "   [--] {$u['email']} já existe\n";
     }
-    echo $inserted
-        ? "   [OK] {$u['email']} criado\n"
-        : "   [--] {$u['email']} já existe\n";
 }
 
 
 // ==========================================================
-// 4. Linhas de Ônibus
+// 3. Linhas de Ônibus
 // ==========================================================
-echo "\n4. Criando Linhas...\n";
+echo "\n3. Criando Linhas...\n";
 
 $stmtLinha = $pdo->prepare("
     INSERT INTO linhas (id, nome, empresa_id) 
@@ -153,9 +155,9 @@ echo $stmtLinha->rowCount() > 0
 
 
 // ==========================================================
-// 5. Pontos de Parada
+// 4. Pontos de Parada
 // ==========================================================
-echo "\n5. Adicionando Pontos...\n";
+echo "\n4. Adicionando Pontos...\n";
 
 $pontos = [
     ['id' => 1, 'nome' => 'Ponto Praça Central', 'lat' => '-21.40590000', 'lng' => '-48.50520000', 'ordem' => 1],
@@ -187,11 +189,10 @@ foreach ($pontos as $p) {
 // ==========================================================
 // RESET DE SEQUENCES (SERIAL)
 // ==========================================================
-// Como fizemos INSERTs manuais com IDs fixos, avisamos o Postgres 
-// para continuar a contagem a partir do último ID.
 try {
     $pdo->exec("SELECT setval(pg_get_serial_sequence('empresa', 'id'), coalesce(max(id),0) + 1, false) FROM empresa;");
     $pdo->exec("SELECT setval(pg_get_serial_sequence('usuarios', 'id'), coalesce(max(id),0) + 1, false) FROM usuarios;");
+    $pdo->exec("SELECT setval(pg_get_serial_sequence('alunos', 'id'), coalesce(max(id),0) + 1, false) FROM alunos;");
     $pdo->exec("SELECT setval(pg_get_serial_sequence('linhas', 'id'), coalesce(max(id),0) + 1, false) FROM linhas;");
     $pdo->exec("SELECT setval(pg_get_serial_sequence('pontos', 'id'), coalesce(max(id),0) + 1, false) FROM pontos;");
 } catch (Exception $e) {

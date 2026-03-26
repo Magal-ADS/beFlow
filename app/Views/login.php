@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BeFlow - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="manifest" href="/beFlow/manifest.json">
+    <meta name="theme-color" content="#3b82f6"> <link rel="apple-touch-icon" href="/beFlow/public/icon-192.png">
 </head>
 <body class="bg-blue-500 h-screen flex flex-col items-center justify-center font-sans">
 
@@ -50,5 +53,14 @@
         </p>
     </div>
 
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/beFlow/sw.js')
+                .then(reg => console.log('PWA: Ativo e pronto para instalar!', reg.scope))
+                .catch(err => console.log('PWA: Erro', err));
+            });
+        }
+    </script>
 </body>
 </html>

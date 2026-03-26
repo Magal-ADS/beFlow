@@ -112,6 +112,37 @@ switch ($rota) {
         $controller->deletarUsuario();
         break;
 
+    case '/admin/rotas':
+        require_once __DIR__ . '/app/Controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->rotas();
+        break;
+
+    // --- NOVAS ROTAS PARA GERENCIAMENTO DE LINHAS E PONTOS ---
+    case '/admin/salvar-linha':
+        require_once __DIR__ . '/app/Controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->salvarLinha();
+        break;
+
+    case '/admin/deletar-linha':
+        require_once __DIR__ . '/app/Controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->deletarLinha();
+        break;
+
+    case '/admin/salvar-ponto':
+        require_once __DIR__ . '/app/Controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->salvarPonto();
+        break;
+
+    case '/admin/deletar-ponto':
+        require_once __DIR__ . '/app/Controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->deletarPonto();
+        break;
+
     // ==========================================
     // ROTA PADRÃO (ERRO 404)
     // ==========================================
@@ -120,7 +151,7 @@ switch ($rota) {
         echo "<div style='font-family: sans-serif; text-align: center; padding-top: 50px;'>";
         echo "<h1 style='color: #4A7DDF;'>Erro 404</h1>";
         echo "<p>Página não encontrada no BeFlow.</p>";
-        echo "<a href='/beFlow/login' style='color: #4A7DDF;'>Voltar para o início</a>";
+        echo "<a href='/beFlow/login' style='color: #4A7DDF; text-decoration: none; font-weight: bold;'>← Voltar para o início</a>";
         echo "</div>";
         break;
 }
