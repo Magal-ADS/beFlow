@@ -1,8 +1,10 @@
 <?php
 require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/Ponto.php';
 
 class Confirmacao {
     private $conn;
+    private $lastError = 'Erro inesperado ao confirmar presença.';
 
     public function __construct() {
         $database = new Database();
@@ -10,18 +12,56 @@ class Confirmacao {
     }
 
     public function registrar($usuario_id, $ponto_id) {
-        // Verifica se o aluno já confirmou presença hoje para não duplicar
-        $data_hoje = date('Y-m-d');
-        
-        $query = "INSERT INTO CONFIRMACOES (usuario_id, ponto_id, data_confirmacao, hora_confirmacao) 
-                  VALUES (:usuario_id, :ponto_id, :data, :hora)";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':usuario_id', $usuario_id);
-        $stmt->bindParam(':ponto_id', $ponto_id);
-        $stmt->bindValue(':data', $data_hoje);
-        $stmt->bindValue(':hora', date('H:i:s'));
+        $alunoId = $this->buscarAlunoIdPorUsuario($usuario_id);
+        if (!$alunoId) {
+            $this->lastError = 'O usuário autenticado não está vinculado a um aluno.';
+            return false;
+        }
 
-        return $stmt->execute();
+        $pontoModel = new Ponto();
+        $viagemId = $pontoModel->buscarViagemAtualId();
+        if (!$viagemId) {
+            $this->lastError = 'Nenhuma viagem ativa foi configurada para hoje.';
+            return false;
+        }
+
+        $sql = "INSERT INTO confirmacoes (aluno_id, viagem_id, ponto_id, tipo)
+                VALUES (:aluno_id, :viagem_id, :ponto_id, :tipo)";
+
+        try {
+            $stmt = $this->conn->prepare($sql);
+            return $stmt->execute([
+                'aluno_id' => $alunoId,
+                'viagem_id' => $viagemId,
+                'ponto_id' => $ponto_id,
+                'tipo' => 'embarque',
+            ]);
+        } catch (PDOException $e) {
+            $this->lastError = $this->isDuplicateKey($e)
+                ? 'Sua presença neste ponto já foi confirmada para a viagem de hoje.'
+                : 'Falha ao registrar a confirmação no banco de dados.';
+
+            return false;
+        }
+    }
+
+    public function getLastError() {
+        return $this->lastError;
+    }
+
+    private function buscarAlunoIdPorUsuario($usuarioId) {
+        $stmt = $this->conn->prepare("SELECT id FROM alunos WHERE usuario_id = :usuario_id LIMIT 1");
+        $stmt->execute(['usuario_id' => $usuarioId]);
+
+        return $stmt->fetchColumn() ?: null;
+    }
+
+    private function isDuplicateKey(PDOException $e) {
+        $message = $e->getMessage();
+        $code = (string) $e->getCode();
+
+        return in_array($code, ['23000', '23505'], true)
+            || stripos($message, 'duplicate') !== false
+            || stripos($message, 'uniq_confirmacao') !== false;
     }
 }

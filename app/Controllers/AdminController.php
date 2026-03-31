@@ -1,232 +1,372 @@
 <?php
-/**
- * BeFlow - Controlador Administrativo (AdminController.php)
- */
-
 require_once __DIR__ . '/../../config/database.php';
 
 class AdminController {
-    
     public function index() {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
-        
-        if (!isset($_SESSION['usuario_id']) || ($_SESSION['tipo_usuario'] !== 'admin_empresa' && $_SESSION['tipo_usuario'] !== 'admin_geral')) {
-            header("Location: /beFlow/login"); exit;
-        }
+        $this->requireAdminSession();
 
         $db = (new Database())->getConnection();
-
-        // CORREÇÃO: Busca o status na nova tabela 'viagens' e não mais na antiga 'viagem_atual'
-        $statusViagem = $db->query("SELECT status FROM viagens ORDER BY id DESC LIMIT 1")->fetchColumn();
+        $statusViagem = $db->query("SELECT status FROM viagens ORDER BY data_viagem DESC, id DESC LIMIT 1")->fetchColumn();
 
         $stats = [
-            'alunos'     => $db->query("SELECT COUNT(*) FROM usuarios WHERE tipo_usuario = 'aluno'")->fetchColumn(),
+            'alunos' => $db->query("SELECT COUNT(*) FROM usuarios WHERE tipo_usuario = 'aluno'")->fetchColumn(),
             'motoristas' => $db->query("SELECT COUNT(*) FROM usuarios WHERE tipo_usuario = 'motorista'")->fetchColumn(),
-            'pontos'     => $db->query("SELECT COUNT(*) FROM pontos")->fetchColumn(),
-            'viagem_status' => $statusViagem ?: 'Sem viagens ativas'
+            'pontos' => $db->query("SELECT COUNT(*) FROM pontos")->fetchColumn(),
+            'viagem_status' => $statusViagem ?: 'Sem viagens ativas',
         ];
 
         require_once __DIR__ . '/../Views/admin_dashboard.php';
     }
 
     public function usuarios() {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
-        
-        if (!isset($_SESSION['usuario_id']) || ($_SESSION['tipo_usuario'] !== 'admin_empresa' && $_SESSION['tipo_usuario'] !== 'admin_geral')) {
-            header("Location: /beFlow/login"); exit;
-        }
+        $this->requireAdminSession();
 
         $db = (new Database())->getConnection();
-        $listaUsuarios = $db->query("SELECT * FROM usuarios ORDER BY nome ASC")->fetchAll(PDO::FETCH_ASSOC);
+        $sql = "SELECT u.*, a.turno, a.escola
+                FROM usuarios u
+                LEFT JOIN alunos a ON a.usuario_id = u.id
+                ORDER BY u.nome ASC";
+        $listaUsuarios = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
         require_once __DIR__ . '/../Views/admin_usuarios.php';
     }
 
     public function salvarUsuario() {
-        header('Content-Type: application/json');
-        
-        $nome  = $_POST['nome'] ?? '';
-        $email = $_POST['email'] ?? '';
-        $senha = $_POST['senha'] ?? '';
-        $tipo  = $_POST['tipo_usuario'] ?? 'aluno';
-        $empresa_id = 1; 
-        
-        // Futuros campos do modal
-        $turno  = $_POST['turno'] ?? 'Não informado';
-        $escola = $_POST['escola'] ?? 'Não informada';
+        $this->requireAdminSessionJson();
 
-        if (empty($nome) || empty($email) || empty($senha)) {
-            echo json_encode(['success' => false, 'message' => 'Preencha todos os campos obrigatórios.']);
-            exit;
+        $nome = trim($_POST['nome'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $senha = trim($_POST['senha'] ?? '');
+        $tipo = $_POST['tipo_usuario'] ?? 'aluno';
+        $empresaId = 1;
+        $turno = trim($_POST['turno'] ?? 'Nao informado');
+        $escola = trim($_POST['escola'] ?? 'Nao informada');
+
+        if ($nome === '' || $email === '' || $senha === '') {
+            $this->jsonResponse(false, 'Preencha todos os campos obrigatórios.');
         }
 
+        $db = null;
         try {
             $db = (new Database())->getConnection();
-            
-            // Inicia a transação (se der erro em uma tabela, ele desfaz a outra)
             $db->beginTransaction();
 
-            $sql = "INSERT INTO usuarios (nome, email, senha, tipo_usuario, empresa_id) 
-                    VALUES (:nome, :email, :senha, :tipo, :empresa_id)";
-            
-            $stmt = $db->prepare($sql);
-            $stmt->bindParam(':nome', $nome);
-            $stmt->bindParam(':email', $email);
-            $stmt->bindParam(':senha', $senha);
-            $stmt->bindParam(':tipo', $tipo);
-            $stmt->bindParam(':empresa_id', $empresa_id);
-            $stmt->execute();
+            $stmt = $db->prepare("
+                INSERT INTO usuarios (nome, email, senha, tipo_usuario, empresa_id)
+                VALUES (:nome, :email, :senha, :tipo, :empresa_id)
+            ");
+            $stmt->execute([
+                'nome' => $nome,
+                'email' => $email,
+                'senha' => $senha,
+                'tipo' => $tipo,
+                'empresa_id' => $empresaId,
+            ]);
 
-            // Pega o ID gerado para amarrar a herança
-            $usuario_id = $db->lastInsertId();
+            $usuarioId = $db->lastInsertId();
 
-            // Se for aluno, insere também na tabela de alunos
-            if ($tipo === 'aluno' && $usuario_id) {
-                $sqlAluno = "INSERT INTO alunos (usuario_id, turno, escola) VALUES (:uid, :turno, :escola)";
-                $stmtAluno = $db->prepare($sqlAluno);
+            if ($tipo === 'aluno' && $usuarioId) {
+                $stmtAluno = $db->prepare("
+                    INSERT INTO alunos (usuario_id, turno, escola)
+                    VALUES (:usuario_id, :turno, :escola)
+                ");
                 $stmtAluno->execute([
-                    ':uid'   => $usuario_id,
-                    ':turno' => $turno,
-                    ':escola'=> $escola
+                    'usuario_id' => $usuarioId,
+                    'turno' => $turno,
+                    'escola' => $escola,
                 ]);
             }
 
-            // Confirma as inserções
             $db->commit();
-            
-            echo json_encode(['success' => true, 'message' => 'Usuário cadastrado com sucesso!']);
-            
+            $this->jsonResponse(true, 'Usuário cadastrado com sucesso.');
         } catch (PDOException $e) {
-            $db->rollBack(); // Desfaz tudo em caso de erro
-            if ($e->getCode() == 23505 || strpos($e->getMessage(), 'Duplicate entry') !== false) {
-                echo json_encode(['success' => false, 'message' => 'Este e-mail já está cadastrado.']);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Erro técnico: ' . $e->getMessage()]);
+            if ($db && $db->inTransaction()) {
+                $db->rollBack();
             }
+
+            $message = $this->isDuplicateKey($e)
+                ? 'Este e-mail já está cadastrado.'
+                : 'Erro técnico ao cadastrar o usuário.';
+
+            $this->jsonResponse(false, $message);
         }
-        exit;
     }
 
     public function editarUsuario() {
-        header('Content-Type: application/json');
-        
-        $id    = $_POST['id'] ?? '';
-        $nome  = $_POST['nome'] ?? '';
-        $email = $_POST['email'] ?? '';
-        $senha = $_POST['senha'] ?? '';
-        $tipo  = $_POST['tipo_usuario'] ?? 'aluno';
-        
-        $turno  = $_POST['turno'] ?? 'Não informado';
-        $escola = $_POST['escola'] ?? 'Não informada';
+        $this->requireAdminSessionJson();
 
-        if (empty($id) || empty($nome) || empty($email)) {
-            echo json_encode(['success' => false, 'message' => 'ID, Nome e E-mail são obrigatórios.']);
-            exit;
+        $id = trim($_POST['id'] ?? '');
+        $nome = trim($_POST['nome'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $senha = trim($_POST['senha'] ?? '');
+        $tipo = $_POST['tipo_usuario'] ?? 'aluno';
+        $turno = trim($_POST['turno'] ?? 'Nao informado');
+        $escola = trim($_POST['escola'] ?? 'Nao informada');
+
+        if ($id === '' || $nome === '' || $email === '') {
+            $this->jsonResponse(false, 'ID, nome e e-mail são obrigatórios.');
         }
 
+        $db = null;
         try {
             $db = (new Database())->getConnection();
             $db->beginTransaction();
-            
-            // 1. Atualiza a tabela usuários
-            if (!empty($senha)) {
-                $sql = "UPDATE usuarios SET nome = :nome, email = :email, senha = :senha, tipo_usuario = :tipo WHERE id = :id";
-                $stmt = $db->prepare($sql);
-                $stmt->bindParam(':senha', $senha);
-            } else {
-                $sql = "UPDATE usuarios SET nome = :nome, email = :email, tipo_usuario = :tipo WHERE id = :id";
-                $stmt = $db->prepare($sql);
-            }
-            $stmt->bindParam(':nome', $nome);
-            $stmt->bindParam(':email', $email);
-            $stmt->bindParam(':tipo', $tipo);
-            $stmt->bindParam(':id', $id);
-            $stmt->execute();
 
-            // 2. Atualiza a tabela alunos (Herança)
+            if ($senha !== '') {
+                $stmt = $db->prepare("
+                    UPDATE usuarios
+                    SET nome = :nome, email = :email, senha = :senha, tipo_usuario = :tipo
+                    WHERE id = :id
+                ");
+                $stmt->execute([
+                    'nome' => $nome,
+                    'email' => $email,
+                    'senha' => $senha,
+                    'tipo' => $tipo,
+                    'id' => $id,
+                ]);
+            } else {
+                $stmt = $db->prepare("
+                    UPDATE usuarios
+                    SET nome = :nome, email = :email, tipo_usuario = :tipo
+                    WHERE id = :id
+                ");
+                $stmt->execute([
+                    'nome' => $nome,
+                    'email' => $email,
+                    'tipo' => $tipo,
+                    'id' => $id,
+                ]);
+            }
+
             if ($tipo === 'aluno') {
-                // Verifica se já existe o registro de aluno
-                $check = $db->prepare("SELECT id FROM alunos WHERE usuario_id = :id");
-                $check->execute([':id' => $id]);
-                
-                if ($check->rowCount() > 0) {
-                    $upd = $db->prepare("UPDATE alunos SET turno = :turno, escola = :escola WHERE usuario_id = :id");
-                    $upd->execute([':turno' => $turno, ':escola' => $escola, ':id' => $id]);
+                $stmtAluno = $db->prepare("SELECT id FROM alunos WHERE usuario_id = :usuario_id LIMIT 1");
+                $stmtAluno->execute(['usuario_id' => $id]);
+                $alunoId = $stmtAluno->fetchColumn();
+
+                if ($alunoId) {
+                    $updateAluno = $db->prepare("
+                        UPDATE alunos SET turno = :turno, escola = :escola WHERE usuario_id = :usuario_id
+                    ");
+                    $updateAluno->execute([
+                        'turno' => $turno,
+                        'escola' => $escola,
+                        'usuario_id' => $id,
+                    ]);
                 } else {
-                    $ins = $db->prepare("INSERT INTO alunos (usuario_id, turno, escola) VALUES (:id, :turno, :escola)");
-                    $ins->execute([':id' => $id, ':turno' => $turno, ':escola' => $escola]);
+                    $insertAluno = $db->prepare("
+                        INSERT INTO alunos (usuario_id, turno, escola)
+                        VALUES (:usuario_id, :turno, :escola)
+                    ");
+                    $insertAluno->execute([
+                        'usuario_id' => $id,
+                        'turno' => $turno,
+                        'escola' => $escola,
+                    ]);
                 }
             } else {
-                // Se o admin editou um "Aluno" e transformou em "Motorista", apaga o vínculo da tabela alunos
-                $del = $db->prepare("DELETE FROM alunos WHERE usuario_id = :id");
-                $del->execute([':id' => $id]);
+                $deleteAluno = $db->prepare("DELETE FROM alunos WHERE usuario_id = :usuario_id");
+                $deleteAluno->execute(['usuario_id' => $id]);
             }
 
             $db->commit();
-            echo json_encode(['success' => true, 'message' => 'Usuário atualizado com sucesso!']);
-            
+            $this->jsonResponse(true, 'Usuário atualizado com sucesso.');
         } catch (PDOException $e) {
-            $db->rollBack();
-            echo json_encode(['success' => false, 'message' => 'Erro técnico: ' . $e->getMessage()]);
+            if ($db && $db->inTransaction()) {
+                $db->rollBack();
+            }
+
+            $message = $this->isDuplicateKey($e)
+                ? 'Já existe outro usuário com este e-mail.'
+                : 'Erro técnico ao atualizar o usuário.';
+
+            $this->jsonResponse(false, $message);
         }
-        exit;
     }
 
     public function deletarUsuario() {
-        header('Content-Type: application/json');
-        
-        $id = $_POST['id'] ?? '';
+        $this->requireAdminSessionJson();
 
-        if (empty($id)) {
-            echo json_encode(['success' => false, 'message' => 'ID inválido.']);
-            exit;
+        $id = trim($_POST['id'] ?? '');
+        if ($id === '') {
+            $this->jsonResponse(false, 'ID inválido.');
         }
 
         try {
             $db = (new Database())->getConnection();
             $stmt = $db->prepare("DELETE FROM usuarios WHERE id = :id");
-            $stmt->bindParam(':id', $id);
+            $stmt->execute(['id' => $id]);
 
-            // Graças ao ON DELETE CASCADE do banco, se deletar o usuário, apaga o aluno junto!
-            if ($stmt->execute()) {
-                echo json_encode(['success' => true, 'message' => 'Usuário removido da base de dados.']);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Erro ao deletar.']);
-            }
+            $this->jsonResponse(true, 'Usuário removido da base de dados.');
         } catch (PDOException $e) {
-            echo json_encode(['success' => false, 'message' => 'Erro: Não foi possível excluir pois este usuário possui registros atrelados.']);
+            $this->jsonResponse(false, 'Não foi possível excluir este usuário.');
         }
-        exit;
     }
 
-    // ==========================================================
-    // MÉTODOS DE ROTAS E PONTOS
-    // ==========================================================
-
     public function rotas() {
-        if (session_status() === PHP_SESSION_NONE) { session_start(); }
-        
-        if (!isset($_SESSION['usuario_id']) || ($_SESSION['tipo_usuario'] !== 'admin_empresa' && $_SESSION['tipo_usuario'] !== 'admin_geral')) {
-            header("Location: /beFlow/login"); exit;
-        }
+        $this->requireAdminSession();
 
         $db = (new Database())->getConnection();
-        
-        // Busca todas as linhas da empresa
         $linhas = $db->query("SELECT * FROM linhas WHERE empresa_id = 1 ORDER BY nome ASC")->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Busca todos os pontos ordenados pela ordem na linha
         $pontos = $db->query("SELECT * FROM pontos ORDER BY linha_id ASC, ordem_na_linha ASC")->fetchAll(PDO::FETCH_ASSOC);
 
-        // Junta os pontos dentro das suas respectivas linhas para facilitar a exibição
         $linhas_com_pontos = [];
         foreach ($linhas as $linha) {
-            $linha['pontos'] = array_filter($pontos, function($p) use ($linha) {
-                return $p['linha_id'] == $linha['id'];
-            });
+            $linha['pontos'] = array_values(array_filter($pontos, function ($ponto) use ($linha) {
+                return (int) $ponto['linha_id'] === (int) $linha['id'];
+            }));
             $linhas_com_pontos[] = $linha;
         }
 
         require_once __DIR__ . '/../Views/admin_rotas.php';
+    }
+
+    public function salvarLinha() {
+        $this->requireAdminSessionJson();
+
+        $id = trim($_POST['id'] ?? '');
+        $nome = trim($_POST['nome'] ?? '');
+
+        if ($nome === '') {
+            $this->jsonResponse(false, 'Informe o nome da rota.');
+        }
+
+        try {
+            $db = (new Database())->getConnection();
+
+            if ($id !== '') {
+                $stmt = $db->prepare("UPDATE linhas SET nome = :nome WHERE id = :id");
+                $stmt->execute(['nome' => $nome, 'id' => $id]);
+            } else {
+                $stmt = $db->prepare("INSERT INTO linhas (nome, empresa_id) VALUES (:nome, :empresa_id)");
+                $stmt->execute(['nome' => $nome, 'empresa_id' => 1]);
+            }
+
+            $this->jsonResponse(true, 'Rota salva com sucesso.');
+        } catch (PDOException $e) {
+            $this->jsonResponse(false, 'Erro ao salvar a rota.');
+        }
+    }
+
+    public function deletarLinha() {
+        $this->requireAdminSessionJson();
+
+        $id = trim($_POST['id'] ?? '');
+        if ($id === '') {
+            $this->jsonResponse(false, 'ID da rota inválido.');
+        }
+
+        try {
+            $db = (new Database())->getConnection();
+            $stmt = $db->prepare("DELETE FROM linhas WHERE id = :id");
+            $stmt->execute(['id' => $id]);
+
+            $this->jsonResponse(true, 'Rota removida com sucesso.');
+        } catch (PDOException $e) {
+            $this->jsonResponse(false, 'Erro ao remover a rota.');
+        }
+    }
+
+    public function salvarPonto() {
+        $this->requireAdminSessionJson();
+
+        $id = trim($_POST['id'] ?? '');
+        $linhaId = trim($_POST['linha_id'] ?? '');
+        $nome = trim($_POST['nome'] ?? '');
+        $latitude = trim($_POST['latitude'] ?? '');
+        $longitude = trim($_POST['longitude'] ?? '');
+        $ordem = trim($_POST['ordem'] ?? '');
+
+        if ($linhaId === '' || $nome === '' || $latitude === '' || $longitude === '' || $ordem === '') {
+            $this->jsonResponse(false, 'Preencha todos os dados do ponto.');
+        }
+
+        try {
+            $db = (new Database())->getConnection();
+
+            if ($id !== '') {
+                $stmt = $db->prepare("
+                    UPDATE pontos
+                    SET linha_id = :linha_id, nome = :nome, latitude = :latitude, longitude = :longitude, ordem_na_linha = :ordem
+                    WHERE id = :id
+                ");
+                $stmt->execute([
+                    'linha_id' => $linhaId,
+                    'nome' => $nome,
+                    'latitude' => $latitude,
+                    'longitude' => $longitude,
+                    'ordem' => $ordem,
+                    'id' => $id,
+                ]);
+            } else {
+                $stmt = $db->prepare("
+                    INSERT INTO pontos (linha_id, nome, latitude, longitude, ordem_na_linha)
+                    VALUES (:linha_id, :nome, :latitude, :longitude, :ordem)
+                ");
+                $stmt->execute([
+                    'linha_id' => $linhaId,
+                    'nome' => $nome,
+                    'latitude' => $latitude,
+                    'longitude' => $longitude,
+                    'ordem' => $ordem,
+                ]);
+            }
+
+            $this->jsonResponse(true, 'Ponto salvo com sucesso.');
+        } catch (PDOException $e) {
+            $this->jsonResponse(false, 'Erro ao salvar o ponto.');
+        }
+    }
+
+    public function deletarPonto() {
+        $this->requireAdminSessionJson();
+
+        $id = trim($_POST['id'] ?? '');
+        if ($id === '') {
+            $this->jsonResponse(false, 'ID do ponto inválido.');
+        }
+
+        try {
+            $db = (new Database())->getConnection();
+            $stmt = $db->prepare("DELETE FROM pontos WHERE id = :id");
+            $stmt->execute(['id' => $id]);
+
+            $this->jsonResponse(true, 'Ponto removido com sucesso.');
+        } catch (PDOException $e) {
+            $this->jsonResponse(false, 'Erro ao remover o ponto.');
+        }
+    }
+
+    private function requireAdminSession() {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['tipo_usuario'], ['admin_empresa', 'admin_geral'], true)) {
+            header('Location: /beFlow/login');
+            exit;
+        }
+    }
+
+    private function requireAdminSessionJson() {
+        header('Content-Type: application/json');
+        $this->requireAdminSession();
+    }
+
+    private function jsonResponse($success, $message) {
+        echo json_encode([
+            'success' => $success,
+            'message' => $message,
+        ]);
+        exit;
+    }
+
+    private function isDuplicateKey(PDOException $e) {
+        $message = $e->getMessage();
+        $code = (string) $e->getCode();
+
+        return in_array($code, ['23000', '23505'], true)
+            || stripos($message, 'duplicate') !== false
+            || stripos($message, 'unique') !== false;
     }
 }
