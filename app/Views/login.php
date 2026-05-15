@@ -6,15 +6,15 @@
     <title>BeFlow - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <link rel="manifest" href="/beFlow/manifest.json">
-    <meta name="theme-color" content="#3b82f6"> <link rel="apple-touch-icon" href="/beFlow/public/icon-192.png">
+    <link rel="manifest" href="<?= BASE_URL ?>/manifest.json">
+    <meta name="theme-color" content="#3b82f6"> <link rel="apple-touch-icon" href="<?= BASE_URL ?>/public/icon-192.png">
 </head>
 <body class="bg-blue-500 h-screen flex flex-col items-center justify-center font-sans">
 
     <div class="bg-white w-11/12 max-w-md rounded-[2.5rem] p-8 shadow-2xl mt-8">
         <h2 class="text-2xl font-semibold text-center text-gray-800 mb-6 mt-4">Entre para continuar</h2>
 
-        <form action="/beFlow/autenticar" method="POST" class="space-y-4">
+        <form action="<?= BASE_URL ?>/autenticar" method="POST" class="space-y-4">
             <div>
                 <input type="email" name="email" placeholder="Digite seu e-mail" required
                     class="w-full px-4 py-4 rounded-xl bg-gray-50 border border-gray-100 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400">
@@ -56,7 +56,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/beFlow/sw.js')
+                navigator.serviceWorker.register('<?= BASE_URL ?>/sw.js')
                 .then(reg => console.log('PWA: Ativo e pronto para instalar!', reg.scope))
                 .catch(err => console.log('PWA: Erro', err));
             });

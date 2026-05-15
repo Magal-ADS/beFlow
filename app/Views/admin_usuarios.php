@@ -169,7 +169,7 @@
         document.getElementById('formUsuario').onsubmit = function(e) {
             e.preventDefault();
             const formData = new FormData(this);
-            const rota = formData.get('acao') === 'editar' ? '/beFlow/admin/editar-usuario' : '/beFlow/admin/salvar-usuario';
+            const rota = formData.get('acao') === 'editar' ? '<?= BASE_URL ?>/admin/editar-usuario' : '<?= BASE_URL ?>/admin/salvar-usuario';
 
             fetch(rota, { method: 'POST', body: formData })
             .then(res => res.json())
@@ -198,7 +198,7 @@
                 if (result.isConfirmed) {
                     const formData = new FormData();
                     formData.append('id', id);
-                    fetch('/beFlow/admin/deletar-usuario', { method: 'POST', body: formData })
+                    fetch('<?= BASE_URL ?>/admin/deletar-usuario', { method: 'POST', body: formData })
                     .then(res => res.json())
                     .then(data => {
                         if(data.success) {

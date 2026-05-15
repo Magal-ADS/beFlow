@@ -182,7 +182,7 @@
         // --- REQUISIÇÕES AJAX (SALVAR) ---
         document.getElementById('formLinha').onsubmit = function(e) {
             e.preventDefault();
-            fetch('/beFlow/admin/salvar-linha', { method: 'POST', body: new FormData(this) })
+            fetch('<?= BASE_URL ?>/admin/salvar-linha', { method: 'POST', body: new FormData(this) })
             .then(res => res.json())
             .then(data => {
                 if(data.success) { location.reload(); } 
@@ -192,7 +192,7 @@
 
         document.getElementById('formPonto').onsubmit = function(e) {
             e.preventDefault();
-            fetch('/beFlow/admin/salvar-ponto', { method: 'POST', body: new FormData(this) })
+            fetch('<?= BASE_URL ?>/admin/salvar-ponto', { method: 'POST', body: new FormData(this) })
             .then(res => res.json())
             .then(data => {
                 if(data.success) { location.reload(); } 
@@ -213,7 +213,7 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     const fd = new FormData(); fd.append('id', id);
-                    fetch('/beFlow/admin/deletar-linha', { method: 'POST', body: fd })
+                    fetch('<?= BASE_URL ?>/admin/deletar-linha', { method: 'POST', body: fd })
                     .then(res => res.json()).then(() => location.reload());
                 }
             });
@@ -230,7 +230,7 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     const fd = new FormData(); fd.append('id', id);
-                    fetch('/beFlow/admin/deletar-ponto', { method: 'POST', body: fd })
+                    fetch('<?= BASE_URL ?>/admin/deletar-ponto', { method: 'POST', body: fd })
                     .then(res => res.json()).then(() => location.reload());
                 }
             });

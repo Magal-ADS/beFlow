@@ -33,7 +33,7 @@
                     <p class="text-[10px] text-blue-500 uppercase font-bold tracking-wider" id="statusMotorista">Aguardando Início 🟡</p>
                 </div>
             </div>
-            <a href="/beFlow/logout" class="p-2 text-gray-400 hover:text-red-500 transition">
+            <a href="<?= BASE_URL ?>/logout" class="p-2 text-gray-400 hover:text-red-500 transition">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
             </a>
         </div>
@@ -84,7 +84,7 @@
 
         // Auto-refresh a cada 10 segundos
         setInterval(function() {
-            fetch('/beFlow/api-pontos')
+            fetch('<?= BASE_URL ?>/api-pontos')
             .then(response => response.json())
             .then(pontosAtualizados => { if(!pontosAtualizados.error) { desenharPontos(pontosAtualizados); } })
             .catch(erro => console.error("Erro ao atualizar o mapa:", erro));
@@ -99,7 +99,7 @@
 
             if (!emViagem) {
                 // AQUI ESTÁ O CONSERTO: Agora ele avisa o banco que a rota iniciou!
-                fetch('/beFlow/iniciar-rota', { method: 'POST' })
+                fetch('<?= BASE_URL ?>/iniciar-rota', { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -132,7 +132,7 @@
                     if (result.isConfirmed) {
                         
                         // Caminho absoluto para garantir que acha a rota certa
-                        fetch('/beFlow/finalizar-rota', { method: 'POST' })
+                        fetch('<?= BASE_URL ?>/finalizar-rota', { method: 'POST' })
                         .then(async response => {
                             const text = await response.text();
                             try {

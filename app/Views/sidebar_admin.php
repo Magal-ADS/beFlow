@@ -12,21 +12,21 @@ $isRotas     = strpos($uri, '/admin/rotas') !== false;
     </div>
     
     <nav class="flex-1 px-4 space-y-2">
-        <a href="/beFlow/admin/dashboard" class="flex items-center gap-3 p-3 rounded-2xl transition <?= $isDashboard ? 'bg-blue-50 text-blue-600 font-bold' : 'text-gray-500 hover:bg-gray-50' ?>">
+        <a href="<?= BASE_URL ?>/admin/dashboard" class="flex items-center gap-3 p-3 rounded-2xl transition <?= $isDashboard ? 'bg-blue-50 text-blue-600 font-bold' : 'text-gray-500 hover:bg-gray-50' ?>">
             Dashboard
         </a>
         
-        <a href="/beFlow/admin/usuarios" class="flex items-center gap-3 p-3 rounded-2xl transition <?= $isUsuarios ? 'bg-blue-50 text-blue-600 font-bold' : 'text-gray-500 hover:bg-gray-50' ?>">
+        <a href="<?= BASE_URL ?>/admin/usuarios" class="flex items-center gap-3 p-3 rounded-2xl transition <?= $isUsuarios ? 'bg-blue-50 text-blue-600 font-bold' : 'text-gray-500 hover:bg-gray-50' ?>">
             Usuários
         </a>
         
-        <a href="/beFlow/admin/rotas" class="flex items-center gap-3 p-3 rounded-2xl transition <?= $isRotas ? 'bg-blue-50 text-blue-600 font-bold' : 'text-gray-500 hover:bg-gray-50' ?>">
+        <a href="<?= BASE_URL ?>/admin/rotas" class="flex items-center gap-3 p-3 rounded-2xl transition <?= $isRotas ? 'bg-blue-50 text-blue-600 font-bold' : 'text-gray-500 hover:bg-gray-50' ?>">
             Rotas e Pontos
         </a>
     </nav>
 
     <div class="p-4 border-t border-gray-100">
-        <a href="/beFlow/logout" class="flex items-center gap-3 p-3 text-red-500 hover:bg-red-50 rounded-2xl transition font-bold">
+        <a href="<?= BASE_URL ?>/logout" class="flex items-center gap-3 p-3 text-red-500 hover:bg-red-50 rounded-2xl transition font-bold">
             Sair
         </a>
     </div>

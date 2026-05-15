@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../Models/Usuario.php';
 
 class AdminController {
     public function index() {
@@ -21,12 +22,8 @@ class AdminController {
     public function usuarios() {
         $this->requireAdminSession();
 
-        $db = (new Database())->getConnection();
-        $sql = "SELECT u.*, a.turno, a.escola
-                FROM usuarios u
-                LEFT JOIN alunos a ON a.usuario_id = u.id
-                ORDER BY u.nome ASC";
-        $listaUsuarios = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        $usuarioModel = new Usuario();
+        $listaUsuarios = $usuarioModel->buscarTodosComDadosDeAluno();
 
         require_once __DIR__ . '/../Views/admin_usuarios.php';
     }
@@ -34,61 +31,31 @@ class AdminController {
     public function salvarUsuario() {
         $this->requireAdminSessionJson();
 
-        $nome = trim($_POST['nome'] ?? '');
-        $email = trim($_POST['email'] ?? '');
-        $senha = trim($_POST['senha'] ?? '');
-        $tipo = $_POST['tipo_usuario'] ?? 'aluno';
-        $empresaId = 1;
-        $turno = trim($_POST['turno'] ?? 'Nao informado');
-        $escola = trim($_POST['escola'] ?? 'Nao informada');
+        $dados = [
+            'nome' => trim($_POST['nome'] ?? ''),
+            'email' => trim($_POST['email'] ?? ''),
+            'senha' => trim($_POST['senha'] ?? ''),
+            'tipo_usuario' => $_POST['tipo_usuario'] ?? 'aluno',
+            'turno' => trim($_POST['turno'] ?? 'Nao informado'),
+            'escola' => trim($_POST['escola'] ?? 'Nao informada'),
+        ];
 
-        if ($nome === '' || $email === '' || $senha === '') {
+        if ($dados['nome'] === '' || $dados['email'] === '' || $dados['senha'] === '') {
             $this->jsonResponse(false, 'Preencha todos os campos obrigatórios.');
         }
 
-        $db = null;
         try {
-            $db = (new Database())->getConnection();
-            $db->beginTransaction();
-
-            $stmt = $db->prepare("
-                INSERT INTO usuarios (nome, email, senha, tipo_usuario, empresa_id)
-                VALUES (:nome, :email, :senha, :tipo, :empresa_id)
-            ");
-            $stmt->execute([
-                'nome' => $nome,
-                'email' => $email,
-                'senha' => $senha,
-                'tipo' => $tipo,
-                'empresa_id' => $empresaId,
-            ]);
-
-            $usuarioId = $db->lastInsertId();
-
-            if ($tipo === 'aluno' && $usuarioId) {
-                $stmtAluno = $db->prepare("
-                    INSERT INTO alunos (usuario_id, turno, escola)
-                    VALUES (:usuario_id, :turno, :escola)
-                ");
-                $stmtAluno->execute([
-                    'usuario_id' => $usuarioId,
-                    'turno' => $turno,
-                    'escola' => $escola,
-                ]);
-            }
-
-            $db->commit();
+            $usuarioModel = new Usuario();
+            $usuarioModel->salvar($dados);
             $this->jsonResponse(true, 'Usuário cadastrado com sucesso.');
         } catch (PDOException $e) {
-            if ($db && $db->inTransaction()) {
-                $db->rollBack();
-            }
-
             $message = $this->isDuplicateKey($e)
                 ? 'Este e-mail já está cadastrado.'
                 : 'Erro técnico ao cadastrar o usuário.';
 
             $this->jsonResponse(false, $message);
+        } catch (Exception $e) {
+            $this->jsonResponse(false, $e->getMessage());
         }
     }
 
@@ -96,91 +63,31 @@ class AdminController {
         $this->requireAdminSessionJson();
 
         $id = trim($_POST['id'] ?? '');
-        $nome = trim($_POST['nome'] ?? '');
-        $email = trim($_POST['email'] ?? '');
-        $senha = trim($_POST['senha'] ?? '');
-        $tipo = $_POST['tipo_usuario'] ?? 'aluno';
-        $turno = trim($_POST['turno'] ?? 'Nao informado');
-        $escola = trim($_POST['escola'] ?? 'Nao informada');
+        $dados = [
+            'nome' => trim($_POST['nome'] ?? ''),
+            'email' => trim($_POST['email'] ?? ''),
+            'senha' => trim($_POST['senha'] ?? ''),
+            'tipo_usuario' => $_POST['tipo_usuario'] ?? 'aluno',
+            'turno' => trim($_POST['turno'] ?? 'Nao informado'),
+            'escola' => trim($_POST['escola'] ?? 'Nao informada'),
+        ];
 
-        if ($id === '' || $nome === '' || $email === '') {
+        if ($id === '' || $dados['nome'] === '' || $dados['email'] === '') {
             $this->jsonResponse(false, 'ID, nome e e-mail são obrigatórios.');
         }
 
-        $db = null;
         try {
-            $db = (new Database())->getConnection();
-            $db->beginTransaction();
-
-            if ($senha !== '') {
-                $stmt = $db->prepare("
-                    UPDATE usuarios
-                    SET nome = :nome, email = :email, senha = :senha, tipo_usuario = :tipo
-                    WHERE id = :id
-                ");
-                $stmt->execute([
-                    'nome' => $nome,
-                    'email' => $email,
-                    'senha' => $senha,
-                    'tipo' => $tipo,
-                    'id' => $id,
-                ]);
-            } else {
-                $stmt = $db->prepare("
-                    UPDATE usuarios
-                    SET nome = :nome, email = :email, tipo_usuario = :tipo
-                    WHERE id = :id
-                ");
-                $stmt->execute([
-                    'nome' => $nome,
-                    'email' => $email,
-                    'tipo' => $tipo,
-                    'id' => $id,
-                ]);
-            }
-
-            if ($tipo === 'aluno') {
-                $stmtAluno = $db->prepare("SELECT id FROM alunos WHERE usuario_id = :usuario_id LIMIT 1");
-                $stmtAluno->execute(['usuario_id' => $id]);
-                $alunoId = $stmtAluno->fetchColumn();
-
-                if ($alunoId) {
-                    $updateAluno = $db->prepare("
-                        UPDATE alunos SET turno = :turno, escola = :escola WHERE usuario_id = :usuario_id
-                    ");
-                    $updateAluno->execute([
-                        'turno' => $turno,
-                        'escola' => $escola,
-                        'usuario_id' => $id,
-                    ]);
-                } else {
-                    $insertAluno = $db->prepare("
-                        INSERT INTO alunos (usuario_id, turno, escola)
-                        VALUES (:usuario_id, :turno, :escola)
-                    ");
-                    $insertAluno->execute([
-                        'usuario_id' => $id,
-                        'turno' => $turno,
-                        'escola' => $escola,
-                    ]);
-                }
-            } else {
-                $deleteAluno = $db->prepare("DELETE FROM alunos WHERE usuario_id = :usuario_id");
-                $deleteAluno->execute(['usuario_id' => $id]);
-            }
-
-            $db->commit();
+            $usuarioModel = new Usuario();
+            $usuarioModel->atualizar($id, $dados);
             $this->jsonResponse(true, 'Usuário atualizado com sucesso.');
         } catch (PDOException $e) {
-            if ($db && $db->inTransaction()) {
-                $db->rollBack();
-            }
-
             $message = $this->isDuplicateKey($e)
                 ? 'Já existe outro usuário com este e-mail.'
                 : 'Erro técnico ao atualizar o usuário.';
 
             $this->jsonResponse(false, $message);
+        } catch (Exception $e) {
+            $this->jsonResponse(false, $e->getMessage());
         }
     }
 
@@ -193,10 +100,8 @@ class AdminController {
         }
 
         try {
-            $db = (new Database())->getConnection();
-            $stmt = $db->prepare("DELETE FROM usuarios WHERE id = :id");
-            $stmt->execute(['id' => $id]);
-
+            $usuarioModel = new Usuario();
+            $usuarioModel->excluir($id);
             $this->jsonResponse(true, 'Usuário removido da base de dados.');
         } catch (PDOException $e) {
             $this->jsonResponse(false, 'Não foi possível excluir este usuário.');
@@ -333,17 +238,13 @@ class AdminController {
 
             $this->jsonResponse(true, 'Ponto removido com sucesso.');
         } catch (PDOException $e) {
-            $this->jsonResponse(false, 'Erro ao remover o ponto.');
+            $this->jsonResponse(false, 'Erro ao remover the ponto.');
         }
     }
 
     private function requireAdminSession() {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
         if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['tipo_usuario'], ['admin_empresa', 'admin_geral'], true)) {
-            header('Location: /beFlow/login');
+            header('Location: ' . BASE_URL . '/login');
             exit;
         }
     }

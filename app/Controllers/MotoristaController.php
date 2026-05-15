@@ -3,12 +3,8 @@ require_once __DIR__ . '/../Models/Ponto.php';
 
 class MotoristaController {
     public function index() {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
         if (!isset($_SESSION['usuario_id']) || $_SESSION['tipo_usuario'] !== 'motorista') {
-            header('Location: /beFlow/login');
+            header('Location: ' . BASE_URL . '/login');
             exit;
         }
 
@@ -20,10 +16,6 @@ class MotoristaController {
 
     public function apiPontos() {
         header('Content-Type: application/json');
-
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
 
         if (!isset($_SESSION['usuario_id']) || $_SESSION['tipo_usuario'] !== 'motorista') {
             echo json_encode(['error' => 'Acesso negado.']);
@@ -37,10 +29,6 @@ class MotoristaController {
 
     public function iniciarRota() {
         header('Content-Type: application/json');
-
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
 
         if (!isset($_SESSION['usuario_id']) || $_SESSION['tipo_usuario'] !== 'motorista') {
             echo json_encode(['success' => false, 'message' => 'Acesso negado.']);
@@ -59,10 +47,6 @@ class MotoristaController {
 
     public function finalizarRota() {
         header('Content-Type: application/json');
-
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
 
         if (!isset($_SESSION['usuario_id']) || $_SESSION['tipo_usuario'] !== 'motorista') {
             echo json_encode(['success' => false, 'message' => 'Acesso negado.']);

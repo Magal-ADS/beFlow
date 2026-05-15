@@ -4,12 +4,8 @@ require_once __DIR__ . '/../Models/Confirmacao.php';
 
 class AlunoController {
     public function index() {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
         if (!isset($_SESSION['usuario_id']) || $_SESSION['tipo_usuario'] !== 'aluno') {
-            header('Location: /beFlow/login');
+            header('Location: ' . BASE_URL . '/login');
             exit;
         }
 
@@ -21,10 +17,6 @@ class AlunoController {
 
     public function confirmar() {
         header('Content-Type: application/json');
-
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
 
         if (!isset($_SESSION['usuario_id'])) {
             echo json_encode(['success' => false, 'message' => 'Sessao expirada. Faca login novamente.']);

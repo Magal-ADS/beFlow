@@ -3,10 +3,18 @@
  * BeFlow - Arquivo de Roteamento Principal (index.php)
  */
 
+// Inicia a sessão globalmente para todo o sistema
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Define a base do projeto para facilitar redirecionamentos e links
+define('BASE_URL', '/beFlow');
+
 require_once __DIR__ . '/app/Controllers/AuthController.php';
 
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$rota = str_ireplace('/beFlow', '', $uri);
+$rota = str_ireplace(BASE_URL, '', $uri);
 
 switch ($rota) {
 
@@ -151,7 +159,7 @@ switch ($rota) {
         echo "<div style='font-family: sans-serif; text-align: center; padding-top: 50px;'>";
         echo "<h1 style='color: #4A7DDF;'>Erro 404</h1>";
         echo "<p>Página não encontrada no BeFlow.</p>";
-        echo "<a href='/beFlow/login' style='color: #4A7DDF; text-decoration: none; font-weight: bold;'>← Voltar para o início</a>";
+        echo "<a href='" . BASE_URL . "/login' style='color: #4A7DDF; text-decoration: none; font-weight: bold;'>← Voltar para o início</a>";
         echo "</div>";
         break;
 }

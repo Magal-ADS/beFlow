@@ -90,7 +90,7 @@
 
         <div class="flex-1 px-4 space-y-2 mt-2">
             <a href="#" class="flex items-center gap-4 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition">Minhas Viagens</a>
-            <a href="/beFlow/logout" class="flex items-center gap-4 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl font-medium mt-auto mb-8 transition">
+            <a href="<?= BASE_URL ?>/logout" class="flex items-center gap-4 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl font-medium mt-auto mb-8 transition">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                 Sair
             </a>
@@ -208,7 +208,7 @@
 
         // Fica checando o status no servidor a cada 10 segundos
         setInterval(function() {
-            fetch('/beFlow/status-viagem')
+            fetch('<?= BASE_URL ?>/status-viagem')
             .then(response => response.json())
             .then(data => {
                 ultimoStatus = data.status;

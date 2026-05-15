@@ -99,8 +99,29 @@ class Ponto {
     }
 
     private function criarViagemDoDia($motoristaId) {
-        $horarioBaseId = $this->conn->query("SELECT id FROM horarios_base ORDER BY id ASC LIMIT 1")->fetchColumn();
-        $veiculoId = $this->conn->query("SELECT id FROM veiculo ORDER BY id ASC LIMIT 1")->fetchColumn();
+        // Busca a empresa do motorista
+        $stmtEmpresa = $this->conn->prepare("SELECT empresa_id FROM usuarios WHERE id = :id LIMIT 1");
+        $stmtEmpresa->execute(['id' => $motoristaId]);
+        $empresaId = $stmtEmpresa->fetchColumn();
+
+        if (!$empresaId) {
+            return null;
+        }
+
+        // Busca o primeiro horário base disponível para a empresa do motorista
+        $sqlHorario = "SELECT hb.id 
+                       FROM horarios_base hb
+                       INNER JOIN linhas l ON l.id = hb.linha_id
+                       WHERE l.empresa_id = :empresa_id
+                       LIMIT 1";
+        $stmtHorario = $this->conn->prepare($sqlHorario);
+        $stmtHorario->execute(['empresa_id' => $empresaId]);
+        $horarioBaseId = $stmtHorario->fetchColumn();
+
+        // Busca o primeiro veículo disponível para a empresa do motorista
+        $stmtVeiculo = $this->conn->prepare("SELECT id FROM veiculo WHERE empresa_id = :empresa_id LIMIT 1");
+        $stmtVeiculo->execute(['empresa_id' => $empresaId]);
+        $veiculoId = $stmtVeiculo->fetchColumn();
 
         if (!$horarioBaseId || !$veiculoId) {
             return null;

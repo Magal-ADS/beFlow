@@ -20,11 +20,6 @@ class AuthController {
      * Processa o formulário de login (POST)
      */
     public function autenticar() {
-        // Inicia a sessão para persistir os dados do usuário
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
         // Pega os dados enviados pelo formulário
         $email = $_POST['email'] ?? '';
         $senha = $_POST['senha'] ?? '';
@@ -34,8 +29,7 @@ class AuthController {
         $usuario = $usuarioModel->buscarPorEmail($email);
 
         // Verifica se o usuário existe e se a senha confere
-        // Nota: Futuramente trocaremos para password_verify para maior segurança
-        if ($usuario && $usuario['senha'] === $senha) {
+        if ($usuario && password_verify($senha, $usuario['senha'])) {
             
             // Define as variáveis de sessão essenciais
             $_SESSION['usuario_id']   = $usuario['id'];
@@ -46,29 +40,30 @@ class AuthController {
             
             if ($usuario['tipo_usuario'] == 'aluno') {
                 // Aluno vai para o mapa de embarque
-                header("Location: /beFlow/home-aluno");
+                header("Location: " . BASE_URL . "/home-aluno");
                 exit; 
                 
             } else if ($usuario['tipo_usuario'] == 'motorista') {
                 // Motorista vai para o painel de controle da rota
-                header("Location: /beFlow/home-motorista");
+                header("Location: " . BASE_URL . "/home-motorista");
                 exit;
                 
             } else if ($usuario['tipo_usuario'] == 'admin_empresa' || $usuario['tipo_usuario'] == 'admin_geral') {
                 // Administrador vai para o novo Dashboard da Empresa
-                header("Location: /beFlow/admin/dashboard");
+                header("Location: " . BASE_URL . "/admin/dashboard");
                 exit;
                 
             } else {
                 // Caso haja um tipo não mapeado, volta pro login por segurança
+                session_unset();
                 session_destroy();
-                header("Location: /beFlow/login");
+                header("Location: " . BASE_URL . "/login");
                 exit;
             }
             
         } else {
             // Caso falhe, exibe um alerta e retorna para o login
-            echo "<script>alert('E-mail ou senha incorretos!'); window.location.href='/beFlow/login';</script>";
+            echo "<script>alert('E-mail ou senha incorretos!'); window.location.href='" . BASE_URL . "/login';</script>";
         }
     }
 
@@ -76,17 +71,12 @@ class AuthController {
      * Encerra a sessão do usuário com segurança
      */
     public function logout() {
-        // Garante que a sessão está ativa antes de destruí-la
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-        
         // Limpa as variáveis e destrói a sessão
         session_unset();
         session_destroy();
         
         // Redireciona o usuário para a tela de login
-        header("Location: /beFlow/login");
+        header("Location: " . BASE_URL . "/login");
         exit;
     }
 }
