@@ -48,7 +48,14 @@ class Ponto {
                              WHERE c.ponto_id = p.id
                                AND c.viagem_id = :viagem_id
                                AND c.tipo = 'embarque'
-                         ) AS total_alunos
+                         ) AS total_alunos,
+                         (
+                             SELECT COUNT(*)
+                             FROM confirmacoes c
+                             WHERE c.ponto_id = p.id
+                               AND c.viagem_id = :viagem_id
+                               AND c.tipo = 'retorno_sim'
+                         ) AS total_retorno
                   FROM pontos p
                   INNER JOIN linhas l ON l.id = p.linha_id
                   WHERE p.linha_id = :linha_id
@@ -59,6 +66,24 @@ class Ponto {
             'viagem_id' => $viagemAtual['id'],
             'linha_id' => $viagemAtual['linha_id'],
         ]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function buscarPontosDaViagemAtual() {
+        $viagemAtual = $this->buscarViagemAtual();
+        if (!$viagemAtual || empty($viagemAtual['linha_id'])) {
+            return [];
+        }
+
+        $query = "SELECT p.*, l.nome AS nome_linha, l.cor AS cor_linha
+                  FROM pontos p
+                  INNER JOIN linhas l ON l.id = p.linha_id
+                  WHERE p.linha_id = :linha_id
+                  ORDER BY p.ordem_na_linha ASC";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute(['linha_id' => $viagemAtual['linha_id']]);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -223,9 +248,11 @@ class Ponto {
             ORDER BY
                 CASE v.status
                     WHEN 'em_rota' THEN 0
-                    WHEN 'aguardando' THEN 1
-                    WHEN 'finalizada' THEN 2
-                    ELSE 3
+                    WHEN 'em_volta' THEN 1
+                    WHEN 'aguardando_volta' THEN 2
+                    WHEN 'aguardando' THEN 3
+                    WHEN 'finalizada' THEN 4
+                    ELSE 5
                 END,
                 v.id DESC
             LIMIT 1

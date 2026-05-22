@@ -87,7 +87,7 @@
                         </div>`,
                     className: '', iconSize: [30, 30], iconAnchor: [15, 15]
                 });
-                var marker = L.marker([ponto.latitude, ponto.longitude], {icon: busIcon}).bindPopup(`<b>${ponto.nome}</b><br>${ponto.nome_linha}<br>${ponto.total_alunos} alunos aguardando.`);
+                var marker = L.marker([ponto.latitude, ponto.longitude], {icon: busIcon}).bindPopup(`<b>${ponto.nome}</b><br>${ponto.nome_linha}<br>${ponto.total_alunos} alunos aguardando.<br>${ponto.total_retorno || 0} alunos confirmaram volta.`);
                 marcadoresLayer.addLayer(marker);
             });
         }

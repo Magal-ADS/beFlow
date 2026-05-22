@@ -111,6 +111,12 @@ switch ($rota) {
         $controller->finalizarRota();
         break;
 
+    case '/iniciar-volta':
+        require_once __DIR__ . '/app/Controllers/MotoristaController.php';
+        $controller = new MotoristaController();
+        $controller->iniciarVolta();
+        break;
+
     case '/admin/dashboard':
         require_once __DIR__ . '/app/Controllers/AdminController.php';
         $controller = new AdminController();

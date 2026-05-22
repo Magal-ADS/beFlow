@@ -18,16 +18,30 @@ class AdminController {
         ];
         $statusViagem = $db->query("SELECT status FROM viagens ORDER BY data_viagem DESC, id DESC LIMIT 1")->fetchColumn();
         $usuariosTotal = (int) $db->query("SELECT COUNT(*) FROM usuarios")->fetchColumn();
-        $linhasTotal = (int) $db->query("SELECT COUNT(*) FROM linhas WHERE empresa_id = 1")->fetchColumn();
+        $motoristasTotal = (int) $db->query("SELECT COUNT(*) FROM usuarios WHERE tipo_usuario = 'motorista' AND empresa_id = 1")->fetchColumn();
+        $linhas = $db->query("SELECT * FROM linhas WHERE empresa_id = 1 ORDER BY nome ASC")->fetchAll(PDO::FETCH_ASSOC);
+        $linhasTotal = count($linhas);
         $onibusTotal = (int) $db->query("SELECT COUNT(*) FROM veiculo WHERE empresa_id = 1")->fetchColumn();
         $pontosTotal = (int) $db->query("SELECT COUNT(*) FROM pontos")->fetchColumn();
         $horariosTotal = (int) $db->query("SELECT COUNT(*) FROM horarios_base")->fetchColumn();
         $empresasTotal = (int) $db->query("SELECT COUNT(*) FROM empresa")->fetchColumn();
         $viagensTotal = (int) $db->query("SELECT COUNT(*) FROM viagens")->fetchColumn();
         $confirmacoesTotal = (int) $db->query("SELECT COUNT(*) FROM confirmacoes")->fetchColumn();
+        $pontos = $db->query("SELECT * FROM pontos ORDER BY linha_id ASC, ordem_na_linha ASC")->fetchAll(PDO::FETCH_ASSOC);
+
+        $linhasComPontos = [];
+        foreach ($linhas as $linha) {
+            $linha['pontos'] = array_values(array_filter($pontos, function ($ponto) use ($linha) {
+                return (int) $ponto['linha_id'] === (int) $linha['id'];
+            }));
+            $linhasComPontos[] = $linha;
+        }
+        $linhas_com_pontos = $linhasComPontos;
 
         $stats = [
+            'alunos' => $usuariosTotal,
             'usuarios' => $usuariosTotal,
+            'motoristas' => $motoristasTotal,
             'linhas_onibus' => $linhasTotal . '/' . $onibusTotal,
             'pontos' => $pontosTotal,
             'horarios' => $horariosTotal,
@@ -136,6 +150,7 @@ class AdminController {
 
         $usuarioModel = new Usuario();
         $listaUsuarios = $usuarioModel->buscarTodosComDadosDeAluno();
+        $canManageAdminUsers = $this->currentUserCanManageAdminUsers();
 
         require_once __DIR__ . '/../Views/admin_usuarios.php';
     }
@@ -154,6 +169,10 @@ class AdminController {
 
         if ($dados['nome'] === '' || $dados['email'] === '' || $dados['senha'] === '') {
             $this->jsonResponse(false, 'Preencha todos os campos obrigatorios.');
+        }
+
+        if (!$this->canAssignAdministrativeRole($dados['tipo_usuario'], $dados['email'])) {
+            $this->jsonResponse(false, 'Usuarios administrativos so podem ser cadastrados com e-mail @beflow por um administrador @beflow.');
         }
 
         try {
@@ -186,6 +205,18 @@ class AdminController {
 
         if ($id === '' || $dados['nome'] === '' || $dados['email'] === '') {
             $this->jsonResponse(false, 'ID, nome e e-mail sao obrigatorios.');
+        }
+
+        $usuarioAtual = $this->buscarUsuarioPorId($id);
+        if (!$usuarioAtual) {
+            $this->jsonResponse(false, 'Usuario nao encontrado.');
+        }
+
+        $isPromocaoParaAdmin = !in_array($usuarioAtual['tipo_usuario'], ['admin_empresa', 'admin_geral'], true)
+            && in_array($dados['tipo_usuario'], ['admin_empresa', 'admin_geral'], true);
+
+        if ($isPromocaoParaAdmin && !$this->canAssignAdministrativeRole($dados['tipo_usuario'], $dados['email'])) {
+            $this->jsonResponse(false, 'Usuarios administrativos so podem ser promovidos com e-mail @beflow por um administrador @beflow.');
         }
 
         try {
@@ -376,6 +407,44 @@ class AdminController {
             'turno' => 'Matutino',
             'hora' => '06:30:00',
         ]);
+    }
+
+    private function canAssignAdministrativeRole($tipoUsuario, $email) {
+        if (!in_array($tipoUsuario, ['admin_empresa', 'admin_geral'], true)) {
+            return true;
+        }
+
+        return $this->currentUserCanManageAdminUsers() && $this->isBeFlowEmail($email);
+    }
+
+    private function currentUserCanManageAdminUsers() {
+        $email = $this->getCurrentSessionUserEmail();
+
+        return $email !== '' && $this->isBeFlowEmail($email);
+    }
+
+    private function buscarUsuarioPorId($id) {
+        $db = (new Database())->getConnection();
+        $stmt = $db->prepare("SELECT id, email, tipo_usuario FROM usuarios WHERE id = :id LIMIT 1");
+        $stmt->execute(['id' => $id]);
+
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
+    private function getCurrentSessionUserEmail() {
+        if (!isset($_SESSION['usuario_id'])) {
+            return '';
+        }
+
+        $db = (new Database())->getConnection();
+        $stmt = $db->prepare("SELECT email FROM usuarios WHERE id = :id LIMIT 1");
+        $stmt->execute(['id' => $_SESSION['usuario_id']]);
+
+        return (string) ($stmt->fetchColumn() ?: '');
+    }
+
+    private function isBeFlowEmail($email) {
+        return stripos(trim((string) $email), '@beflow') !== false;
     }
 
     private function requireAdminSession() {

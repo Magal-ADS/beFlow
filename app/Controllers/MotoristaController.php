@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../Models/Ponto.php';
+require_once __DIR__ . '/../../config/database.php';
 
 class MotoristaController {
     private function requireMotoristaJson() {
@@ -21,6 +22,14 @@ class MotoristaController {
         $pontos = $pontoModel->buscarPontosComContagem($_SESSION['usuario_id']);
         $viagemAtual = $pontoModel->buscarViagemAtual($_SESSION['usuario_id']);
         $linhasDisponiveis = $pontoModel->buscarLinhasDaEmpresa(1);
+        $db = (new Database())->getConnection();
+        $stmtMotorista = $db->prepare("SELECT nome, telefone, email FROM usuarios WHERE id = :id LIMIT 1");
+        $stmtMotorista->execute(['id' => $_SESSION['usuario_id']]);
+        $currentMotorista = $stmtMotorista->fetch(PDO::FETCH_ASSOC) ?: [
+            'nome' => $_SESSION['usuario_nome'] ?? 'Motorista',
+            'telefone' => '',
+            'email' => '',
+        ];
 
         require_once __DIR__ . '/../Views/home_motorista.php';
     }
@@ -76,11 +85,28 @@ class MotoristaController {
         $this->requireMotoristaJson();
 
         $pontoModel = new Ponto();
-        $ok = $pontoModel->atualizarStatusViagem('finalizada', $_SESSION['usuario_id']);
+        $viagemAtual = $pontoModel->buscarViagemAtual($_SESSION['usuario_id']);
+        $statusDestino = ($viagemAtual && ($viagemAtual['status'] ?? '') === 'em_volta') ? 'finalizada' : 'aguardando_volta';
+        $ok = $pontoModel->atualizarStatusViagem($statusDestino, $_SESSION['usuario_id']);
 
         echo json_encode([
             'success' => $ok,
-            'message' => $ok ? 'Rota finalizada com sucesso.' : 'Nao foi possivel finalizar a rota.',
+            'message' => $ok
+                ? ($statusDestino === 'finalizada' ? 'Volta finalizada com sucesso.' : 'Ida finalizada. Agora voce pode iniciar a volta.')
+                : 'Nao foi possivel finalizar a rota.',
+        ]);
+        exit;
+    }
+
+    public function iniciarVolta() {
+        $this->requireMotoristaJson();
+
+        $pontoModel = new Ponto();
+        $ok = $pontoModel->atualizarStatusViagem('em_volta', $_SESSION['usuario_id']);
+
+        echo json_encode([
+            'success' => $ok,
+            'message' => $ok ? 'Volta iniciada com sucesso.' : 'Nao foi possivel iniciar a volta.',
         ]);
         exit;
     }

@@ -4,23 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BeFlow - Inicio</title>
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+
     <style>
         #map { height: 100%; width: 100%; z-index: 0; }
         .leaflet-control-container { z-index: 5 !important; }
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #4A7DDF; border-radius: 10px; }
-        .bottom-sheet-toggle-icon {
-            transition: transform 0.3s ease;
-        }
-        .bottom-sheet-conteudo {
-            transition: max-height 0.35s ease, opacity 0.3s ease;
-        }
+        .bottom-sheet-toggle-icon { transition: transform 0.3s ease; }
+        .bottom-sheet-conteudo { transition: max-height 0.35s ease, opacity 0.3s ease; }
         .bottom-sheet-handle {
             width: 40px;
             height: 5px;
@@ -57,11 +53,11 @@
         <button onclick="toggleSidebar()" class="w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-md text-blue-500 pointer-events-auto hover:bg-white transition">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
         </button>
-        
+
         <button id="btnNotificacao" onclick="mostrarNotificacao()" class="w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-md text-red-500 relative pointer-events-auto hover:bg-white transition">
             <span id="bolinhaNotificacao" class="hidden absolute top-2 right-2 w-2 h-2 bg-red-600 rounded-full animate-ping"></span>
             <span id="bolinhaEstatica" class="hidden absolute top-2 right-2 w-2 h-2 bg-red-600 rounded-full"></span>
-            
+
             <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
         </button>
     </div>
@@ -89,72 +85,104 @@
         <div id="bottomSheetPontos" class="bottom-sheet-pontos">
             <div id="bottomSheetConteudo" class="bottom-sheet-conteudo">
                 <h3 class="font-semibold text-gray-700 mb-4 text-center">Selecione seu ponto de embarque:</h3>
-                <div id="listaPontos" class="space-y-3 max-h-48 overflow-y-auto pr-2 pb-4 custom-scroll">
-                <?php if (empty($pontos)): ?>
-                    <p class="text-center text-gray-400 text-sm py-4">Nenhum ponto encontrado.</p>
-                <?php else: ?>
-                    <?php foreach ($pontos as $p): ?>
-                    <div class="card-ponto flex items-center justify-between p-4 border border-gray-100 rounded-2xl bg-white shadow-sm hover:border-blue-200 transition" data-ponto-id="<?= $p['id']; ?>" data-search="<?= htmlspecialchars(($p['nome'] ?? '') . ' ' . ($p['nome_linha'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-                        <div>
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="bg-blue-500 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase">
-                                    <?= htmlspecialchars($p['nome_linha'] ?? 'Linha'); ?>
-                                </span>
+                <div id="painelEstadoAluno" class="hidden mb-4"></div>
+                <div id="listaPontosWrapper">
+                    <div id="listaPontos" class="space-y-3 max-h-48 overflow-y-auto pr-2 pb-4 custom-scroll">
+                    <?php if (empty($pontos)): ?>
+                        <p class="text-center text-gray-400 text-sm py-4">Nenhum ponto encontrado.</p>
+                    <?php else: ?>
+                        <?php foreach ($pontos as $p): ?>
+                        <div class="card-ponto flex items-center justify-between p-4 border border-gray-100 rounded-2xl bg-white shadow-sm hover:border-blue-200 transition" data-ponto-id="<?= $p['id']; ?>" data-search="<?= htmlspecialchars(($p['nome'] ?? '') . ' ' . ($p['nome_linha'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="bg-blue-500 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase">
+                                        <?= htmlspecialchars($p['nome_linha'] ?? 'Linha'); ?>
+                                    </span>
+                                </div>
+                                <p class="text-sm font-semibold text-gray-700"><?= htmlspecialchars($p['nome']); ?></p>
+                                <p class="text-xs text-gray-400 italic">Ponto de parada oficial</p>
                             </div>
-                            <p class="text-sm font-semibold text-gray-700"><?= htmlspecialchars($p['nome']); ?></p>
-                            <p class="text-xs text-gray-400 italic">Ponto de parada oficial</p>
+                            <button onclick="confirmarPonto(<?= $p['id']; ?>)" class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-md active:scale-95 transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            </button>
                         </div>
-                        <button onclick="confirmarPonto(<?= $p['id']; ?>, this)" class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-md active:scale-95 transition">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        </button>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                     </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
+                    <p id="nenhumResultadoPontos" class="hidden text-center text-gray-400 text-sm py-4">Nenhum ponto corresponde a busca.</p>
                 </div>
-                <p id="nenhumResultadoPontos" class="hidden text-center text-gray-400 text-sm py-4">Nenhum ponto corresponde a busca.</p>
             </div>
         </div>
     </div>
 
-    <div id="sidebarOverlay" class="fixed inset-0 bg-black/40 z-40 hidden opacity-0 transition-opacity duration-300" onclick="toggleSidebar()"></div>
-    <div id="sidebarMenu" class="fixed top-0 left-0 h-full w-[85%] max-w-[320px] bg-white z-50 transform -translate-x-full transition-transform duration-300 ease-in-out rounded-r-[2.5rem] shadow-2xl flex flex-col">
-        <button id="closeSidebarBtn" onclick="toggleSidebar()" class="absolute top-6 -right-10 bg-[#4A7DDF] text-white p-2 rounded-r-xl shadow-md opacity-0 transition-opacity duration-300 pointer-events-none">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 hidden opacity-0" onclick="toggleSidebar()"></div>
+    <div id="sidebarMenu" class="fixed top-0 left-0 h-full w-[80%] max-w-sm bg-white rounded-r-[2rem] shadow-2xl z-50 flex flex-col p-8 transition-transform duration-300 ease-in-out -translate-x-full">
+        <button id="closeSidebarBtn" onclick="toggleSidebar()" class="absolute top-12 -right-5 w-10 h-10 bg-blue-500 text-white rounded-lg flex items-center justify-center shadow-md opacity-0 transition-opacity duration-300 pointer-events-none">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
         </button>
 
-        <div class="p-8 flex flex-col items-center">
-            <div class="w-20 h-20 bg-gray-200 rounded-full mb-4 overflow-hidden border-2 border-gray-100">
-                <img src="https://ui-avatars.com/api/?name=<?= urlencode($_SESSION['usuario_nome']); ?>&background=random" alt="Avatar">
+        <div>
+            <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 text-2xl mb-6 shadow-inner">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8m-8 4h8m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             </div>
-            <h2 class="text-xl font-bold text-gray-800 text-center">Ola, <?= htmlspecialchars($_SESSION['usuario_nome']); ?>!</h2>
-            <button class="mt-6 w-full bg-[#4A7DDF] text-white text-sm font-semibold py-3 rounded-xl shadow-md hover:bg-blue-600 transition">Personalizar Perfil</button>
+
+            <h2 class="text-xl">
+                <span class="text-gray-800">Olá, </span><span class="text-blue-600 font-black"><?= htmlspecialchars($currentAluno['nome'] ?? ($_SESSION['usuario_nome'] ?? 'Aluno')) ?>!</span>
+            </h2>
+            <p class="text-sm font-black text-gray-900 tracking-wide mt-1"><?= htmlspecialchars(($currentAluno['telefone'] ?? '') !== '' ? $currentAluno['telefone'] : ($currentAluno['email'] ?? 'Sem contato')) ?></p>
+
+            <div class="h-px w-full bg-gray-100 my-6"></div>
         </div>
 
-        <div class="flex-1 px-4 space-y-2 mt-2">
-            <a href="#" class="flex items-center gap-4 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition">Minhas Viagens</a>
-            <a href="<?= BASE_URL ?>/logout" class="flex items-center gap-4 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl font-medium mt-auto mb-8 transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                Sair
+        <div>
+            <button type="button" class="w-full bg-blue-500 text-white rounded-xl py-3.5 flex items-center justify-center gap-3 font-bold shadow-lg shadow-blue-500/30 hover:bg-blue-600 mb-6 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.768-6.768a2.5 2.5 0 113.536 3.536L12.536 16.536A4 4 0 019.707 17.707L6 18l.293-3.707A4 4 0 017.464 11.464L14.232 4.696a2.5 2.5 0 013.536 0"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19a6 6 0 10-6-6"></path></svg>
+                <span>Personalizar Perfil</span>
+            </button>
+
+            <div class="flex flex-col gap-6">
+                <a href="#" class="flex items-center gap-4 text-gray-600 font-bold hover:text-blue-600 transition">
+                    <svg class="w-6 h-6 stroke-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h8m-8 4h8m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <span>Viagens</span>
+                </a>
+                <a href="#" class="flex items-center gap-4 text-gray-600 font-bold hover:text-blue-600 transition">
+                    <svg class="w-6 h-6 stroke-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 15v-3a8 8 0 0116 0v3"></path><path stroke-linecap="round" stroke-linejoin="round" d="M18 17a2 2 0 002-2v-1a2 2 0 00-2-2h-1v5h1zM6 17a2 2 0 01-2-2v-1a2 2 0 012-2h1v5H6z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9 19h6"></path></svg>
+                    <span>Ajuda</span>
+                </a>
+                <a href="#" class="flex items-center gap-4 text-gray-600 font-bold hover:text-blue-600 transition">
+                    <svg class="w-6 h-6 stroke-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8m-8 4h5m-7 6l-4 1 1-4V6a2 2 0 012-2h14a2 2 0 012 2v9a2 2 0 01-2 2H8l-3 3z"></path></svg>
+                    <span>Fale Conosco</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="mt-auto">
+            <a href="<?= BASE_URL ?>/logout" class="w-full bg-[#A53F3F] text-white rounded-xl py-3.5 flex items-center justify-center gap-3 font-bold shadow-md hover:bg-red-800 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H9m4 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                <span>Sair</span>
             </a>
+            <p class="text-center text-[10px] text-gray-400 mt-4 font-medium">Termos de uso v1.1.1</p>
         </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        const estadoConfirmacaoInicial = <?= json_encode($estadoConfirmacao ?? null, JSON_UNESCAPED_UNICODE) ?>;
+
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebarMenu');
             const overlay = document.getElementById('sidebarOverlay');
             const bottomSheet = document.getElementById('bottomSheet');
             const closeBtn = document.getElementById('closeSidebarBtn');
-            
+
             if (sidebar.classList.contains('-translate-x-full')) {
                 sidebar.classList.remove('-translate-x-full');
                 overlay.classList.remove('hidden');
                 bottomSheet.style.transform = 'translateY(100%)';
-                setTimeout(() => { 
-                    overlay.classList.remove('opacity-0'); 
-                    closeBtn.classList.remove('opacity-0'); 
-                    closeBtn.classList.remove('pointer-events-none'); 
+                setTimeout(() => {
+                    overlay.classList.remove('opacity-0');
+                    closeBtn.classList.remove('opacity-0');
+                    closeBtn.classList.remove('pointer-events-none');
                 }, 10);
             } else {
                 sidebar.classList.add('-translate-x-full');
@@ -193,17 +221,20 @@
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        map.locate({setView: true, maxZoom: 16});
-        map.on('locationfound', function(e) {
+        map.locate({ setView: true, maxZoom: 16 });
+        map.on('locationfound', function (e) {
             L.circleMarker(e.latlng, {
-                radius: 8, fillColor: "#4A7DDF", color: "#fff", weight: 3, opacity: 1, fillOpacity: 1
-            }).addTo(map).bindPopup("Voce esta aqui").openPopup();
+                radius: 8, fillColor: '#4A7DDF', color: '#fff', weight: 3, opacity: 1, fillOpacity: 1
+            }).addTo(map).bindPopup('Voce esta aqui').openPopup();
         });
 
         var pontosDoBanco = <?= json_encode($pontos); ?>;
         var buscaInput = document.getElementById('buscarPonto');
         var cardsPontos = Array.from(document.querySelectorAll('.card-ponto'));
         var nenhumResultadoPontos = document.getElementById('nenhumResultadoPontos');
+        var listaPontosWrapper = document.getElementById('listaPontosWrapper');
+        var painelEstadoAluno = document.getElementById('painelEstadoAluno');
+        var estadoConfirmacaoAtual = estadoConfirmacaoInicial;
         var busIcon = L.divIcon({
             html: `<div style="background-color: #4A7DDF; padding: 6px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">
                     <svg style="width: 14px; height: 14px; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -214,19 +245,23 @@
         });
         var marcadoresPorPonto = {};
 
-        pontosDoBanco.forEach(function(ponto) {
+        pontosDoBanco.forEach(function (ponto) {
             if (ponto.latitude && ponto.longitude) {
-                marcadoresPorPonto[ponto.id] = L.marker([ponto.latitude, ponto.longitude], {icon: busIcon})
+                marcadoresPorPonto[ponto.id] = L.marker([ponto.latitude, ponto.longitude], { icon: busIcon })
                     .addTo(map)
                     .bindPopup(`<strong>${ponto.nome}</strong><br><span style="color: #666;">${ponto.nome_linha || 'Linha BeFlow'}</span>`);
             }
         });
 
         function filtrarPontos() {
+            if (estadoConfirmacaoAtual) {
+                return;
+            }
+
             var termo = (buscaInput.value || '').trim().toLowerCase();
             var idsVisiveis = [];
 
-            cardsPontos.forEach(function(card) {
+            cardsPontos.forEach(function (card) {
                 var textoBusca = (card.dataset.search || '').toLowerCase();
                 var pontoId = card.dataset.pontoId;
                 var corresponde = termo === '' || textoBusca.indexOf(termo) !== -1;
@@ -246,7 +281,7 @@
                 }
             });
 
-            nenhumResultadoPontos.classList.toggle('hidden', cardsPontos.some(function(card) {
+            nenhumResultadoPontos.classList.toggle('hidden', cardsPontos.some(function (card) {
                 return !card.classList.contains('hidden');
             }));
 
@@ -262,37 +297,185 @@
             document.getElementById('bolinhaEstatica').classList.add('hidden');
         }
 
-        function confirmarPonto(pontoId, elemento) {
-            fetch('confirmar-presenca', {
+        function enviarAcaoConfirmacao(payload) {
+            return fetch('confirmar-presenca', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ponto_id: pontoId })
+                body: JSON.stringify(payload)
             })
             .then(async response => {
                 const text = await response.text();
-                try { return JSON.parse(text); }
-                catch (e) { throw new Error("O servidor enviou um erro em vez de JSON."); }
-            })
-            .then(data => {
-                limparNotificacao();
-
-                if (data.success) {
-                    Swal.fire({
-                        title: 'Confirmado!', text: 'O motorista ja recebeu seu aviso de embarque.',
-                        icon: 'success', confirmButtonColor: '#4A7DDF', confirmButtonText: 'Beleza!'
-                    });
-                    elemento.classList.remove('bg-blue-600');
-                    elemento.classList.add('bg-green-500');
-                    elemento.onclick = null;
-                } else {
-                    Swal.fire({ title: 'Ops!', text: data.message, icon: 'error', confirmButtonColor: '#4A7DDF' });
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    throw new Error('O servidor enviou um erro em vez de JSON.');
                 }
-            })
-            .catch(error => {
-                limparNotificacao();
-                Swal.fire({ title: 'Erro de Servidor', text: 'Nao foi possivel confirmar.', icon: 'warning', confirmButtonColor: '#4A7DDF' });
             });
         }
+
+        function getResumoEstado(tipo) {
+            if (tipo === 'embarque') {
+                return 'Sua presenca neste ponto foi confirmada.';
+            }
+            if (tipo === 'embarcado') {
+                return 'Embarque informado. Agora diga se voce vai voltar de onibus.';
+            }
+            if (tipo === 'retorno_sim') {
+                return 'Seu retorno de onibus foi registrado e sera contabilizado.';
+            }
+            if (tipo === 'retorno_nao') {
+                return 'Voce informou que nao vai voltar de onibus.';
+            }
+            return '';
+        }
+
+        function renderizarEstadoAluno() {
+            if (!estadoConfirmacaoAtual) {
+                painelEstadoAluno.classList.add('hidden');
+                painelEstadoAluno.innerHTML = '';
+                listaPontosWrapper.classList.remove('hidden');
+                filtrarPontos();
+                return;
+            }
+
+            const pontoNome = estadoConfirmacaoAtual.ponto_nome || 'Ponto selecionado';
+            const linhaNome = estadoConfirmacaoAtual.linha_nome || 'Linha ativa';
+            const resumo = getResumoEstado(estadoConfirmacaoAtual.tipo);
+            let acoes = '';
+
+            if (estadoConfirmacaoAtual.tipo === 'embarque') {
+                acoes = `
+                    <div class="grid grid-cols-2 gap-3 mt-4">
+                        <button type="button" onclick="cancelarPresenca()" class="rounded-2xl border border-red-200 text-red-600 font-bold py-3 hover:bg-red-50 transition">Cancelar</button>
+                        <button type="button" onclick="informarEmbarque()" class="rounded-2xl bg-blue-600 text-white font-bold py-3 shadow-md hover:bg-blue-700 transition">Estou no onibus</button>
+                    </div>
+                `;
+            } else if (estadoConfirmacaoAtual.tipo === 'embarcado') {
+                acoes = `
+                    <div class="grid grid-cols-1 gap-3 mt-4">
+                        <button type="button" onclick="informarRetorno(true)" class="rounded-2xl bg-blue-600 text-white font-bold py-3 shadow-md hover:bg-blue-700 transition">Vou voltar de onibus</button>
+                        <button type="button" onclick="informarRetorno(false)" class="rounded-2xl border border-gray-200 text-gray-700 font-bold py-3 hover:bg-gray-50 transition">Nao vou voltar de onibus</button>
+                    </div>
+                `;
+            } else if (estadoConfirmacaoAtual.tipo === 'retorno_sim' || estadoConfirmacaoAtual.tipo === 'retorno_nao') {
+                acoes = `
+                    <div class="mt-4">
+                        <button type="button" onclick="informarRetorno(${estadoConfirmacaoAtual.tipo === 'retorno_nao' ? 'true' : 'false'})" class="w-full rounded-2xl border border-gray-200 text-gray-700 font-bold py-3 hover:bg-gray-50 transition">
+                            ${estadoConfirmacaoAtual.tipo === 'retorno_sim' ? 'Nao vou voltar de onibus' : 'Vou voltar de onibus'}
+                        </button>
+                    </div>
+                `;
+            }
+
+            painelEstadoAluno.innerHTML = `
+                <div class="p-4 rounded-[1.5rem] border border-blue-100 bg-blue-50/70 shadow-sm">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="text-[11px] uppercase tracking-[0.2em] font-bold text-blue-600">${linhaNome}</p>
+                            <h4 class="mt-1 text-lg font-black text-gray-900">${pontoNome}</h4>
+                            <p class="mt-2 text-sm text-gray-600">${resumo}</p>
+                        </div>
+                        <div class="w-11 h-11 rounded-2xl bg-white text-blue-600 flex items-center justify-center shadow-sm">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8m-8 4h8m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </div>
+                    </div>
+                    ${acoes}
+                </div>
+            `;
+            painelEstadoAluno.classList.remove('hidden');
+            listaPontosWrapper.classList.add('hidden');
+            nenhumResultadoPontos.classList.add('hidden');
+        }
+
+        function confirmarPonto(pontoId) {
+            Swal.fire({
+                title: 'Confirmar presenca?',
+                text: 'Deseja confirmar sua presenca neste ponto de embarque?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#2563eb',
+                cancelButtonColor: '#9ca3af',
+                confirmButtonText: 'Sim, confirmar',
+                cancelButtonText: 'Voltar'
+            }).then((result) => {
+                if (!result.isConfirmed) {
+                    return;
+                }
+
+                enviarAcaoConfirmacao({ acao: 'confirmar_ponto', ponto_id: pontoId })
+                    .then(data => {
+                        limparNotificacao();
+
+                        if (data.success) {
+                            estadoConfirmacaoAtual = data.state || null;
+                            renderizarEstadoAluno();
+                            Swal.fire('Confirmado!', data.message, 'success');
+                        } else {
+                            Swal.fire('Ops!', data.message, 'error');
+                        }
+                    })
+                    .catch(() => {
+                        limparNotificacao();
+                        Swal.fire('Erro de Servidor', 'Nao foi possivel confirmar.', 'warning');
+                    });
+            });
+        }
+
+        function cancelarPresenca() {
+            Swal.fire({
+                title: 'Cancelar confirmacao?',
+                text: 'Voce podera escolher outro ponto de embarque.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#9ca3af',
+                confirmButtonText: 'Sim, cancelar',
+                cancelButtonText: 'Voltar'
+            }).then((result) => {
+                if (!result.isConfirmed) {
+                    return;
+                }
+
+                enviarAcaoConfirmacao({ acao: 'cancelar_ponto' })
+                    .then(data => {
+                        if (data.success) {
+                            estadoConfirmacaoAtual = data.state || null;
+                            renderizarEstadoAluno();
+                            Swal.fire('Cancelado', data.message, 'success');
+                        } else {
+                            Swal.fire('Ops!', data.message, 'error');
+                        }
+                    });
+            });
+        }
+
+        function informarEmbarque() {
+            enviarAcaoConfirmacao({ acao: 'informar_embarque' })
+                .then(data => {
+                    if (data.success) {
+                        estadoConfirmacaoAtual = data.state || null;
+                        renderizarEstadoAluno();
+                        Swal.fire('Perfeito', data.message, 'success');
+                    } else {
+                        Swal.fire('Ops!', data.message, 'error');
+                    }
+                });
+        }
+
+        function informarRetorno(vaiVoltar) {
+            enviarAcaoConfirmacao({ acao: vaiVoltar ? 'retorno_sim' : 'retorno_nao' })
+                .then(data => {
+                    if (data.success) {
+                        estadoConfirmacaoAtual = data.state || null;
+                        renderizarEstadoAluno();
+                        Swal.fire('Informacao salva', data.message, 'success');
+                    } else {
+                        Swal.fire('Ops!', data.message, 'error');
+                    }
+                });
+        }
+
+        renderizarEstadoAluno();
 
         var notificadoSaida = false;
         var notificadoChegada = false;
@@ -309,7 +492,7 @@
             limparNotificacao();
         }
 
-        setInterval(function() {
+        setInterval(function () {
             fetch('<?= BASE_URL ?>/status-viagem')
             .then(response => response.json())
             .then(data => {
@@ -318,7 +501,7 @@
                 if (data.status === 'em_rota' && !notificadoSaida) {
                     notificadoSaida = true;
                     notificadoChegada = false;
-                    
+
                     document.getElementById('bolinhaNotificacao').classList.remove('hidden');
                     document.getElementById('bolinhaEstatica').classList.remove('hidden');
 
@@ -333,7 +516,7 @@
                 } else if (data.status === 'finalizada' && !notificadoChegada && notificadoSaida) {
                     notificadoChegada = true;
                     notificadoSaida = false;
-                    
+
                     limparNotificacao();
 
                     Swal.fire({
@@ -345,7 +528,7 @@
                     });
                 }
             })
-            .catch(erro => console.error("Erro ao buscar status:", erro));
+            .catch(erro => console.error('Erro ao buscar status:', erro));
         }, 10000);
     </script>
 </body>
