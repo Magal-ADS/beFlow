@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BeFlow - Início</title>
+    <title>BeFlow - InÃ­cio</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -12,7 +12,6 @@
     <style>
         #map { height: 100%; width: 100%; z-index: 0; }
         .leaflet-control-container { z-index: 5 !important; }
-        /* Customizando a barra de rolagem da lista de pontos */
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #4A7DDF; border-radius: 10px; }
@@ -38,13 +37,11 @@
             margin-top: 0;
             padding-bottom: 0;
         }
-
         .bottom-sheet-pontos.aberto .bottom-sheet-conteudo {
             max-height: 500px;
             overflow: visible;
             opacity: 1;
         }
-
         @media (max-width: 767px) {
             .bottom-sheet-pontos.aberto .bottom-sheet-conteudo {
                 max-height: 500px;
@@ -114,7 +111,7 @@
                     <?php endforeach; ?>
                 <?php endif; ?>
                 </div>
-                <p id="nenhumResultadoPontos" class="hidden text-center text-gray-400 text-sm py-4">Nenhum ponto corresponde à busca.</p>
+                <p id="nenhumResultadoPontos" class="hidden text-center text-gray-400 text-sm py-4">Nenhum ponto corresponde Ã  busca.</p>
             </div>
         </div>
     </div>
@@ -129,7 +126,7 @@
             <div class="w-20 h-20 bg-gray-200 rounded-full mb-4 overflow-hidden border-2 border-gray-100">
                 <img src="https://ui-avatars.com/api/?name=<?= urlencode($_SESSION['usuario_nome']); ?>&background=random" alt="Avatar">
             </div>
-            <h2 class="text-xl font-bold text-gray-800 text-center">👋 Olá, <?= htmlspecialchars($_SESSION['usuario_nome']); ?>!</h2>
+            <h2 class="text-xl font-bold text-gray-800 text-center">ðŸ‘‹ OlÃ¡, <?= htmlspecialchars($_SESSION['usuario_nome']); ?>!</h2>
             <button class="mt-6 w-full bg-[#4A7DDF] text-white text-sm font-semibold py-3 rounded-xl shadow-md hover:bg-blue-600 transition">Personalizar Perfil</button>
         </div>
 
@@ -191,7 +188,6 @@
             setExpanded(true);
         })();
 
-        // --- MAPA ---
         var map = L.map('map', { zoomControl: false }).setView([-21.4059, -48.5052], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
@@ -201,10 +197,9 @@
         map.on('locationfound', function(e) {
             L.circleMarker(e.latlng, {
                 radius: 8, fillColor: "#4A7DDF", color: "#fff", weight: 3, opacity: 1, fillOpacity: 1
-            }).addTo(map).bindPopup("Você está aqui").openPopup();
+            }).addTo(map).bindPopup("VocÃª estÃ¡ aqui").openPopup();
         });
 
-        // --- PONTOS DO BANCO ---
         var pontosDoBanco = <?= json_encode($pontos); ?>;
         var buscaInput = document.getElementById('buscarPonto');
         var cardsPontos = Array.from(document.querySelectorAll('.card-ponto'));
@@ -220,7 +215,7 @@
         var marcadoresPorPonto = {};
 
         pontosDoBanco.forEach(function(ponto) {
-            if(ponto.latitude && ponto.longitude) {
+            if (ponto.latitude && ponto.longitude) {
                 marcadoresPorPonto[ponto.id] = L.marker([ponto.latitude, ponto.longitude], {icon: busIcon})
                     .addTo(map)
                     .bindPopup(`<strong>${ponto.nome}</strong><br><span style="color: #666;">${ponto.nome_linha || 'Linha BeFlow'}</span>`);
@@ -262,7 +257,6 @@
 
         buscaInput.addEventListener('input', filtrarPontos);
 
-        // --- CONFIRMAÇÃO COM SWEETALERT2 ---
         function confirmarPonto(pontoId, elemento) {
             fetch('confirmar-presenca', {
                 method: 'POST',
@@ -271,13 +265,13 @@
             })
             .then(async response => {
                 const text = await response.text();
-                try { return JSON.parse(text); } 
+                try { return JSON.parse(text); }
                 catch (e) { throw new Error("O servidor enviou um erro em vez de JSON."); }
             })
             .then(data => {
                 if (data.success) {
                     Swal.fire({
-                        title: 'Confirmado!', text: '👋 O motorista já recebeu seu aviso de embarque.',
+                        title: 'Confirmado!', text: 'ðŸ‘‹ O motorista jÃ¡ recebeu seu aviso de embarque.',
                         icon: 'success', confirmButtonColor: '#4A7DDF', confirmButtonText: 'Beleza!'
                     });
                     elemento.classList.remove('bg-blue-600');
@@ -288,65 +282,55 @@
                 }
             })
             .catch(error => {
-                Swal.fire({ title: 'Erro de Servidor', text: 'Não foi possível confirmar.', icon: 'warning', confirmButtonColor: '#4A7DDF' });
+                Swal.fire({ title: 'Erro de Servidor', text: 'NÃ£o foi possÃ­vel confirmar.', icon: 'warning', confirmButtonColor: '#4A7DDF' });
             });
         }
 
-        // ========================================================================
-        // --- SISTEMA DE NOTIFICAÇÃO DO ALUNO (Consertado) ---
-        // ========================================================================
-        
         var notificadoSaida = false;
         var notificadoChegada = false;
         var ultimoStatus = 'aguardando';
 
-        // O que acontece quando o aluno clica no sininho
         function mostrarNotificacao() {
             if (ultimoStatus === 'em_rota') {
-                Swal.fire({ title: '🚌 O ônibus já saiu!', text: 'Fique atento ao seu ponto de embarque.', icon: 'info', confirmButtonColor: '#4A7DDF' });
+                Swal.fire({ title: 'ðŸšŒ O Ã´nibus jÃ¡ saiu!', text: 'Fique atento ao seu ponto de embarque.', icon: 'info', confirmButtonColor: '#4A7DDF' });
             } else if (ultimoStatus === 'finalizada') {
-                Swal.fire({ title: '✅ Viagem Concluída', text: 'O ônibus já finalizou a rota de hoje.', icon: 'success', confirmButtonColor: '#4A7DDF' });
+                Swal.fire({ title: 'âœ… Viagem ConcluÃ­da', text: 'O Ã´nibus jÃ¡ finalizou a rota de hoje.', icon: 'success', confirmButtonColor: '#4A7DDF' });
             } else {
-                Swal.fire({ title: 'Sem Novidades', text: 'O ônibus ainda não iniciou a rota.', icon: 'question', confirmButtonColor: '#4A7DDF' });
+                Swal.fire({ title: 'Sem Novidades', text: 'O Ã´nibus ainda nÃ£o iniciou a rota.', icon: 'question', confirmButtonColor: '#4A7DDF' });
             }
             document.getElementById('bolinhaNotificacao').classList.add('hidden');
         }
 
-        // Fica checando o status no servidor a cada 10 segundos
         setInterval(function() {
             fetch('<?= BASE_URL ?>/status-viagem')
             .then(response => response.json())
             .then(data => {
                 ultimoStatus = data.status;
 
-                // 1. Ônibus acabou de SAIR
                 if (data.status === 'em_rota' && !notificadoSaida) {
-                    notificadoSaida = true; // Não repete o alerta de saída
-                    notificadoChegada = false; // Reseta o de chegada
+                    notificadoSaida = true;
+                    notificadoChegada = false;
                     
                     document.getElementById('bolinhaNotificacao').classList.remove('hidden');
                     document.getElementById('bolinhaEstatica').classList.remove('hidden');
 
                     Swal.fire({
-                        title: 'O ônibus saiu! 🚌',
+                        title: 'O Ã´nibus saiu! ðŸšŒ',
                         text: 'O motorista acabou de iniciar a rota. Dirija-se ao seu ponto.',
                         iconHtml: '<img src="https://media.giphy.com/media/l0HlU5b1A0rXgPzH2/giphy.gif" style="width: 150px; border-radius: 50%;">',
                         customClass: { icon: 'no-border' },
                         confirmButtonColor: '#4A7DDF',
-                        confirmButtonText: 'Beleza, tô indo!'
+                        confirmButtonText: 'Beleza, tÃ´ indo!'
                     });
-                }
-                
-                // 2. Ônibus CHEGOU / FINALIZOU
-                else if (data.status === 'finalizada' && !notificadoChegada && notificadoSaida) {
-                    notificadoChegada = true; // Não repete o alerta de chegada
-                    notificadoSaida = false; // Reseta o de saída para amanhã
+                } else if (data.status === 'finalizada' && !notificadoChegada && notificadoSaida) {
+                    notificadoChegada = true;
+                    notificadoSaida = false;
                     
                     document.getElementById('bolinhaNotificacao').classList.add('hidden');
                     document.getElementById('bolinhaEstatica').classList.add('hidden');
 
                     Swal.fire({
-                        title: 'Viagem Finalizada ✅',
+                        title: 'Viagem Finalizada âœ…',
                         text: 'O motorista encerrou a rota.',
                         icon: 'info',
                         confirmButtonColor: '#4A7DDF',
@@ -355,7 +339,7 @@
                 }
             })
             .catch(erro => console.error("Erro ao buscar status:", erro));
-        }, 10000); // Checa a cada 10 segundos
+        }, 10000);
     </script>
 </body>
 </html>
