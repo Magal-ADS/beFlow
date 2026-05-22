@@ -1,7 +1,8 @@
 const CACHE_NAME = 'beflow-v1';
+const basePath = new URL('./', self.location).pathname;
 const urlsToCache = [
-  '/beFlow/',
-  '/beFlow/login'
+  basePath,
+  `${basePath}login`
 ];
 
 // Instala o Service Worker e guarda os arquivos básicos em cache

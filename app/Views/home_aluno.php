@@ -16,6 +16,40 @@
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #4A7DDF; border-radius: 10px; }
+        .bottom-sheet-toggle-icon {
+            transition: transform 0.3s ease;
+        }
+        .bottom-sheet-conteudo {
+            transition: max-height 0.35s ease, opacity 0.3s ease;
+        }
+        .bottom-sheet-handle {
+            width: 40px;
+            height: 5px;
+            display: block;
+            background-color: #cbd5e1;
+            border-radius: 9999px;
+            margin: 0 auto 15px auto;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+        }
+        .bottom-sheet-pontos .bottom-sheet-conteudo {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            margin-top: 0;
+            padding-bottom: 0;
+        }
+
+        .bottom-sheet-pontos.aberto .bottom-sheet-conteudo {
+            max-height: 500px;
+            overflow: visible;
+            opacity: 1;
+        }
+
+        @media (max-width: 767px) {
+            .bottom-sheet-pontos.aberto .bottom-sheet-conteudo {
+                max-height: 500px;
+            }
+        }
     </style>
 </head>
 <body class="h-screen w-full relative font-sans overflow-hidden bg-gray-100">
@@ -36,41 +70,52 @@
     </div>
 
     <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-[2.5rem] p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-20 transition-transform duration-300" id="bottomSheet">
+        <button type="button" id="bottomSheetHandle" class="w-full flex justify-center items-center gap-2 mb-4 cursor-pointer" aria-label="Expandir ou minimizar painel" aria-expanded="true">
+            <span class="bottom-sheet-handle"></span>
+            <svg id="bottomSheetToggleIcon" class="bottom-sheet-toggle-icon w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </button>
+
         <div class="flex gap-2 mb-6">
             <div class="relative flex-1">
                 <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
-                <input type="text" placeholder="Buscar no mapa..." class="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-50 border border-gray-100 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                <input type="text" id="buscarPonto" placeholder="Buscar ponto ou linha..." class="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-50 border border-gray-100 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400">
             </div>
             <button class="w-14 h-14 bg-blue-400 text-white rounded-2xl flex items-center justify-center shadow-md">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </button>
         </div>
 
-        <h3 class="font-semibold text-gray-700 mb-4 text-center">Selecione seu ponto de embarque:</h3>
-        
-        <div class="space-y-3 max-h-48 overflow-y-auto pr-2 pb-4 custom-scroll">
-            <?php if (empty($pontos)): ?>
-                <p class="text-center text-gray-400 text-sm py-4">Nenhum ponto encontrado.</p>
-            <?php else: ?>
-                <?php foreach ($pontos as $p): ?>
-                <div class="flex items-center justify-between p-4 border border-gray-100 rounded-2xl bg-white shadow-sm hover:border-blue-200 transition">
-                    <div>
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="bg-blue-500 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase">
-                                <?= htmlspecialchars($p['nome_linha'] ?? 'Linha'); ?>
-                            </span>
+        <div id="bottomSheetPontos" class="bottom-sheet-pontos">
+            <div id="bottomSheetConteudo" class="bottom-sheet-conteudo">
+                <h3 class="font-semibold text-gray-700 mb-4 text-center">Selecione seu ponto de embarque:</h3>
+                <div id="listaPontos" class="space-y-3 max-h-48 overflow-y-auto pr-2 pb-4 custom-scroll">
+                <?php if (empty($pontos)): ?>
+                    <p class="text-center text-gray-400 text-sm py-4">Nenhum ponto encontrado.</p>
+                <?php else: ?>
+                    <?php foreach ($pontos as $p): ?>
+                    <div class="card-ponto flex items-center justify-between p-4 border border-gray-100 rounded-2xl bg-white shadow-sm hover:border-blue-200 transition" data-ponto-id="<?= $p['id']; ?>" data-search="<?= htmlspecialchars(($p['nome'] ?? '') . ' ' . ($p['nome_linha'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="bg-blue-500 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase">
+                                    <?= htmlspecialchars($p['nome_linha'] ?? 'Linha'); ?>
+                                </span>
+                            </div>
+                            <p class="text-sm font-semibold text-gray-700"><?= htmlspecialchars($p['nome']); ?></p>
+                            <p class="text-xs text-gray-400 italic">Ponto de parada oficial</p>
                         </div>
-                        <p class="text-sm font-semibold text-gray-700"><?= htmlspecialchars($p['nome']); ?></p>
-                        <p class="text-xs text-gray-400 italic">Ponto de parada oficial</p>
+                        <button onclick="confirmarPonto(<?= $p['id']; ?>, this)" class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-md active:scale-95 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </button>
                     </div>
-                    <button onclick="confirmarPonto(<?= $p['id']; ?>, this)" class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-md active:scale-95 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    </button>
+                    <?php endforeach; ?>
+                <?php endif; ?>
                 </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
+                <p id="nenhumResultadoPontos" class="hidden text-center text-gray-400 text-sm py-4">Nenhum ponto corresponde à busca.</p>
+            </div>
         </div>
     </div>
 
@@ -124,6 +169,28 @@
             }
         }
 
+        (function () {
+            const container = document.getElementById('bottomSheetPontos');
+            const handle = document.getElementById('bottomSheetHandle');
+            const chevronDownPath = 'M19 9l-7 7-7-7';
+            const chevronUpPath = 'M5 15l7-7 7 7';
+            const iconPath = document.querySelector('#bottomSheetToggleIcon path');
+
+            function setExpanded(expanded) {
+                container.classList.toggle('aberto', expanded);
+                handle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                handle.setAttribute('aria-label', expanded ? 'Minimizar painel' : 'Expandir painel');
+                iconPath.setAttribute('d', expanded ? chevronDownPath : chevronUpPath);
+            }
+
+            function togglePanel() {
+                setExpanded(!container.classList.contains('aberto'));
+            }
+
+            handle.addEventListener('click', togglePanel);
+            setExpanded(true);
+        })();
+
         // --- MAPA ---
         var map = L.map('map', { zoomControl: false }).setView([-21.4059, -48.5052], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -139,6 +206,9 @@
 
         // --- PONTOS DO BANCO ---
         var pontosDoBanco = <?= json_encode($pontos); ?>;
+        var buscaInput = document.getElementById('buscarPonto');
+        var cardsPontos = Array.from(document.querySelectorAll('.card-ponto'));
+        var nenhumResultadoPontos = document.getElementById('nenhumResultadoPontos');
         var busIcon = L.divIcon({
             html: `<div style="background-color: #4A7DDF; padding: 6px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">
                     <svg style="width: 14px; height: 14px; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -147,14 +217,50 @@
                    </div>`,
             className: '', iconSize: [28, 28], iconAnchor: [14, 14]
         });
+        var marcadoresPorPonto = {};
 
         pontosDoBanco.forEach(function(ponto) {
             if(ponto.latitude && ponto.longitude) {
-                L.marker([ponto.latitude, ponto.longitude], {icon: busIcon})
-                 .addTo(map)
-                 .bindPopup(`<strong>${ponto.nome}</strong><br><span style="color: #666;">${ponto.nome_linha || 'Linha BeFlow'}</span>`);
+                marcadoresPorPonto[ponto.id] = L.marker([ponto.latitude, ponto.longitude], {icon: busIcon})
+                    .addTo(map)
+                    .bindPopup(`<strong>${ponto.nome}</strong><br><span style="color: #666;">${ponto.nome_linha || 'Linha BeFlow'}</span>`);
             }
         });
+
+        function filtrarPontos() {
+            var termo = (buscaInput.value || '').trim().toLowerCase();
+            var idsVisiveis = [];
+
+            cardsPontos.forEach(function(card) {
+                var textoBusca = (card.dataset.search || '').toLowerCase();
+                var pontoId = card.dataset.pontoId;
+                var corresponde = termo === '' || textoBusca.indexOf(termo) !== -1;
+
+                card.classList.toggle('hidden', !corresponde);
+
+                if (marcadoresPorPonto[pontoId]) {
+                    if (corresponde) {
+                        marcadoresPorPonto[pontoId].addTo(map);
+                    } else {
+                        map.removeLayer(marcadoresPorPonto[pontoId]);
+                    }
+                }
+
+                if (corresponde && marcadoresPorPonto[pontoId]) {
+                    idsVisiveis.push(pontoId);
+                }
+            });
+
+            nenhumResultadoPontos.classList.toggle('hidden', cardsPontos.some(function(card) {
+                return !card.classList.contains('hidden');
+            }));
+
+            if (idsVisiveis.length === 1) {
+                map.setView(marcadoresPorPonto[idsVisiveis[0]].getLatLng(), 16);
+            }
+        }
+
+        buscaInput.addEventListener('input', filtrarPontos);
 
         // --- CONFIRMAÇÃO COM SWEETALERT2 ---
         function confirmarPonto(pontoId, elemento) {

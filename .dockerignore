@@ -1,0 +1,6 @@
+.git
+.gitignore
+.env
+tests
+Thumbs.db
+.DS_Store

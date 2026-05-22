@@ -8,13 +8,41 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+function normalizeBaseUrl($path) {
+    $path = trim((string) $path);
+    if ($path === '' || $path === '/') {
+        return '';
+    }
+
+    $path = '/' . trim($path, '/');
+    return rtrim($path, '/');
+}
+
+function resolveBaseUrl() {
+    $configuredBaseUrl = getenv('APP_BASE_URL');
+    if ($configuredBaseUrl !== false && trim($configuredBaseUrl) !== '') {
+        return normalizeBaseUrl($configuredBaseUrl);
+    }
+
+    $scriptDirectory = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+    return normalizeBaseUrl($scriptDirectory);
+}
+
 // Define a base do projeto para facilitar redirecionamentos e links
-define('BASE_URL', '/beFlow');
+define('BASE_URL', resolveBaseUrl());
 
 require_once __DIR__ . '/app/Controllers/AuthController.php';
 
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$rota = str_ireplace(BASE_URL, '', $uri);
+$rota = $uri ?: '/';
+
+if (BASE_URL !== '' && stripos($rota, BASE_URL) === 0) {
+    $rota = substr($rota, strlen(BASE_URL));
+}
+
+if ($rota === '' || $rota === false) {
+    $rota = '/';
+}
 
 switch ($rota) {
 
