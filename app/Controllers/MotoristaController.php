@@ -85,28 +85,24 @@ class MotoristaController {
         $this->requireMotoristaJson();
 
         $pontoModel = new Ponto();
-        $viagemAtual = $pontoModel->buscarViagemAtual($_SESSION['usuario_id']);
-        $statusDestino = ($viagemAtual && ($viagemAtual['status'] ?? '') === 'em_volta') ? 'finalizada' : 'aguardando_volta';
-        $ok = $pontoModel->atualizarStatusViagem($statusDestino, $_SESSION['usuario_id']);
+        $ok = $pontoModel->atualizarStatusViagem('aguardando_encerramento', $_SESSION['usuario_id']);
 
         echo json_encode([
             'success' => $ok,
-            'message' => $ok
-                ? ($statusDestino === 'finalizada' ? 'Volta finalizada com sucesso.' : 'Ida finalizada. Agora voce pode iniciar a volta.')
-                : 'Nao foi possivel finalizar a rota.',
+            'message' => $ok ? 'Chegada registrada. Agora acompanhe os retornos e encerre o dia pela sidebar.' : 'Nao foi possivel finalizar a rota.',
         ]);
         exit;
     }
 
-    public function iniciarVolta() {
+    public function encerrarDia() {
         $this->requireMotoristaJson();
 
         $pontoModel = new Ponto();
-        $ok = $pontoModel->atualizarStatusViagem('em_volta', $_SESSION['usuario_id']);
+        $ok = $pontoModel->atualizarStatusViagem('finalizada', $_SESSION['usuario_id']);
 
         echo json_encode([
             'success' => $ok,
-            'message' => $ok ? 'Volta iniciada com sucesso.' : 'Nao foi possivel iniciar a volta.',
+            'message' => $ok ? 'Dia encerrado com sucesso.' : 'Nao foi possivel encerrar o dia.',
         ]);
         exit;
     }

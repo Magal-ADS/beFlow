@@ -111,10 +111,10 @@ switch ($rota) {
         $controller->finalizarRota();
         break;
 
-    case '/iniciar-volta':
+    case '/encerrar-dia':
         require_once __DIR__ . '/app/Controllers/MotoristaController.php';
         $controller = new MotoristaController();
-        $controller->iniciarVolta();
+        $controller->encerrarDia();
         break;
 
     case '/admin/dashboard':

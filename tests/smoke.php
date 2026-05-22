@@ -38,7 +38,9 @@ assertTrue($primeiroPonto && (int) $primeiroPonto['total_alunos'] === 1, 'Motori
 
 assertTrue($pontoModel->atualizarStatusViagem('em_rota', $motoristaId) === true, 'Motorista inicia a rota');
 assertTrue($pontoModel->lerStatusViagem() === 'em_rota', 'Status muda para em_rota');
-assertTrue($pontoModel->atualizarStatusViagem('finalizada', $motoristaId) === true, 'Motorista finaliza a rota');
+assertTrue($pontoModel->atualizarStatusViagem('aguardando_encerramento', $motoristaId) === true, 'Motorista finaliza a chegada');
+assertTrue($pontoModel->lerStatusViagem() === 'aguardando_encerramento', 'Status muda para aguardando_encerramento');
+assertTrue($pontoModel->atualizarStatusViagem('finalizada', $motoristaId) === true, 'Motorista encerra o dia');
 assertTrue($pontoModel->lerStatusViagem() === 'finalizada', 'Status muda para finalizada');
 
 foreach (['salvarLinha', 'deletarLinha', 'salvarPonto', 'deletarPonto'] as $method) {

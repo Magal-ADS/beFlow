@@ -6,7 +6,7 @@
     <title>BeFlow Admin - Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="min-h-screen flex bg-gray-50 relative z-10" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+<body class="min-h-screen bg-gray-50 relative z-10" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
 
     <?php include __DIR__ . '/sidebar_admin.php'; ?>
 
@@ -65,100 +65,116 @@
     }, $points));
     ?>
 
-    <main class="flex-1 p-10">
-        <header>
-            <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p class="text-sm text-gray-500 mb-8">Visao geral do sistema BeFlow</p>
-        </header>
-
-        <section class="grid grid-cols-5 gap-6 mb-8">
-            <?php foreach ($dashboardCards as $card): ?>
-                <?php
-                $cardTitle = $card['title'];
-                $cardValue = $card['value'];
-
-                if ($cardTitle === 'Usuarios') {
-                    $cardValue = $stats['alunos'] ?? 0;
-                } elseif ($cardTitle === 'Linhas e Onibus') {
-                    $cardValue = isset($linhas_com_pontos) ? count($linhas_com_pontos) : 0;
-                } elseif ($cardTitle === 'Pontos de parada') {
-                    $cardValue = $stats['pontos'] ?? 0;
-                } elseif ($cardTitle === 'Horarios das linhas') {
-                    $cardTitle = 'Motoristas';
-                    $cardValue = $stats['motoristas'] ?? 0;
-                }
-                ?>
-                <article class="bg-white rounded-[20px] p-6 shadow-sm border border-gray-100 flex flex-col">
-                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center <?= $card['icon_bg'] ?> <?= $card['icon_fg'] ?>">
-                        <?= dashboardIcon($card['icon']) ?>
-                    </div>
-                    <p class="mt-8 text-sm text-gray-500"><?= htmlspecialchars($cardTitle) ?></p>
-                    <h2 class="mt-2 text-4xl font-bold text-gray-900"><?= htmlspecialchars((string) $cardValue) ?></h2>
-                    <span class="mt-5 bg-green-100 text-green-600 text-[10px] px-2 py-1 rounded-full w-fit"><?= htmlspecialchars($card['change']) ?></span>
-                </article>
-            <?php endforeach; ?>
-        </section>
-
-        <section class="grid grid-cols-3 gap-6">
-            <article class="col-span-2 bg-white rounded-[24px] p-8 shadow-sm border border-gray-100">
-                <div class="mb-6">
-                    <h3 class="text-xl font-bold text-gray-900">Resumo do sistema</h3>
-                    <p class="text-sm text-gray-500">Informacoes em tempo real</p>
-                </div>
-
-                <div class="relative h-80 rounded-[20px] bg-gradient-to-t from-blue-50 to-transparent overflow-hidden">
-                    <div class="absolute top-14 left-[53%] -translate-x-1/2 bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-full shadow-lg">
-                        Abril 897
-                    </div>
-
-                    <svg viewBox="0 0 <?= $chartWidth ?> <?= $chartHeight ?>" class="w-full h-full">
-                        <path d="M<?= $polyline ?>" fill="none" stroke="#2563eb" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <?php foreach ($points as $point): ?>
-                            <circle cx="<?= $point['x'] ?>" cy="<?= $point['y'] ?>" r="6" fill="#2563eb"/>
-                        <?php endforeach; ?>
-                        <?php foreach ($points as $point): ?>
-                            <text x="<?= $point['x'] - 10 ?>" y="295" class="fill-gray-400 text-xs"><?= htmlspecialchars($point['label']) ?></text>
-                        <?php endforeach; ?>
-                    </svg>
-                </div>
-            </article>
-
-            <aside class="col-span-1 bg-white rounded-[24px] p-8 shadow-sm border border-gray-100">
+    <div class="lg:flex">
+        <main class="flex-1 min-w-0">
+            <header class="sticky top-0 z-30 lg:hidden bg-gray-50/95 backdrop-blur border-b border-gray-200 px-4 py-4 flex items-center justify-between">
                 <div>
-                    <h3 class="text-xl font-bold text-gray-900">Resumo do sistema</h3>
-                    <p class="text-sm text-gray-500">Ultimos registros no sistema</p>
+                    <h1 class="text-lg font-bold text-gray-900">Dashboard</h1>
+                    <p class="text-xs text-gray-500">BeFlow Admin</p>
                 </div>
+                <button type="button" onclick="toggleAdminSidebar(true)" class="w-11 h-11 rounded-2xl bg-white shadow-sm border border-gray-200 text-gray-700 flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+            </header>
 
-                <div class="flex flex-col gap-6 mt-6">
-                    <?php foreach (array_slice($recentActivities, 0, 5) as $activity): ?>
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold <?= activityAvatarClasses($activity['type']) ?>">
-                                <?= htmlspecialchars($activity['avatar']) ?>
+            <div class="p-4 sm:p-6 lg:p-10">
+                <header class="hidden lg:block">
+                    <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+                    <p class="text-sm text-gray-500 mb-8">Visao geral do sistema BeFlow</p>
+                </header>
+
+                <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 lg:gap-6 mb-6 lg:mb-8">
+                    <?php foreach ($dashboardCards as $card): ?>
+                        <?php
+                        $cardTitle = $card['title'];
+                        $cardValue = $card['value'];
+
+                        if ($cardTitle === 'Usuarios') {
+                            $cardValue = $stats['alunos'] ?? 0;
+                        } elseif ($cardTitle === 'Linhas e Onibus') {
+                            $cardValue = isset($linhas_com_pontos) ? count($linhas_com_pontos) : 0;
+                        } elseif ($cardTitle === 'Pontos de parada') {
+                            $cardValue = $stats['pontos'] ?? 0;
+                        } elseif ($cardTitle === 'Horarios das linhas') {
+                            $cardTitle = 'Motoristas';
+                            $cardValue = $stats['motoristas'] ?? 0;
+                        }
+                        ?>
+                        <article class="bg-white rounded-[20px] p-5 lg:p-6 shadow-sm border border-gray-100 flex flex-col">
+                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center <?= $card['icon_bg'] ?> <?= $card['icon_fg'] ?>">
+                                <?= dashboardIcon($card['icon']) ?>
                             </div>
-                            <div class="flex-1">
-                                <p class="text-sm font-semibold text-gray-800">
-                                    <?php if ($activity['type'] === 'line'): ?>
-                                        Nova linha cadastrada
-                                    <?php elseif ($activity['type'] === 'stop'): ?>
-                                        Novo ponto registrado
-                                    <?php else: ?>
-                                        Novo usuario cadastrado
-                                    <?php endif; ?>
-                                </p>
-                                <p class="text-sm text-gray-400">
-                                    <?php
-                                    $parts = explode(' ', $activity['text']);
-                                    echo htmlspecialchars(implode(' ', array_slice($parts, -3)));
-                                    ?>
-                                </p>
-                            </div>
-                            <span class="text-xs text-gray-400 uppercase tracking-wider">ha 2h</span>
-                        </div>
+                            <p class="mt-6 lg:mt-8 text-sm text-gray-500"><?= htmlspecialchars($cardTitle) ?></p>
+                            <h2 class="mt-2 text-3xl lg:text-4xl font-bold text-gray-900 break-words"><?= htmlspecialchars((string) $cardValue) ?></h2>
+                            <span class="mt-4 lg:mt-5 bg-green-100 text-green-600 text-[10px] px-2 py-1 rounded-full w-fit"><?= htmlspecialchars($card['change']) ?></span>
+                        </article>
                     <?php endforeach; ?>
-                </div>
-            </aside>
-        </section>
-    </main>
+                </section>
+
+                <section class="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6">
+                    <article class="xl:col-span-2 bg-white rounded-[24px] p-5 lg:p-8 shadow-sm border border-gray-100 min-w-0">
+                        <div class="mb-6">
+                            <h3 class="text-lg lg:text-xl font-bold text-gray-900">Resumo do sistema</h3>
+                            <p class="text-sm text-gray-500">Informacoes em tempo real</p>
+                        </div>
+
+                        <div class="relative h-72 lg:h-80 rounded-[20px] bg-gradient-to-t from-blue-50 to-transparent overflow-hidden">
+                            <div class="absolute top-4 right-4 lg:top-14 lg:left-[53%] lg:right-auto lg:-translate-x-1/2 bg-blue-600 text-white text-xs lg:text-sm font-semibold px-3 py-2 rounded-full shadow-lg">
+                                <?= htmlspecialchars($peakLabel) ?> <?= htmlspecialchars((string) $peak['value']) ?>
+                            </div>
+
+                            <div class="w-full h-full overflow-x-auto">
+                                <svg viewBox="0 0 <?= $chartWidth ?> <?= $chartHeight ?>" class="min-w-[680px] w-full h-full">
+                                    <path d="M<?= $polyline ?>" fill="none" stroke="#2563eb" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <?php foreach ($points as $point): ?>
+                                        <circle cx="<?= $point['x'] ?>" cy="<?= $point['y'] ?>" r="6" fill="#2563eb"/>
+                                    <?php endforeach; ?>
+                                    <?php foreach ($points as $point): ?>
+                                        <text x="<?= $point['x'] - 18 ?>" y="295" class="fill-gray-400 text-xs"><?= htmlspecialchars($point['label']) ?></text>
+                                    <?php endforeach; ?>
+                                </svg>
+                            </div>
+                        </div>
+                    </article>
+
+                    <aside class="bg-white rounded-[24px] p-5 lg:p-8 shadow-sm border border-gray-100">
+                        <div>
+                            <h3 class="text-lg lg:text-xl font-bold text-gray-900">Atividade recente</h3>
+                            <p class="text-sm text-gray-500">Ultimos registros no sistema</p>
+                        </div>
+
+                        <div class="flex flex-col gap-5 lg:gap-6 mt-6">
+                            <?php foreach (array_slice($recentActivities, 0, 5) as $activity): ?>
+                                <div class="flex items-start gap-4">
+                                    <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold shrink-0 <?= activityAvatarClasses($activity['type']) ?>">
+                                        <?= htmlspecialchars($activity['avatar']) ?>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-semibold text-gray-800">
+                                            <?php if ($activity['type'] === 'line'): ?>
+                                                Nova linha cadastrada
+                                            <?php elseif ($activity['type'] === 'stop'): ?>
+                                                Novo ponto registrado
+                                            <?php else: ?>
+                                                Novo usuario cadastrado
+                                            <?php endif; ?>
+                                        </p>
+                                        <p class="text-sm text-gray-400 break-words">
+                                            <?php
+                                            $parts = explode(' ', $activity['text']);
+                                            echo htmlspecialchars(implode(' ', array_slice($parts, -3)));
+                                            ?>
+                                        </p>
+                                    </div>
+                                    <span class="text-[10px] lg:text-xs text-gray-400 uppercase tracking-wider shrink-0">ha 2h</span>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </aside>
+                </section>
+            </div>
+        </main>
+    </div>
 
 </body>
 </html>

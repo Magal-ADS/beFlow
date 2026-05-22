@@ -41,14 +41,21 @@ function sidebarItemClasses($active) {
 }
 ?>
 
-<aside class="relative z-40 shadow-2xl w-72 bg-[#111827] text-gray-300 flex flex-col min-h-screen p-6">
-    <div class="flex items-center gap-3 mb-8">
-        <div class="w-11 h-11 rounded-full bg-blue-600 flex items-center justify-center text-white">
-            <?= renderSidebarIcon('bus') ?>
+<div id="adminSidebarOverlay" class="fixed inset-0 bg-slate-950/50 z-40 hidden lg:hidden" onclick="toggleAdminSidebar(false)"></div>
+
+<aside id="adminSidebar" class="fixed inset-y-0 left-0 z-50 shadow-2xl w-72 max-w-[85vw] bg-[#111827] text-gray-300 flex flex-col min-h-screen p-6 transform -translate-x-full transition-transform duration-300 lg:translate-x-0 lg:sticky lg:top-0">
+    <div class="flex items-center justify-between gap-3 mb-8">
+        <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-full bg-blue-600 flex items-center justify-center text-white">
+                <?= renderSidebarIcon('bus') ?>
+            </div>
+            <div class="text-white font-bold text-lg leading-tight">
+                BeFlow Admin Panel
+            </div>
         </div>
-        <div class="text-white font-bold text-lg leading-tight">
-            BeFlow Admin Panel
-        </div>
+        <button type="button" class="lg:hidden w-10 h-10 rounded-2xl bg-gray-800 text-white flex items-center justify-center" onclick="toggleAdminSidebar(false)">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
     </div>
 
     <div class="pb-6 mb-6 border-b border-gray-800">
@@ -83,3 +90,29 @@ function sidebarItemClasses($active) {
         <p class="text-xs text-gray-500 text-center mt-4">Termos de uso v1.1.1</p>
     </div>
 </aside>
+
+<script>
+    function toggleAdminSidebar(forceOpen) {
+        const sidebar = document.getElementById('adminSidebar');
+        const overlay = document.getElementById('adminSidebarOverlay');
+
+        if (!sidebar || !overlay) {
+            return;
+        }
+
+        const shouldOpen = typeof forceOpen === 'boolean'
+            ? forceOpen
+            : sidebar.classList.contains('-translate-x-full');
+
+        if (shouldOpen) {
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden', 'lg:overflow-auto');
+            return;
+        }
+
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    }
+</script>

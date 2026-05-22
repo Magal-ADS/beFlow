@@ -484,7 +484,7 @@
         function mostrarNotificacao() {
             if (ultimoStatus === 'em_rota') {
                 Swal.fire({ title: 'O onibus ja saiu!', text: 'Fique atento ao seu ponto de embarque.', icon: 'info', confirmButtonColor: '#4A7DDF' });
-            } else if (ultimoStatus === 'finalizada') {
+            } else if (ultimoStatus === 'aguardando_encerramento' || ultimoStatus === 'finalizada') {
                 Swal.fire({ title: 'Viagem Concluida', text: 'O onibus ja finalizou a rota de hoje.', icon: 'success', confirmButtonColor: '#4A7DDF' });
             } else {
                 Swal.fire({ title: 'Sem Novidades', text: 'O onibus ainda nao iniciou a rota.', icon: 'question', confirmButtonColor: '#4A7DDF' });
@@ -513,7 +513,7 @@
                         confirmButtonColor: '#4A7DDF',
                         confirmButtonText: 'Beleza, to indo!'
                     });
-                } else if (data.status === 'finalizada' && !notificadoChegada && notificadoSaida) {
+                } else if ((data.status === 'aguardando_encerramento' || data.status === 'finalizada') && !notificadoChegada && notificadoSaida) {
                     notificadoChegada = true;
                     notificadoSaida = false;
 

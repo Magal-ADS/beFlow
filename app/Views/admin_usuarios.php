@@ -11,70 +11,82 @@
 
     <?php include __DIR__ . '/sidebar_admin.php'; ?>
 
-    <main class="flex-1 overflow-y-auto p-10">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+    <main class="flex-1 overflow-y-auto">
+        <header class="sticky top-0 z-30 lg:hidden bg-gray-50/95 backdrop-blur border-b border-gray-200 px-4 py-4 flex items-center justify-between">
             <div>
-                <h2 class="text-3xl font-black text-gray-800 tracking-tighter">Gerenciar Usuarios</h2>
-                <p class="text-gray-500">Listagem de alunos e motoristas cadastrados.</p>
+                <h1 class="text-lg font-bold text-gray-900">Gerenciar Usuarios</h1>
+                <p class="text-xs text-gray-500">BeFlow Admin</p>
             </div>
+            <button type="button" onclick="toggleAdminSidebar(true)" class="w-11 h-11 rounded-2xl bg-white shadow-sm border border-gray-200 text-gray-700 flex items-center justify-center">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+        </header>
 
-            <div class="flex items-center gap-4 w-full md:w-auto">
-                <div class="relative w-full md:w-64">
-                    <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    </div>
-                    <input type="text" id="inputPesquisa" onkeyup="filtrarTabela()" placeholder="Buscar usuario..." class="w-full pl-10 pr-4 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+        <div class="p-4 sm:p-6 lg:p-10">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+                <div>
+                    <h2 class="text-3xl font-black text-gray-800 tracking-tighter">Gerenciar Usuarios</h2>
+                    <p class="text-gray-500">Listagem de alunos e motoristas cadastrados.</p>
                 </div>
 
-                <button onclick="abrirModal('novo')" class="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition shrink-0 active:scale-95">
-                    + Novo Usuario
-                </button>
-            </div>
-        </div>
+                <div class="flex items-center gap-4 w-full md:w-auto">
+                    <div class="relative w-full md:w-64">
+                        <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                        <input type="text" id="inputPesquisa" onkeyup="filtrarTabela()" placeholder="Buscar usuario..." class="w-full pl-10 pr-4 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+                    </div>
 
-        <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
-            <table class="w-full text-left" id="tabelaUsuarios">
-                <thead class="bg-gray-50 border-b border-gray-100">
-                    <tr>
-                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Nome</th>
-                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">E-mail</th>
-                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Tipo</th>
-                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase text-right">Acoes</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    <?php if (!empty($listaUsuarios)): ?>
-                        <?php foreach ($listaUsuarios as $u): ?>
-                        <?php $isAdminUser = in_array($u['tipo_usuario'], ['admin_empresa', 'admin_geral'], true); ?>
-                        <tr class="hover:bg-gray-50 transition linha-usuario">
-                            <td class="px-6 py-4 font-bold text-gray-700"><?= htmlspecialchars($u['nome']) ?></td>
-                            <td class="px-6 py-4 text-gray-500"><?= htmlspecialchars($u['email']) ?></td>
-                            <td class="px-6 py-4">
-                                <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider <?= $u['tipo_usuario'] === 'motorista' ? 'bg-green-100 text-green-600' : ($u['tipo_usuario'] === 'aluno' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600') ?>">
-                                    <?= htmlspecialchars($u['tipo_usuario']) ?>
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-right flex justify-end gap-3">
-                                <?php if (!$isAdminUser || !empty($canManageAdminUsers)): ?>
-                                <button onclick="abrirModal('editar', <?= $u['id'] ?>, '<?= addslashes($u['nome']) ?>', '<?= addslashes($u['email']) ?>', '<?= $u['tipo_usuario'] ?>')" class="text-blue-400 hover:text-blue-600 transition" title="Editar Usuario">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                </button>
-                                <?php else: ?>
-                                <span class="text-gray-300 cursor-not-allowed" title="Somente usuarios @beflow podem editar administradores">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                </span>
-                                <?php endif; ?>
-                                <button onclick="deletarUsuario(<?= $u['id'] ?>)" class="text-gray-300 hover:text-red-500 transition" title="Excluir Usuario">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                </button>
-                            </td>
+                    <button onclick="abrirModal('novo')" class="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition shrink-0 active:scale-95">
+                        + Novo Usuario
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                <table class="w-full text-left" id="tabelaUsuarios">
+                    <thead class="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Nome</th>
+                            <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">E-mail</th>
+                            <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Tipo</th>
+                            <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase text-right">Acoes</th>
                         </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr><td colspan="4" class="px-6 py-4 text-center text-gray-500 font-bold italic">Nenhum usuario encontrado na base.</td></tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <?php if (!empty($listaUsuarios)): ?>
+                            <?php foreach ($listaUsuarios as $u): ?>
+                            <?php $isAdminUser = in_array($u['tipo_usuario'], ['admin_empresa', 'admin_geral'], true); ?>
+                            <tr class="hover:bg-gray-50 transition linha-usuario">
+                                <td class="px-6 py-4 font-bold text-gray-700"><?= htmlspecialchars($u['nome']) ?></td>
+                                <td class="px-6 py-4 text-gray-500"><?= htmlspecialchars($u['email']) ?></td>
+                                <td class="px-6 py-4">
+                                    <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider <?= $u['tipo_usuario'] === 'motorista' ? 'bg-green-100 text-green-600' : ($u['tipo_usuario'] === 'aluno' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600') ?>">
+                                        <?= htmlspecialchars($u['tipo_usuario']) ?>
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-right flex justify-end gap-3">
+                                    <?php if (!$isAdminUser || !empty($canManageAdminUsers)): ?>
+                                    <button onclick="abrirModal('editar', <?= $u['id'] ?>, '<?= addslashes($u['nome']) ?>', '<?= addslashes($u['email']) ?>', '<?= $u['tipo_usuario'] ?>')" class="text-blue-400 hover:text-blue-600 transition" title="Editar Usuario">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                    </button>
+                                    <?php else: ?>
+                                    <span class="text-gray-300 cursor-not-allowed" title="Somente usuarios @beflow podem editar administradores">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                    </span>
+                                    <?php endif; ?>
+                                    <button onclick="deletarUsuario(<?= $u['id'] ?>)" class="text-gray-300 hover:text-red-500 transition" title="Excluir Usuario">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr><td colspan="4" class="px-6 py-4 text-center text-gray-500 font-bold italic">Nenhum usuario encontrado na base.</td></tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </main>
 

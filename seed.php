@@ -151,15 +151,22 @@ if ($motoristaId) {
         $sqlViagem = "
             INSERT INTO viagens (horario_base_id, linha_id, motorista_id, veiculo_id, numero_onibus, status, data_viagem, latitude_atual, longitude_atual)
             VALUES (1, 1, :motorista_id, 1, '302', 'aguardando', CURDATE(), NULL, NULL)
-            ON DUPLICATE KEY UPDATE numero_onibus = VALUES(numero_onibus), linha_id = VALUES(linha_id), status = 'aguardando'
+            ON DUPLICATE KEY UPDATE
+                horario_base_id = VALUES(horario_base_id),
+                motorista_id = VALUES(motorista_id),
+                veiculo_id = VALUES(veiculo_id),
+                numero_onibus = VALUES(numero_onibus),
+                status = 'aguardando'
         ";
     } else {
         $sqlViagem = "
             INSERT INTO viagens (horario_base_id, linha_id, motorista_id, veiculo_id, numero_onibus, status, data_viagem, latitude_atual, longitude_atual)
             VALUES (1, 1, :motorista_id, 1, '302', 'aguardando', CURRENT_DATE, NULL, NULL)
-            ON CONFLICT ON CONSTRAINT uniq_viagem_dia DO UPDATE
-            SET numero_onibus = EXCLUDED.numero_onibus,
-                linha_id = EXCLUDED.linha_id,
+            ON CONFLICT ON CONSTRAINT uniq_viagem_linha_dia DO UPDATE
+            SET horario_base_id = EXCLUDED.horario_base_id,
+                motorista_id = EXCLUDED.motorista_id,
+                veiculo_id = EXCLUDED.veiculo_id,
+                numero_onibus = EXCLUDED.numero_onibus,
                 status = EXCLUDED.status
         ";
     }
