@@ -102,6 +102,7 @@ if ($driver === 'mysql') {
                 longitude DECIMAL(11,8) NOT NULL,
                 ordem_na_linha INT NOT NULL,
                 linha_id INT NOT NULL,
+                horario_aproximado TIME NULL,
                 CONSTRAINT fk_pontos_linha FOREIGN KEY (linha_id) REFERENCES linhas (id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ",
@@ -205,6 +206,7 @@ if ($driver === 'mysql') {
                 longitude NUMERIC(11,8) NOT NULL,
                 ordem_na_linha INT NOT NULL,
                 linha_id INT NOT NULL,
+                horario_aproximado TIME NULL,
                 CONSTRAINT fk_pontos_linha FOREIGN KEY (linha_id) REFERENCES linhas (id) ON DELETE CASCADE
             );
         ",

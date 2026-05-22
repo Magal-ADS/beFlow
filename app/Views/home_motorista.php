@@ -211,7 +211,7 @@
                 });
 
                 const marker = L.marker([ponto.latitude, ponto.longitude], { icon: busIcon })
-                    .bindPopup(`<b>${ponto.nome}</b><br>${ponto.nome_linha}<br>${ponto.total_alunos} alunos aguardando.<br>${ponto.total_retorno || 0} alunos confirmaram volta.`);
+                    .bindPopup(`<b>${ponto.nome}</b><br>${ponto.nome_linha}${ponto.horario_aproximado ? `<br>Horario aprox.: ${String(ponto.horario_aproximado).slice(0, 5)}` : ''}<br>${ponto.total_alunos} alunos aguardando.<br>${ponto.total_retorno || 0} alunos confirmaram volta.`);
                 marcadoresLayer.addLayer(marker);
             });
         }

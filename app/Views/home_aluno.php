@@ -100,7 +100,12 @@
                                     </span>
                                 </div>
                                 <p class="text-sm font-semibold text-gray-700"><?= htmlspecialchars($p['nome']); ?></p>
-                                <p class="text-xs text-gray-400 italic">Ponto de parada oficial</p>
+                                <p class="text-xs text-gray-400 italic">
+                                    Ponto de parada oficial
+                                    <?php if (!empty($p['horario_aproximado'])): ?>
+                                        • Horario aprox.: <?= htmlspecialchars(substr($p['horario_aproximado'], 0, 5)); ?>
+                                    <?php endif; ?>
+                                </p>
                             </div>
                             <button onclick="confirmarPonto(<?= $p['id']; ?>)" class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-md active:scale-95 transition">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -249,7 +254,7 @@
             if (ponto.latitude && ponto.longitude) {
                 marcadoresPorPonto[ponto.id] = L.marker([ponto.latitude, ponto.longitude], { icon: busIcon })
                     .addTo(map)
-                    .bindPopup(`<strong>${ponto.nome}</strong><br><span style="color: #666;">${ponto.nome_linha || 'Linha BeFlow'}</span>`);
+                    .bindPopup(`<strong>${ponto.nome}</strong><br><span style="color: #666;">${ponto.nome_linha || 'Linha BeFlow'}</span>${ponto.horario_aproximado ? `<br><span style="color: #b45309;">Horario aprox.: ${String(ponto.horario_aproximado).slice(0, 5)}</span>` : ''}`);
             }
         });
 

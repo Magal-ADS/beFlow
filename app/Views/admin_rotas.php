@@ -96,6 +96,9 @@
                                                             <div class="flex items-center gap-3 mt-2 flex-wrap">
                                                                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-white px-2 py-1 rounded-md border border-gray-100">Lat: <?= $ponto['latitude'] ?></p>
                                                                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-white px-2 py-1 rounded-md border border-gray-100">Lng: <?= $ponto['longitude'] ?></p>
+                                                                <?php if (!empty($ponto['horario_aproximado'])): ?>
+                                                                    <p class="text-[10px] font-bold text-amber-600 uppercase tracking-widest bg-amber-50 px-2 py-1 rounded-md border border-amber-100">Horario: <?= htmlspecialchars(substr($ponto['horario_aproximado'], 0, 5)) ?></p>
+                                                                <?php endif; ?>
                                                             </div>
                                                         </div>
 
@@ -156,13 +159,25 @@
             <h3 id="tituloModalPonto" class="text-2xl font-black text-gray-800 mb-6 tracking-tighter">Ponto de Parada</h3>
             <form id="formPonto" class="space-y-4">
                 <input type="hidden" name="id" id="pontoId">
-                <input type="hidden" name="linha_id" id="pontoLinhaId">
+                <div class="space-y-2">
+                    <label for="pontoLinhaId" class="block text-sm font-bold text-gray-600">Selecione a linha deste ponto</label>
+                    <select name="linha_id" id="pontoLinhaId" class="w-full p-4 rounded-2xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-blue-400 font-bold text-gray-600" required>
+                        <option value="">Selecione uma linha</option>
+                        <?php foreach ($linhas as $linha): ?>
+                            <option value="<?= $linha['id'] ?>"><?= htmlspecialchars($linha['nome']) ?> (<?= htmlspecialchars($linha['cor']) ?>)</option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
                 <input type="text" name="nome" id="pontoNome" placeholder="Nome do Ponto" class="w-full p-4 rounded-2xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-blue-400" required>
                 <div class="grid grid-cols-2 gap-4">
                     <input type="text" name="latitude" id="pontoLat" placeholder="Latitude (-21.4...)" class="p-4 rounded-2xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-blue-400" required>
                     <input type="text" name="longitude" id="pontoLng" placeholder="Longitude (-48.5...)" class="p-4 rounded-2xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-blue-400" required>
                 </div>
                 <input type="number" name="ordem" id="pontoOrdem" placeholder="Ordem na Linha (Ex: 1, 2, 3)" class="w-full p-4 rounded-2xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-blue-400" required>
+                <div class="space-y-2">
+                    <label for="pontoHorarioAproximado" class="block text-sm font-bold text-gray-600">Informe o horario aproximado que o onibus costuma passar neste ponto</label>
+                    <input type="time" name="horario_aproximado" id="pontoHorarioAproximado" class="w-full p-4 rounded-2xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-blue-400" step="60">
+                </div>
                 <div class="flex gap-3 pt-4">
                     <button type="button" onclick="fecharModais()" class="flex-1 p-4 rounded-2xl font-bold text-gray-400 hover:bg-gray-100 transition">Cancelar</button>
                     <button type="submit" class="flex-1 p-4 rounded-2xl font-bold bg-blue-600 text-white shadow-lg shadow-blue-200 active:scale-95 transition">Salvar Ponto</button>
@@ -195,6 +210,7 @@
                 document.getElementById('pontoLat').value = dados.latitude;
                 document.getElementById('pontoLng').value = dados.longitude;
                 document.getElementById('pontoOrdem').value = dados.ordem_na_linha;
+                document.getElementById('pontoHorarioAproximado').value = dados.horario_aproximado ? String(dados.horario_aproximado).slice(0, 5) : '';
                 document.getElementById('tituloModalPonto').innerText = 'Editar Ponto';
             } else {
                 document.getElementById('formPonto').reset();

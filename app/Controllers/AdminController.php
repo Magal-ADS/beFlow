@@ -332,10 +332,17 @@ class AdminController {
         $latitude = trim($_POST['latitude'] ?? '');
         $longitude = trim($_POST['longitude'] ?? '');
         $ordem = trim($_POST['ordem'] ?? '');
+        $horarioAproximado = trim($_POST['horario_aproximado'] ?? '');
 
         if ($linhaId === '' || $nome === '' || $latitude === '' || $longitude === '' || $ordem === '') {
             $this->jsonResponse(false, 'Preencha todos os dados do ponto.');
         }
+
+        if ($horarioAproximado !== '' && !$this->isValidApproximateTime($horarioAproximado)) {
+            $this->jsonResponse(false, 'Informe um horario aproximado valido para o ponto.');
+        }
+
+        $horarioAproximado = $horarioAproximado !== '' ? $this->normalizeApproximateTime($horarioAproximado) : null;
 
         try {
             $db = (new Database())->getConnection();
@@ -343,7 +350,7 @@ class AdminController {
             if ($id !== '') {
                 $stmt = $db->prepare("
                     UPDATE pontos
-                    SET linha_id = :linha_id, nome = :nome, latitude = :latitude, longitude = :longitude, ordem_na_linha = :ordem
+                    SET linha_id = :linha_id, nome = :nome, latitude = :latitude, longitude = :longitude, ordem_na_linha = :ordem, horario_aproximado = :horario_aproximado
                     WHERE id = :id
                 ");
                 $stmt->execute([
@@ -352,12 +359,13 @@ class AdminController {
                     'latitude' => $latitude,
                     'longitude' => $longitude,
                     'ordem' => $ordem,
+                    'horario_aproximado' => $horarioAproximado,
                     'id' => $id,
                 ]);
             } else {
                 $stmt = $db->prepare("
-                    INSERT INTO pontos (linha_id, nome, latitude, longitude, ordem_na_linha)
-                    VALUES (:linha_id, :nome, :latitude, :longitude, :ordem)
+                    INSERT INTO pontos (linha_id, nome, latitude, longitude, ordem_na_linha, horario_aproximado)
+                    VALUES (:linha_id, :nome, :latitude, :longitude, :ordem, :horario_aproximado)
                 ");
                 $stmt->execute([
                     'linha_id' => $linhaId,
@@ -365,6 +373,7 @@ class AdminController {
                     'latitude' => $latitude,
                     'longitude' => $longitude,
                     'ordem' => $ordem,
+                    'horario_aproximado' => $horarioAproximado,
                 ]);
             }
 
@@ -474,6 +483,14 @@ class AdminController {
         return in_array($code, ['23000', '23505'], true)
             || stripos($message, 'duplicate') !== false
             || stripos($message, 'unique') !== false;
+    }
+
+    private function isValidApproximateTime($value) {
+        return preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $value) === 1;
+    }
+
+    private function normalizeApproximateTime($value) {
+        return strlen($value) === 5 ? $value . ':00' : $value;
     }
 }
 ?>
