@@ -15,7 +15,7 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
             <div>
                 <h2 class="text-3xl font-black text-gray-800 tracking-tighter">Rotas e Pontos</h2>
-                <p class="text-gray-500">Gerencie as linhas de ônibus e as paradas do trajeto.</p>
+                <p class="text-gray-500">Gerencie as linhas de onibus e as paradas do trajeto.</p>
             </div>
             
             <div class="flex items-center gap-4 w-full md:w-auto">
@@ -39,7 +39,7 @@
                     <div class="flex justify-between items-center mb-8 border-b border-gray-100 pb-6">
                         <div class="flex items-center gap-4">
                             <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center font-black text-2xl shadow-inner">
-                                🚌
+                                R
                             </div>
                             <div>
                                 <h3 class="text-2xl font-black text-gray-800 tracking-tight"><?= htmlspecialchars($linha['nome']) ?></h3>
@@ -98,7 +98,7 @@
                 <?php endforeach; ?>
             <?php else: ?>
                 <div class="text-center py-24 bg-white rounded-[3rem] border border-gray-100 shadow-sm">
-                    <div class="text-6xl mb-4">📍</div>
+                    <div class="text-6xl mb-4">R</div>
                     <p class="text-gray-500 font-black text-xl tracking-tighter">Nenhuma rota encontrada para esta empresa.</p>
                     <p class="text-gray-400 text-sm mt-1">Comece clicando em "+ Nova Rota" acima.</p>
                 </div>
@@ -179,7 +179,7 @@
             document.querySelectorAll('#modalLinha, #modalPonto').forEach(m => m.classList.replace('flex', 'hidden')); 
         }
 
-        // --- REQUISIÇÕES AJAX (SALVAR) ---
+        // --- REQUISICOES AJAX (SALVAR) ---
         document.getElementById('formLinha').onsubmit = function(e) {
             e.preventDefault();
             fetch('<?= BASE_URL ?>/admin/salvar-linha', { method: 'POST', body: new FormData(this) })
@@ -200,7 +200,7 @@
             });
         }
 
-        // --- EXCLUSÃO (SWEET ALERT) ---
+        // --- EXCLUSAO (SWEET ALERT) ---
         function excluirLinha(id) {
             Swal.fire({
                 title: 'Deletar Rota?',

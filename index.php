@@ -3,10 +3,12 @@
  * BeFlow - Arquivo de Roteamento Principal (index.php)
  */
 
-// Inicia a sessão globalmente para todo o sistema
+// Inicia a sess�o globalmente para todo o sistema
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+header('Content-Type: text/html; charset=UTF-8');
 
 function normalizeBaseUrl($path) {
     $path = trim((string) $path);
@@ -47,7 +49,7 @@ if ($rota === '' || $rota === false) {
 switch ($rota) {
 
     // ==========================================
-    // ROTAS DE AUTENTICAÇÃO
+    // ROTAS DE AUTENTICA��O
     // ==========================================
     case '':
     case '/':
@@ -180,14 +182,14 @@ switch ($rota) {
         break;
 
     // ==========================================
-    // ROTA PADRÃO (ERRO 404)
+    // ROTA PADR�O (ERRO 404)
     // ==========================================
     default:
         http_response_code(404);
         echo "<div style='font-family: sans-serif; text-align: center; padding-top: 50px;'>";
         echo "<h1 style='color: #4A7DDF;'>Erro 404</h1>";
-        echo "<p>Página não encontrada no BeFlow.</p>";
-        echo "<a href='" . BASE_URL . "/login' style='color: #4A7DDF; text-decoration: none; font-weight: bold;'>← Voltar para o início</a>";
+        echo "<p>P�gina n�o encontrada no BeFlow.</p>";
+        echo "<a href='" . BASE_URL . "/login' style='color: #4A7DDF; text-decoration: none; font-weight: bold;'>? Voltar para o in�cio</a>";
         echo "</div>";
         break;
 }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BeFlow - InÃ­cio</title>
+    <title>BeFlow - Inicio</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -111,7 +111,7 @@
                     <?php endforeach; ?>
                 <?php endif; ?>
                 </div>
-                <p id="nenhumResultadoPontos" class="hidden text-center text-gray-400 text-sm py-4">Nenhum ponto corresponde Ã  busca.</p>
+                <p id="nenhumResultadoPontos" class="hidden text-center text-gray-400 text-sm py-4">Nenhum ponto corresponde a busca.</p>
             </div>
         </div>
     </div>
@@ -126,7 +126,7 @@
             <div class="w-20 h-20 bg-gray-200 rounded-full mb-4 overflow-hidden border-2 border-gray-100">
                 <img src="https://ui-avatars.com/api/?name=<?= urlencode($_SESSION['usuario_nome']); ?>&background=random" alt="Avatar">
             </div>
-            <h2 class="text-xl font-bold text-gray-800 text-center">ðŸ‘‹ OlÃ¡, <?= htmlspecialchars($_SESSION['usuario_nome']); ?>!</h2>
+            <h2 class="text-xl font-bold text-gray-800 text-center">Ola, <?= htmlspecialchars($_SESSION['usuario_nome']); ?>!</h2>
             <button class="mt-6 w-full bg-[#4A7DDF] text-white text-sm font-semibold py-3 rounded-xl shadow-md hover:bg-blue-600 transition">Personalizar Perfil</button>
         </div>
 
@@ -197,7 +197,7 @@
         map.on('locationfound', function(e) {
             L.circleMarker(e.latlng, {
                 radius: 8, fillColor: "#4A7DDF", color: "#fff", weight: 3, opacity: 1, fillOpacity: 1
-            }).addTo(map).bindPopup("VocÃª estÃ¡ aqui").openPopup();
+            }).addTo(map).bindPopup("Voce esta aqui").openPopup();
         });
 
         var pontosDoBanco = <?= json_encode($pontos); ?>;
@@ -257,6 +257,11 @@
 
         buscaInput.addEventListener('input', filtrarPontos);
 
+        function limparNotificacao() {
+            document.getElementById('bolinhaNotificacao').classList.add('hidden');
+            document.getElementById('bolinhaEstatica').classList.add('hidden');
+        }
+
         function confirmarPonto(pontoId, elemento) {
             fetch('confirmar-presenca', {
                 method: 'POST',
@@ -269,9 +274,11 @@
                 catch (e) { throw new Error("O servidor enviou um erro em vez de JSON."); }
             })
             .then(data => {
+                limparNotificacao();
+
                 if (data.success) {
                     Swal.fire({
-                        title: 'Confirmado!', text: 'ðŸ‘‹ O motorista jÃ¡ recebeu seu aviso de embarque.',
+                        title: 'Confirmado!', text: 'O motorista ja recebeu seu aviso de embarque.',
                         icon: 'success', confirmButtonColor: '#4A7DDF', confirmButtonText: 'Beleza!'
                     });
                     elemento.classList.remove('bg-blue-600');
@@ -282,7 +289,8 @@
                 }
             })
             .catch(error => {
-                Swal.fire({ title: 'Erro de Servidor', text: 'NÃ£o foi possÃ­vel confirmar.', icon: 'warning', confirmButtonColor: '#4A7DDF' });
+                limparNotificacao();
+                Swal.fire({ title: 'Erro de Servidor', text: 'Nao foi possivel confirmar.', icon: 'warning', confirmButtonColor: '#4A7DDF' });
             });
         }
 
@@ -292,13 +300,13 @@
 
         function mostrarNotificacao() {
             if (ultimoStatus === 'em_rota') {
-                Swal.fire({ title: 'ðŸšŒ O Ã´nibus jÃ¡ saiu!', text: 'Fique atento ao seu ponto de embarque.', icon: 'info', confirmButtonColor: '#4A7DDF' });
+                Swal.fire({ title: 'O onibus ja saiu!', text: 'Fique atento ao seu ponto de embarque.', icon: 'info', confirmButtonColor: '#4A7DDF' });
             } else if (ultimoStatus === 'finalizada') {
-                Swal.fire({ title: 'âœ… Viagem ConcluÃ­da', text: 'O Ã´nibus jÃ¡ finalizou a rota de hoje.', icon: 'success', confirmButtonColor: '#4A7DDF' });
+                Swal.fire({ title: 'Viagem Concluida', text: 'O onibus ja finalizou a rota de hoje.', icon: 'success', confirmButtonColor: '#4A7DDF' });
             } else {
-                Swal.fire({ title: 'Sem Novidades', text: 'O Ã´nibus ainda nÃ£o iniciou a rota.', icon: 'question', confirmButtonColor: '#4A7DDF' });
+                Swal.fire({ title: 'Sem Novidades', text: 'O onibus ainda nao iniciou a rota.', icon: 'question', confirmButtonColor: '#4A7DDF' });
             }
-            document.getElementById('bolinhaNotificacao').classList.add('hidden');
+            limparNotificacao();
         }
 
         setInterval(function() {
@@ -315,22 +323,21 @@
                     document.getElementById('bolinhaEstatica').classList.remove('hidden');
 
                     Swal.fire({
-                        title: 'O Ã´nibus saiu! ðŸšŒ',
+                        title: 'O onibus saiu!',
                         text: 'O motorista acabou de iniciar a rota. Dirija-se ao seu ponto.',
                         iconHtml: '<img src="https://media.giphy.com/media/l0HlU5b1A0rXgPzH2/giphy.gif" style="width: 150px; border-radius: 50%;">',
                         customClass: { icon: 'no-border' },
                         confirmButtonColor: '#4A7DDF',
-                        confirmButtonText: 'Beleza, tÃ´ indo!'
+                        confirmButtonText: 'Beleza, to indo!'
                     });
                 } else if (data.status === 'finalizada' && !notificadoChegada && notificadoSaida) {
                     notificadoChegada = true;
                     notificadoSaida = false;
                     
-                    document.getElementById('bolinhaNotificacao').classList.add('hidden');
-                    document.getElementById('bolinhaEstatica').classList.add('hidden');
+                    limparNotificacao();
 
                     Swal.fire({
-                        title: 'Viagem Finalizada âœ…',
+                        title: 'Viagem Finalizada',
                         text: 'O motorista encerrou a rota.',
                         icon: 'info',
                         confirmButtonColor: '#4A7DDF',

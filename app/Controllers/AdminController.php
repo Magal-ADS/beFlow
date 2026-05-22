@@ -41,17 +41,17 @@ class AdminController {
         ];
 
         if ($dados['nome'] === '' || $dados['email'] === '' || $dados['senha'] === '') {
-            $this->jsonResponse(false, 'Preencha todos os campos obrigatórios.');
+            $this->jsonResponse(false, 'Preencha todos os campos obrigat�rios.');
         }
 
         try {
             $usuarioModel = new Usuario();
             $usuarioModel->salvar($dados);
-            $this->jsonResponse(true, 'Usuário cadastrado com sucesso.');
+            $this->jsonResponse(true, 'Usu�rio cadastrado com sucesso.');
         } catch (PDOException $e) {
             $message = $this->isDuplicateKey($e)
-                ? 'Este e-mail já está cadastrado.'
-                : 'Erro técnico ao cadastrar o usuário.';
+                ? 'Este e-mail j� est� cadastrado.'
+                : 'Erro t�cnico ao cadastrar o usu�rio.';
 
             $this->jsonResponse(false, $message);
         } catch (Exception $e) {
@@ -73,17 +73,17 @@ class AdminController {
         ];
 
         if ($id === '' || $dados['nome'] === '' || $dados['email'] === '') {
-            $this->jsonResponse(false, 'ID, nome e e-mail são obrigatórios.');
+            $this->jsonResponse(false, 'ID, nome e e-mail s�o obrigat�rios.');
         }
 
         try {
             $usuarioModel = new Usuario();
             $usuarioModel->atualizar($id, $dados);
-            $this->jsonResponse(true, 'Usuário atualizado com sucesso.');
+            $this->jsonResponse(true, 'Usu�rio atualizado com sucesso.');
         } catch (PDOException $e) {
             $message = $this->isDuplicateKey($e)
-                ? 'Já existe outro usuário com este e-mail.'
-                : 'Erro técnico ao atualizar o usuário.';
+                ? 'J� existe outro usu�rio com este e-mail.'
+                : 'Erro t�cnico ao atualizar o usu�rio.';
 
             $this->jsonResponse(false, $message);
         } catch (Exception $e) {
@@ -96,15 +96,15 @@ class AdminController {
 
         $id = trim($_POST['id'] ?? '');
         if ($id === '') {
-            $this->jsonResponse(false, 'ID inválido.');
+            $this->jsonResponse(false, 'ID inv�lido.');
         }
 
         try {
             $usuarioModel = new Usuario();
             $usuarioModel->excluir($id);
-            $this->jsonResponse(true, 'Usuário removido da base de dados.');
+            $this->jsonResponse(true, 'Usu�rio removido da base de dados.');
         } catch (PDOException $e) {
-            $this->jsonResponse(false, 'Não foi possível excluir este usuário.');
+            $this->jsonResponse(false, 'N�o foi poss�vel excluir este usu�rio.');
         }
     }
 
@@ -158,7 +158,7 @@ class AdminController {
 
         $id = trim($_POST['id'] ?? '');
         if ($id === '') {
-            $this->jsonResponse(false, 'ID da rota inválido.');
+            $this->jsonResponse(false, 'ID da rota inv�lido.');
         }
 
         try {
@@ -228,7 +228,7 @@ class AdminController {
 
         $id = trim($_POST['id'] ?? '');
         if ($id === '') {
-            $this->jsonResponse(false, 'ID do ponto inválido.');
+            $this->jsonResponse(false, 'ID do ponto inv�lido.');
         }
 
         try {

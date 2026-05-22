@@ -4,7 +4,7 @@ require_once __DIR__ . '/Ponto.php';
 
 class Confirmacao {
     private $conn;
-    private $lastError = 'Erro inesperado ao confirmar presença.';
+    private $lastError = 'Erro inesperado ao confirmar presen�a.';
 
     public function __construct() {
         $database = new Database();
@@ -14,7 +14,7 @@ class Confirmacao {
     public function registrar($usuario_id, $ponto_id) {
         $alunoId = $this->buscarAlunoIdPorUsuario($usuario_id);
         if (!$alunoId) {
-            $this->lastError = 'O usuário autenticado não está vinculado a um aluno.';
+            $this->lastError = 'O usu�rio autenticado n�o est� vinculado a um aluno.';
             return false;
         }
 
@@ -38,8 +38,8 @@ class Confirmacao {
             ]);
         } catch (PDOException $e) {
             $this->lastError = $this->isDuplicateKey($e)
-                ? 'Sua presença neste ponto já foi confirmada para a viagem de hoje.'
-                : 'Falha ao registrar a confirmação no banco de dados.';
+                ? 'Sua presen�a neste ponto j� foi confirmada para a viagem de hoje.'
+                : 'Falha ao registrar a confirma��o no banco de dados.';
 
             return false;
         }

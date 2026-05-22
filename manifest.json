@@ -1,7 +1,7 @@
 {
   "name": "BeFlow - Transporte Inteligente",
   "short_name": "BeFlow",
-  "description": "Sistema de gestão de transporte e rastreamento.",
+  "description": "Sistema de gestao de transporte e rastreamento.",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",

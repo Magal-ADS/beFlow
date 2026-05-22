@@ -29,8 +29,8 @@
                     <?= substr($_SESSION['usuario_nome'], 0, 1); ?>
                 </div>
                 <div>
-                    <h1 class="text-sm font-bold text-gray-800">Olá, <?= explode(' ', $_SESSION['usuario_nome'])[0]; ?>!</h1>
-                    <p class="text-[10px] text-blue-500 uppercase font-bold tracking-wider" id="statusMotorista">Aguardando Início 🟡</p>
+                    <h1 class="text-sm font-bold text-gray-800">Ola, <?= explode(' ', $_SESSION['usuario_nome'])[0]; ?>!</h1>
+                    <p class="text-[10px] text-blue-500 uppercase font-bold tracking-wider" id="statusMotorista">Aguardando Inicio</p>
                 </div>
             </div>
             <a href="<?= BASE_URL ?>/logout" class="p-2 text-gray-400 hover:text-red-500 transition">
@@ -56,7 +56,7 @@
         var marcadoresLayer = L.layerGroup().addTo(map);
         var emViagem = false; // Controle de estado da viagem
 
-        // FUNÇÃO PARA DESENHAR OS PONTOS
+        // FUNCAO PARA DESENHAR OS PONTOS
         function desenharPontos(pontosArray) {
             marcadoresLayer.clearLayers();
             pontosArray.forEach(function(ponto) {
@@ -79,7 +79,7 @@
 
         map.locate({setView: true, maxZoom: 15});
         map.on('locationfound', function(e) {
-            L.circleMarker(e.latlng, { radius: 8, fillColor: "#22c55e", color: "#fff", weight: 3, opacity: 1, fillOpacity: 1 }).addTo(map).bindPopup("Seu ônibus").openPopup();
+            L.circleMarker(e.latlng, { radius: 8, fillColor: "#22c55e", color: "#fff", weight: 3, opacity: 1, fillOpacity: 1 }).addTo(map).bindPopup("Seu onibus").openPopup();
         });
 
         // Auto-refresh a cada 10 segundos
@@ -90,7 +90,7 @@
             .catch(erro => console.error("Erro ao atualizar o mapa:", erro));
         }, 10000);
 
-        // --- LÓGICA DO BOTÃO DE ROTA (AGORA COM PROTEÇÃO DE ERRO E FETCH DE INÍCIO) ---
+        // --- LOGICA DO BOTAO DE ROTA ---
         function toggleRota() {
             const btn = document.getElementById('btnRota');
             const icon = document.getElementById('iconRota');
@@ -98,7 +98,7 @@
             const status = document.getElementById('statusMotorista');
 
             if (!emViagem) {
-                // AQUI ESTÁ O CONSERTO: Agora ele avisa o banco que a rota iniciou!
+                // Agora ele avisa o banco que a rota iniciou.
                 fetch('<?= BASE_URL ?>/iniciar-rota', { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
@@ -110,10 +110,10 @@
                         btn.classList.replace('shadow-[0_10px_20px_rgba(34,197,94,0.4)]', 'shadow-[0_10px_20px_rgba(239,68,68,0.4)]');
                         
                         text.innerText = "Finalizar Rota";
-                        status.innerHTML = "Em Rota <span class='animate-pulse'>🟢</span>";
+                        status.innerHTML = "Em Rota";
                         icon.innerHTML = `<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd"/>`;
                         
-                        Swal.fire({ title: 'Rota Iniciada!', text: 'Dirija com segurança.', icon: 'success', timer: 2000, showConfirmButton: false });
+                        Swal.fire({ title: 'Rota Iniciada!', text: 'Dirija com seguranca.', icon: 'success', timer: 2000, showConfirmButton: false });
                     }
                 })
                 .catch(erro => console.error("Erro ao iniciar a rota:", erro));
@@ -121,7 +121,7 @@
                 // FINALIZAR ROTA
                 Swal.fire({
                     title: 'Finalizar Rota?',
-                    text: "Você chegou ao destino final da viagem?",
+                    text: "Voce chegou ao destino final da viagem?",
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#4A7DDF',
@@ -147,7 +147,7 @@
                         })
                         .then(data => {
                             if(data.success) {
-                                Swal.fire('Finalizada!', 'A rota foi concluída com sucesso.', 'success')
+                                Swal.fire('Finalizada!', 'A rota foi concluida com sucesso.', 'success')
                                 .then(() => window.location.reload());
                             } else {
                                 Swal.fire('Ops!', data.message, 'error');

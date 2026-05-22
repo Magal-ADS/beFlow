@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BeFlow Admin - Usuários</title>
+    <title>BeFlow Admin - Usuarios</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
@@ -14,7 +14,7 @@
     <main class="flex-1 overflow-y-auto p-10">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
             <div>
-                <h2 class="text-3xl font-black text-gray-800 tracking-tighter">Gerenciar Usuários</h2>
+                <h2 class="text-3xl font-black text-gray-800 tracking-tighter">Gerenciar Usuarios</h2>
                 <p class="text-gray-500">Listagem de alunos e motoristas cadastrados.</p>
             </div>
             
@@ -23,11 +23,11 @@
                     <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                         <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
-                    <input type="text" id="inputPesquisa" onkeyup="filtrarTabela()" placeholder="Buscar usuário..." class="w-full pl-10 pr-4 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+                    <input type="text" id="inputPesquisa" onkeyup="filtrarTabela()" placeholder="Buscar usuario..." class="w-full pl-10 pr-4 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
                 </div>
                 
                 <button onclick="abrirModal('novo')" class="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition shrink-0 active:scale-95">
-                    + Novo Usuário
+                    + Novo Usu�rio
                 </button>
             </div>
         </div>
@@ -39,7 +39,7 @@
                         <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Nome</th>
                         <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">E-mail</th>
                         <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Tipo</th>
-                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase text-right">Ações</th>
+                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase text-right">Acoes</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -55,17 +55,17 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-right flex justify-end gap-3">
-                                <button onclick="abrirModal('editar', <?= $u['id'] ?>, '<?= addslashes($u['nome']) ?>', '<?= addslashes($u['email']) ?>', '<?= $u['tipo_usuario'] ?>')" class="text-blue-400 hover:text-blue-600 transition" title="Editar Usuário">
+                                <button onclick="abrirModal('editar', <?= $u['id'] ?>, '<?= addslashes($u['nome']) ?>', '<?= addslashes($u['email']) ?>', '<?= $u['tipo_usuario'] ?>')" class="text-blue-400 hover:text-blue-600 transition" title="Editar Usu�rio">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                 </button>
-                                <button onclick="deletarUsuario(<?= $u['id'] ?>)" class="text-gray-300 hover:text-red-500 transition" title="Excluir Usuário">
+                                <button onclick="deletarUsuario(<?= $u['id'] ?>)" class="text-gray-300 hover:text-red-500 transition" title="Excluir Usu�rio">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>
                             </td>
                         </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <tr><td colspan="4" class="px-6 py-4 text-center text-gray-500 font-bold italic">Nenhum usuário encontrado na base.</td></tr>
+                        <tr><td colspan="4" class="px-6 py-4 text-center text-gray-500 font-bold italic">Nenhum usuario encontrado na base.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>
@@ -91,11 +91,11 @@
                 <select id="inputTipo" name="tipo_usuario" onchange="toggleCamposAluno()" class="w-full p-4 rounded-2xl bg-gray-50 border-none focus:ring-2 focus:ring-blue-400 outline-none font-bold text-gray-500">
                     <option value="aluno">Aluno</option>
                     <option value="motorista">Motorista</option>
-                    <option value="admin_empresa">Admin Empresa</option>
+                    <option value="admin_empresa">Acoesa</option>
                 </select>
 
                 <div id="camposAluno" class="space-y-4 pt-2">
-                    <input type="text" name="escola" placeholder="Escola / Instituição" class="w-full p-4 rounded-2xl bg-blue-50/50 border border-blue-100 focus:ring-2 focus:ring-blue-400 outline-none">
+                    <input type="text" name="escola" placeholder="Escola / Instituicao" class="w-full p-4 rounded-2xl bg-blue-50/50 border border-blue-100 focus:ring-2 focus:ring-blue-400 outline-none">
                     <select name="turno" class="w-full p-4 rounded-2xl bg-blue-50/50 border border-blue-100 focus:ring-2 focus:ring-blue-400 outline-none">
                         <option value="Matutino">Matutino</option>
                         <option value="Vespertino">Vespertino</option>
@@ -141,7 +141,7 @@
             form.reset();
 
             if (modo === 'editar') {
-                titulo.innerText = "Editar Usuário";
+                titulo.innerText = "Editar Usu�rio";
                 acao.value = "editar";
                 document.getElementById('inputId').value = id;
                 document.getElementById('inputNome').value = nome;
@@ -187,7 +187,7 @@
         function deletarUsuario(id) {
             Swal.fire({
                 title: 'Tem certeza?',
-                text: "Esta ação é irreversível e removerá todos os dados vinculados.",
+                text: "Esta acao e irreversivel e removera todos os dados vinculados.",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#ef4444',
@@ -202,7 +202,7 @@
                     .then(res => res.json())
                     .then(data => {
                         if(data.success) {
-                            Swal.fire('Excluído!', data.message, 'success').then(() => location.reload());
+                            Swal.fire('Excluido!', data.message, 'success').then(() => location.reload());
                         } else {
                             Swal.fire('Erro', data.message, 'error');
                         }

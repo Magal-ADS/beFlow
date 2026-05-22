@@ -123,7 +123,7 @@ class Database {
             $this->conn = $this->createPdo(true);
         } catch (PDOException $exception) {
             throw new RuntimeException(
-                "Erro na conexão com o banco de dados ({$this->driver}): " . $exception->getMessage(),
+                "Erro na conex�o com o banco de dados ({$this->driver}): " . $exception->getMessage(),
                 0,
                 $exception
             );

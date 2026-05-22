@@ -13,12 +13,12 @@
     <main class="flex-1 overflow-y-auto p-10">
         <header class="mb-10 flex justify-between items-end">
             <div>
-                <h2 class="text-3xl font-black text-gray-800 tracking-tighter">Visão Geral</h2>
+                <h2 class="text-3xl font-black text-gray-800 tracking-tighter">Visao Geral</h2>
                 <p class="text-gray-500 font-medium">Bem-vindo ao centro de controle da BeFlow.</p>
             </div>
             <div class="text-right">
                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-100 px-3 py-1 rounded-lg inline-block mb-1">Empresa Vinculada</p>
-                <p class="text-sm font-black text-blue-600 italic">Viação BeFlow Local</p>
+                <p class="text-sm font-black text-blue-600 italic">Viacao BeFlow Local</p>
             </div>
         </header>
 
@@ -28,7 +28,7 @@
                     <p class="text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">Alunos Ativos</p>
                     <h3 class="text-6xl font-black text-gray-800 tracking-tighter"><?= $stats['alunos'] ?></h3>
                     <div class="mt-4 flex items-center gap-2 text-green-500 text-xs font-bold">
-                        <span class="bg-green-100 px-2 py-1 rounded-lg">↑ 100% no sistema</span>
+                        <span class="bg-green-100 px-2 py-1 rounded-lg">100% no sistema</span>
                     </div>
                 </div>
                 <div class="absolute -right-4 -bottom-4 text-blue-500 opacity-[0.03] group-hover:scale-110 transition-transform duration-500">
@@ -40,7 +40,7 @@
                 <div class="relative z-10">
                     <p class="text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">Motoristas</p>
                     <h3 class="text-6xl font-black text-gray-800 tracking-tighter"><?= $stats['motoristas'] ?></h3>
-                    <p class="text-[10px] text-gray-300 font-bold mt-4">DISPONÍVEIS NA FROTA</p>
+                    <p class="text-[10px] text-gray-300 font-bold mt-4">DISPONIVEIS NA FROTA</p>
                 </div>
                 <div class="absolute -right-4 -bottom-4 text-green-500 opacity-[0.03] group-hover:scale-110 transition-transform duration-500">
                     <svg class="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M8 7h8m-8 4h8m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -71,10 +71,10 @@
                 </div>
                 <h4 class="text-white text-2xl font-black mb-3 tracking-tight">Monitoramento em Tempo Real</h4>
                 <p class="text-slate-400 max-w-sm mx-auto font-medium leading-relaxed">
-                    Em breve, você poderá visualizar os ônibus se movendo no mapa e a ocupação de cada ponto em tempo real.
+                    Em breve, voce podera visualizar os onibus se movendo no mapa e a ocupacao de cada ponto em tempo real.
                 </p>
                 <div class="mt-8">
-                    <span class="bg-slate-800 text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-full border border-slate-700">Módulo em Desenvolvimento</span>
+                    <span class="bg-slate-800 text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-full border border-slate-700">Modulo em Desenvolvimento</span>
                 </div>
             </div>
         </div>

@@ -16,12 +16,12 @@
 
         <form action="<?= BASE_URL ?>/autenticar" method="POST" class="space-y-4">
             <div>
-                <input type="email" name="email" placeholder="Digite seu e-mail" required
+                <input type="email" name="email" placeholder="********" required
                     class="w-full px-4 py-4 rounded-xl bg-gray-50 border border-gray-100 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400">
             </div>
 
             <div>
-                <input type="password" name="senha" placeholder="••••••••" required
+                <input type="password" name="senha" placeholder="********" required
                     class="w-full px-4 py-4 rounded-xl bg-gray-50 border border-gray-100 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400">
                 <div class="text-right mt-2">
                     <a href="#" class="text-xs text-gray-400 hover:text-blue-500">esqueceu sua senha?</a>
@@ -37,19 +37,19 @@
         <div class="mt-8 text-center">
             <div class="flex items-center justify-center gap-2 mb-6">
                 <hr class="w-1/4 border-gray-200">
-                <span class="text-xs text-gray-400">Ou faça login com</span>
+                <span class="text-xs text-gray-400">Ou faca login com</span>
                 <hr class="w-1/4 border-gray-200">
             </div>
             
             <div class="flex justify-center gap-4">
                 <button class="w-14 h-14 border border-gray-100 rounded-2xl shadow-sm flex items-center justify-center hover:bg-gray-50 text-xl font-bold text-gray-700">G</button>
-                <button class="w-14 h-14 border border-gray-100 rounded-2xl shadow-sm flex items-center justify-center hover:bg-gray-50 text-xl font-bold text-gray-700"></button>
+                <button class="w-14 h-14 border border-gray-100 rounded-2xl shadow-sm flex items-center justify-center hover:bg-gray-50 text-xl font-bold text-gray-700">Apple</button>
                 <button class="w-14 h-14 border border-gray-100 rounded-2xl shadow-sm flex items-center justify-center hover:bg-gray-50 text-xl font-bold text-blue-600">f</button>
             </div>
         </div>
 
         <p class="text-center text-sm text-gray-600 mt-8 mb-4">
-            Se você não possui uma conta <a href="#" class="text-blue-500 font-semibold">Registre-se aqui!</a>
+            Se voce nao possui uma conta <a href="#" class="text-blue-500 font-semibold">Registre-se aqui!</a>
         </p>
     </div>
 
