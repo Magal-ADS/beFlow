@@ -16,6 +16,46 @@
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #4A7DDF; border-radius: 10px; }
+        .bottom-sheet-toggle-icon {
+            transition: transform 0.3s ease;
+        }
+        .bottom-sheet-conteudo {
+            transition: max-height 0.35s ease, opacity 0.3s ease;
+        }
+        .bottom-sheet-handle {
+            width: 40px;
+            height: 5px;
+            background-color: #e5e7eb;
+            border-radius: 9999px;
+            margin: 0 auto 15px auto;
+        }
+
+        @media (max-width: 767px) {
+            .bottom-sheet-pontos.aberto .bottom-sheet-toggle-icon {
+                transform: rotate(180deg);
+            }
+
+            .bottom-sheet-pontos .bottom-sheet-conteudo {
+                max-height: 0;
+                overflow: hidden;
+                opacity: 0;
+                margin-top: 0;
+                padding-bottom: 0;
+            }
+
+            .bottom-sheet-pontos.aberto .bottom-sheet-conteudo {
+                max-height: 500px;
+                overflow: visible;
+                opacity: 1;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .bottom-sheet-handle,
+            .bottom-sheet-toggle {
+                cursor: default;
+            }
+        }
     </style>
 </head>
 <body class="h-screen w-full relative font-sans overflow-hidden bg-gray-100">
@@ -36,6 +76,8 @@
     </div>
 
     <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-[2.5rem] p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-20 transition-transform duration-300" id="bottomSheet">
+        <button type="button" id="bottomSheetHandle" class="bottom-sheet-handle block md:pointer-events-none" aria-label="Expandir ou minimizar painel"></button>
+
         <div class="flex gap-2 mb-6">
             <div class="relative flex-1">
                 <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
@@ -46,31 +88,39 @@
             <button class="w-14 h-14 bg-blue-400 text-white rounded-2xl flex items-center justify-center shadow-md">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </button>
+            <button type="button" id="bottomSheetToggle" class="bottom-sheet-toggle w-14 h-14 bg-gray-100 text-gray-500 rounded-2xl flex items-center justify-center shadow-sm md:hidden" aria-label="Minimizar painel" aria-expanded="false">
+                <svg id="bottomSheetToggleIcon" class="bottom-sheet-toggle-icon w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
         </div>
 
-        <h3 class="font-semibold text-gray-700 mb-4 text-center">Selecione seu ponto de embarque:</h3>
-        
-        <div class="space-y-3 max-h-48 overflow-y-auto pr-2 pb-4 custom-scroll">
-            <?php if (empty($pontos)): ?>
-                <p class="text-center text-gray-400 text-sm py-4">Nenhum ponto encontrado.</p>
-            <?php else: ?>
-                <?php foreach ($pontos as $p): ?>
-                <div class="flex items-center justify-between p-4 border border-gray-100 rounded-2xl bg-white shadow-sm hover:border-blue-200 transition">
-                    <div>
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="bg-blue-500 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase">
-                                <?= htmlspecialchars($p['nome_linha'] ?? 'Linha'); ?>
-                            </span>
+        <div id="bottomSheetPontos" class="bottom-sheet-pontos">
+            <div id="bottomSheetConteudo" class="bottom-sheet-conteudo">
+                <h3 class="font-semibold text-gray-700 mb-4 text-center">Selecione seu ponto de embarque:</h3>
+                <div class="space-y-3 max-h-48 overflow-y-auto pr-2 pb-4 custom-scroll">
+                <?php if (empty($pontos)): ?>
+                    <p class="text-center text-gray-400 text-sm py-4">Nenhum ponto encontrado.</p>
+                <?php else: ?>
+                    <?php foreach ($pontos as $p): ?>
+                    <div class="flex items-center justify-between p-4 border border-gray-100 rounded-2xl bg-white shadow-sm hover:border-blue-200 transition">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="bg-blue-500 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase">
+                                    <?= htmlspecialchars($p['nome_linha'] ?? 'Linha'); ?>
+                                </span>
+                            </div>
+                            <p class="text-sm font-semibold text-gray-700"><?= htmlspecialchars($p['nome']); ?></p>
+                            <p class="text-xs text-gray-400 italic">Ponto de parada oficial</p>
                         </div>
-                        <p class="text-sm font-semibold text-gray-700"><?= htmlspecialchars($p['nome']); ?></p>
-                        <p class="text-xs text-gray-400 italic">Ponto de parada oficial</p>
+                        <button onclick="confirmarPonto(<?= $p['id']; ?>, this)" class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-md active:scale-95 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </button>
                     </div>
-                    <button onclick="confirmarPonto(<?= $p['id']; ?>, this)" class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-md active:scale-95 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    </button>
+                    <?php endforeach; ?>
+                <?php endif; ?>
                 </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
+            </div>
         </div>
     </div>
 
@@ -123,6 +173,46 @@
                 setTimeout(() => { overlay.classList.add('hidden'); }, 300);
             }
         }
+
+        (function () {
+            const container = document.getElementById('bottomSheetPontos');
+            const toggle = document.getElementById('bottomSheetToggle');
+            const handle = document.getElementById('bottomSheetHandle');
+            const mobileQuery = window.matchMedia('(max-width: 767px)');
+            const chevronDownPath = 'M19 9l-7 7-7-7';
+            const chevronUpPath = 'M5 15l7-7 7 7';
+            const iconPath = document.querySelector('#bottomSheetToggleIcon path');
+
+            function setExpanded(expanded) {
+                container.classList.toggle('aberto', expanded);
+                toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                toggle.setAttribute('aria-label', expanded ? 'Minimizar painel' : 'Expandir painel');
+                iconPath.setAttribute('d', expanded ? chevronDownPath : chevronUpPath);
+            }
+
+            function syncAccordionState() {
+                if (mobileQuery.matches) {
+                    setExpanded(false);
+                    return;
+                }
+
+                setExpanded(true);
+            }
+
+            function togglePanel() {
+                if (!mobileQuery.matches) {
+                    return;
+                }
+
+                setExpanded(!container.classList.contains('aberto'));
+            }
+
+            toggle.addEventListener('click', togglePanel);
+            handle.addEventListener('click', togglePanel);
+
+            syncAccordionState();
+            mobileQuery.addEventListener('change', syncAccordionState);
+        })();
 
         // --- MAPA ---
         var map = L.map('map', { zoomControl: false }).setView([-21.4059, -48.5052], 15);
