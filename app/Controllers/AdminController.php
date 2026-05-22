@@ -3,18 +3,130 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../Models/Usuario.php';
 
 class AdminController {
+    private $allowedColors = ['azul', 'vermelha', 'amarela', 'verde'];
+
     public function index() {
         $this->requireAdminSession();
 
         $db = (new Database())->getConnection();
+        $stmtAdmin = $db->prepare("SELECT nome, telefone, email FROM usuarios WHERE id = :id LIMIT 1");
+        $stmtAdmin->execute(['id' => $_SESSION['usuario_id']]);
+        $currentAdmin = $stmtAdmin->fetch(PDO::FETCH_ASSOC) ?: [
+            'nome' => $_SESSION['usuario_nome'] ?? 'Usuario',
+            'telefone' => '',
+            'email' => '',
+        ];
         $statusViagem = $db->query("SELECT status FROM viagens ORDER BY data_viagem DESC, id DESC LIMIT 1")->fetchColumn();
+        $usuariosTotal = (int) $db->query("SELECT COUNT(*) FROM usuarios")->fetchColumn();
+        $linhasTotal = (int) $db->query("SELECT COUNT(*) FROM linhas WHERE empresa_id = 1")->fetchColumn();
+        $onibusTotal = (int) $db->query("SELECT COUNT(*) FROM veiculo WHERE empresa_id = 1")->fetchColumn();
+        $pontosTotal = (int) $db->query("SELECT COUNT(*) FROM pontos")->fetchColumn();
+        $horariosTotal = (int) $db->query("SELECT COUNT(*) FROM horarios_base")->fetchColumn();
+        $empresasTotal = (int) $db->query("SELECT COUNT(*) FROM empresa")->fetchColumn();
+        $viagensTotal = (int) $db->query("SELECT COUNT(*) FROM viagens")->fetchColumn();
+        $confirmacoesTotal = (int) $db->query("SELECT COUNT(*) FROM confirmacoes")->fetchColumn();
 
         $stats = [
-            'alunos' => $db->query("SELECT COUNT(*) FROM usuarios WHERE tipo_usuario = 'aluno'")->fetchColumn(),
-            'motoristas' => $db->query("SELECT COUNT(*) FROM usuarios WHERE tipo_usuario = 'motorista'")->fetchColumn(),
-            'pontos' => $db->query("SELECT COUNT(*) FROM pontos")->fetchColumn(),
+            'usuarios' => $usuariosTotal,
+            'linhas_onibus' => $linhasTotal . '/' . $onibusTotal,
+            'pontos' => $pontosTotal,
+            'horarios' => $horariosTotal,
+            'empresas' => $empresasTotal,
             'viagem_status' => $statusViagem ?: 'Sem viagens ativas',
         ];
+
+        $dashboardCards = [
+            [
+                'title' => 'Usuarios',
+                'value' => (string) $usuariosTotal,
+                'change' => 'Base atual do sistema',
+                'icon_bg' => 'bg-blue-100',
+                'icon_fg' => 'text-blue-600',
+                'icon' => 'users',
+            ],
+            [
+                'title' => 'Linhas e Onibus',
+                'value' => $linhasTotal . '/' . $onibusTotal,
+                'change' => 'Operacao cadastrada',
+                'icon_bg' => 'bg-emerald-100',
+                'icon_fg' => 'text-emerald-600',
+                'icon' => 'bus',
+            ],
+            [
+                'title' => 'Pontos de parada',
+                'value' => (string) $pontosTotal,
+                'change' => 'Mapa operacional',
+                'icon_bg' => 'bg-violet-100',
+                'icon_fg' => 'text-violet-600',
+                'icon' => 'pin',
+            ],
+            [
+                'title' => 'Horarios das linhas',
+                'value' => (string) $horariosTotal,
+                'change' => 'Agenda configurada',
+                'icon_bg' => 'bg-amber-100',
+                'icon_fg' => 'text-amber-600',
+                'icon' => 'clock',
+            ],
+            [
+                'title' => 'Empresas',
+                'value' => (string) $empresasTotal,
+                'change' => 'Cadastro institucional',
+                'icon_bg' => 'bg-slate-200',
+                'icon_fg' => 'text-slate-700',
+                'icon' => 'building',
+            ],
+        ];
+
+        $summarySeries = [
+            ['label' => 'Usuarios', 'value' => $usuariosTotal],
+            ['label' => 'Linhas', 'value' => $linhasTotal],
+            ['label' => 'Onibus', 'value' => $onibusTotal],
+            ['label' => 'Pontos', 'value' => $pontosTotal],
+            ['label' => 'Horarios', 'value' => $horariosTotal],
+            ['label' => 'Viagens', 'value' => $viagensTotal + $confirmacoesTotal],
+        ];
+
+        $peakPoint = $summarySeries[0];
+        foreach ($summarySeries as $point) {
+            if ($point['value'] > $peakPoint['value']) {
+                $peakPoint = $point;
+            }
+        }
+
+        $recentActivities = [];
+
+        $latestUsers = $db->query("SELECT id, nome FROM usuarios ORDER BY id DESC LIMIT 3")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($latestUsers as $user) {
+            $recentActivities[] = [
+                'type' => 'user',
+                'avatar' => strtoupper(substr($user['nome'], 0, 1)),
+                'text' => 'Novo usuario cadastrado ' . $user['nome'],
+                'meta' => 'ID #' . $user['id'],
+            ];
+        }
+
+        $latestLines = $db->query("SELECT id, nome FROM linhas ORDER BY id DESC LIMIT 2")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($latestLines as $line) {
+            $recentActivities[] = [
+                'type' => 'line',
+                'avatar' => 'L',
+                'text' => 'Linha atualizada ' . $line['nome'],
+                'meta' => 'ID #' . $line['id'],
+            ];
+        }
+
+        $latestStops = $db->query("SELECT id, nome FROM pontos ORDER BY id DESC LIMIT 2")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($latestStops as $stop) {
+            $recentActivities[] = [
+                'type' => 'stop',
+                'avatar' => 'P',
+                'text' => 'Novo ponto registrado ' . $stop['nome'],
+                'meta' => 'ID #' . $stop['id'],
+            ];
+        }
+
+        $recentActivities = array_slice($recentActivities, 0, 6);
 
         require_once __DIR__ . '/../Views/admin_dashboard.php';
     }
@@ -41,17 +153,17 @@ class AdminController {
         ];
 
         if ($dados['nome'] === '' || $dados['email'] === '' || $dados['senha'] === '') {
-            $this->jsonResponse(false, 'Preencha todos os campos obrigat�rios.');
+            $this->jsonResponse(false, 'Preencha todos os campos obrigatorios.');
         }
 
         try {
             $usuarioModel = new Usuario();
             $usuarioModel->salvar($dados);
-            $this->jsonResponse(true, 'Usu�rio cadastrado com sucesso.');
+            $this->jsonResponse(true, 'Usuario cadastrado com sucesso.');
         } catch (PDOException $e) {
             $message = $this->isDuplicateKey($e)
-                ? 'Este e-mail j� est� cadastrado.'
-                : 'Erro t�cnico ao cadastrar o usu�rio.';
+                ? 'Este e-mail ja esta cadastrado.'
+                : 'Erro tecnico ao cadastrar o usuario.';
 
             $this->jsonResponse(false, $message);
         } catch (Exception $e) {
@@ -73,17 +185,17 @@ class AdminController {
         ];
 
         if ($id === '' || $dados['nome'] === '' || $dados['email'] === '') {
-            $this->jsonResponse(false, 'ID, nome e e-mail s�o obrigat�rios.');
+            $this->jsonResponse(false, 'ID, nome e e-mail sao obrigatorios.');
         }
 
         try {
             $usuarioModel = new Usuario();
             $usuarioModel->atualizar($id, $dados);
-            $this->jsonResponse(true, 'Usu�rio atualizado com sucesso.');
+            $this->jsonResponse(true, 'Usuario atualizado com sucesso.');
         } catch (PDOException $e) {
             $message = $this->isDuplicateKey($e)
-                ? 'J� existe outro usu�rio com este e-mail.'
-                : 'Erro t�cnico ao atualizar o usu�rio.';
+                ? 'Ja existe outro usuario com este e-mail.'
+                : 'Erro tecnico ao atualizar o usuario.';
 
             $this->jsonResponse(false, $message);
         } catch (Exception $e) {
@@ -96,15 +208,15 @@ class AdminController {
 
         $id = trim($_POST['id'] ?? '');
         if ($id === '') {
-            $this->jsonResponse(false, 'ID inv�lido.');
+            $this->jsonResponse(false, 'ID invalido.');
         }
 
         try {
             $usuarioModel = new Usuario();
             $usuarioModel->excluir($id);
-            $this->jsonResponse(true, 'Usu�rio removido da base de dados.');
+            $this->jsonResponse(true, 'Usuario removido da base de dados.');
         } catch (PDOException $e) {
-            $this->jsonResponse(false, 'N�o foi poss�vel excluir este usu�rio.');
+            $this->jsonResponse(false, 'Nao foi possivel excluir este usuario.');
         }
     }
 
@@ -115,12 +227,12 @@ class AdminController {
         $linhas = $db->query("SELECT * FROM linhas WHERE empresa_id = 1 ORDER BY nome ASC")->fetchAll(PDO::FETCH_ASSOC);
         $pontos = $db->query("SELECT * FROM pontos ORDER BY linha_id ASC, ordem_na_linha ASC")->fetchAll(PDO::FETCH_ASSOC);
 
-        $linhas_com_pontos = [];
+        $linhasComPontos = [];
         foreach ($linhas as $linha) {
             $linha['pontos'] = array_values(array_filter($pontos, function ($ponto) use ($linha) {
                 return (int) $ponto['linha_id'] === (int) $linha['id'];
             }));
-            $linhas_com_pontos[] = $linha;
+            $linhasComPontos[] = $linha;
         }
 
         require_once __DIR__ . '/../Views/admin_rotas.php';
@@ -131,25 +243,33 @@ class AdminController {
 
         $id = trim($_POST['id'] ?? '');
         $nome = trim($_POST['nome'] ?? '');
+        $cor = strtolower(trim($_POST['cor'] ?? 'azul'));
 
         if ($nome === '') {
-            $this->jsonResponse(false, 'Informe o nome da rota.');
+            $this->jsonResponse(false, 'Informe o nome da linha.');
+        }
+
+        if (!in_array($cor, $this->allowedColors, true)) {
+            $this->jsonResponse(false, 'Selecione uma cor valida para a linha.');
         }
 
         try {
             $db = (new Database())->getConnection();
 
             if ($id !== '') {
-                $stmt = $db->prepare("UPDATE linhas SET nome = :nome WHERE id = :id");
-                $stmt->execute(['nome' => $nome, 'id' => $id]);
+                $stmt = $db->prepare("UPDATE linhas SET nome = :nome, cor = :cor WHERE id = :id");
+                $stmt->execute(['nome' => $nome, 'cor' => $cor, 'id' => $id]);
+                $linhaId = (int) $id;
             } else {
-                $stmt = $db->prepare("INSERT INTO linhas (nome, empresa_id) VALUES (:nome, :empresa_id)");
-                $stmt->execute(['nome' => $nome, 'empresa_id' => 1]);
+                $stmt = $db->prepare("INSERT INTO linhas (nome, cor, empresa_id) VALUES (:nome, :cor, :empresa_id)");
+                $stmt->execute(['nome' => $nome, 'cor' => $cor, 'empresa_id' => 1]);
+                $linhaId = (int) $db->lastInsertId();
             }
 
-            $this->jsonResponse(true, 'Rota salva com sucesso.');
+            $this->ensureHorarioBase($db, $linhaId);
+            $this->jsonResponse(true, 'Linha salva com sucesso.');
         } catch (PDOException $e) {
-            $this->jsonResponse(false, 'Erro ao salvar a rota.');
+            $this->jsonResponse(false, 'Erro ao salvar a linha.');
         }
     }
 
@@ -158,7 +278,7 @@ class AdminController {
 
         $id = trim($_POST['id'] ?? '');
         if ($id === '') {
-            $this->jsonResponse(false, 'ID da rota inv�lido.');
+            $this->jsonResponse(false, 'ID da linha invalido.');
         }
 
         try {
@@ -166,9 +286,9 @@ class AdminController {
             $stmt = $db->prepare("DELETE FROM linhas WHERE id = :id");
             $stmt->execute(['id' => $id]);
 
-            $this->jsonResponse(true, 'Rota removida com sucesso.');
+            $this->jsonResponse(true, 'Linha removida com sucesso.');
         } catch (PDOException $e) {
-            $this->jsonResponse(false, 'Erro ao remover a rota.');
+            $this->jsonResponse(false, 'Erro ao remover a linha.');
         }
     }
 
@@ -228,7 +348,7 @@ class AdminController {
 
         $id = trim($_POST['id'] ?? '');
         if ($id === '') {
-            $this->jsonResponse(false, 'ID do ponto inv�lido.');
+            $this->jsonResponse(false, 'ID do ponto invalido.');
         }
 
         try {
@@ -238,8 +358,24 @@ class AdminController {
 
             $this->jsonResponse(true, 'Ponto removido com sucesso.');
         } catch (PDOException $e) {
-            $this->jsonResponse(false, 'Erro ao remover the ponto.');
+            $this->jsonResponse(false, 'Erro ao remover o ponto.');
         }
+    }
+
+    private function ensureHorarioBase(PDO $db, $linhaId) {
+        $stmt = $db->prepare("SELECT id FROM horarios_base WHERE linha_id = :linha_id LIMIT 1");
+        $stmt->execute(['linha_id' => $linhaId]);
+
+        if ($stmt->fetchColumn()) {
+            return;
+        }
+
+        $insert = $db->prepare("INSERT INTO horarios_base (linha_id, turno, hora_saida_garagem) VALUES (:linha_id, :turno, :hora)");
+        $insert->execute([
+            'linha_id' => $linhaId,
+            'turno' => 'Matutino',
+            'hora' => '06:30:00',
+        ]);
     }
 
     private function requireAdminSession() {
@@ -271,3 +407,4 @@ class AdminController {
             || stripos($message, 'unique') !== false;
     }
 }
+?>

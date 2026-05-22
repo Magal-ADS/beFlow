@@ -71,6 +71,7 @@ if ($driver === 'mysql') {
             CREATE TABLE linhas (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 nome VARCHAR(100) NOT NULL,
+                cor VARCHAR(20) NOT NULL DEFAULT 'azul',
                 empresa_id INT NOT NULL,
                 CONSTRAINT fk_linhas_empresa FOREIGN KEY (empresa_id) REFERENCES empresa (id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -117,14 +118,17 @@ if ($driver === 'mysql') {
             CREATE TABLE viagens (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 horario_base_id INT NOT NULL,
+                linha_id INT NOT NULL,
                 motorista_id INT NOT NULL,
                 veiculo_id INT NOT NULL,
+                numero_onibus VARCHAR(50) NULL,
                 status VARCHAR(50) DEFAULT 'aguardando',
                 data_viagem DATE NOT NULL,
                 latitude_atual DECIMAL(10,8) NULL,
                 longitude_atual DECIMAL(11,8) NULL,
                 UNIQUE KEY uniq_viagem_dia (horario_base_id, motorista_id, veiculo_id, data_viagem),
                 CONSTRAINT fk_viagens_horario FOREIGN KEY (horario_base_id) REFERENCES horarios_base (id) ON DELETE CASCADE,
+                CONSTRAINT fk_viagens_linha FOREIGN KEY (linha_id) REFERENCES linhas (id) ON DELETE CASCADE,
                 CONSTRAINT fk_viagens_motorista FOREIGN KEY (motorista_id) REFERENCES usuarios (id) ON DELETE CASCADE,
                 CONSTRAINT fk_viagens_veiculo FOREIGN KEY (veiculo_id) REFERENCES veiculo (id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -170,6 +174,7 @@ if ($driver === 'mysql') {
             CREATE TABLE linhas (
                 id SERIAL PRIMARY KEY,
                 nome VARCHAR(100) NOT NULL,
+                cor VARCHAR(20) NOT NULL DEFAULT 'azul',
                 empresa_id INT NOT NULL,
                 CONSTRAINT fk_linhas_empresa FOREIGN KEY (empresa_id) REFERENCES empresa (id) ON DELETE CASCADE
             );
@@ -216,14 +221,17 @@ if ($driver === 'mysql') {
             CREATE TABLE viagens (
                 id SERIAL PRIMARY KEY,
                 horario_base_id INT NOT NULL,
+                linha_id INT NOT NULL,
                 motorista_id INT NOT NULL,
                 veiculo_id INT NOT NULL,
+                numero_onibus VARCHAR(50),
                 status VARCHAR(50) DEFAULT 'aguardando',
                 data_viagem DATE NOT NULL,
                 latitude_atual NUMERIC(10,8),
                 longitude_atual NUMERIC(11,8),
                 CONSTRAINT uniq_viagem_dia UNIQUE (horario_base_id, motorista_id, veiculo_id, data_viagem),
                 CONSTRAINT fk_viagens_horario FOREIGN KEY (horario_base_id) REFERENCES horarios_base (id) ON DELETE CASCADE,
+                CONSTRAINT fk_viagens_linha FOREIGN KEY (linha_id) REFERENCES linhas (id) ON DELETE CASCADE,
                 CONSTRAINT fk_viagens_motorista FOREIGN KEY (motorista_id) REFERENCES usuarios (id) ON DELETE CASCADE,
                 CONSTRAINT fk_viagens_veiculo FOREIGN KEY (veiculo_id) REFERENCES veiculo (id) ON DELETE CASCADE
             );
@@ -265,3 +273,4 @@ if ($errors > 0) {
 } else {
     echo " com sucesso.\n";
 }
+?>

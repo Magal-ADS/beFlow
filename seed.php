@@ -31,11 +31,7 @@ function upsert(PDO $pdo, $driver, $table, array $data, array $uniqueColumns) {
                 VALUES (" . implode(', ', $placeholders) . ")
                 ON DUPLICATE KEY UPDATE " . implode(', ', $updates);
     } else {
-        $updates = array_map(function ($column) use ($uniqueColumns) {
-            if (in_array($column, $uniqueColumns, true)) {
-                return "{$column} = EXCLUDED.{$column}";
-            }
-
+        $updates = array_map(function ($column) {
             return "{$column} = EXCLUDED.{$column}";
         }, $columns);
 
@@ -92,31 +88,52 @@ foreach ($usuarios as $usuario) {
     echo "   [OK] {$usuario['email']}\n";
 }
 
-echo "\n3. Linha, veiculo e horario base\n";
-upsert($pdo, $driver, 'linhas', [
-    'id' => 1,
-    'nome' => 'Linha 302 - Centro',
-    'empresa_id' => 1,
-], ['id']);
+echo "\n3. Linhas, veiculo e horarios base\n";
+$linhas = [
+    ['id' => 1, 'nome' => 'Linha Azul', 'cor' => 'azul', 'empresa_id' => 1],
+    ['id' => 2, 'nome' => 'Linha Vermelha', 'cor' => 'vermelha', 'empresa_id' => 1],
+    ['id' => 3, 'nome' => 'Linha Amarela', 'cor' => 'amarela', 'empresa_id' => 1],
+    ['id' => 4, 'nome' => 'Linha Verde', 'cor' => 'verde', 'empresa_id' => 1],
+];
+
+foreach ($linhas as $linha) {
+    upsert($pdo, $driver, 'linhas', $linha, ['id']);
+}
+
 upsert($pdo, $driver, 'veiculo', [
     'id' => 1,
-    'numero_identificador' => 'BUS-302',
-    'placa' => 'BEF-0302',
+    'numero_identificador' => 'FROTA-BASE',
+    'placa' => 'BEF-0001',
     'empresa_id' => 1,
 ], ['id']);
-upsert($pdo, $driver, 'horarios_base', [
-    'id' => 1,
-    'linha_id' => 1,
-    'turno' => 'Matutino',
-    'hora_saida_garagem' => '06:30:00',
-], ['id']);
-echo "   [OK] Estrutura da rota criada\n";
+
+$horarios = [
+    ['id' => 1, 'linha_id' => 1, 'turno' => 'Matutino', 'hora_saida_garagem' => '06:30:00'],
+    ['id' => 2, 'linha_id' => 2, 'turno' => 'Matutino', 'hora_saida_garagem' => '06:45:00'],
+    ['id' => 3, 'linha_id' => 3, 'turno' => 'Matutino', 'hora_saida_garagem' => '07:00:00'],
+    ['id' => 4, 'linha_id' => 4, 'turno' => 'Matutino', 'hora_saida_garagem' => '07:15:00'],
+];
+
+foreach ($horarios as $horario) {
+    upsert($pdo, $driver, 'horarios_base', $horario, ['id']);
+}
+
+echo "   [OK] Estrutura base criada\n";
 
 echo "\n4. Pontos\n";
 $pontos = [
     ['id' => 1, 'nome' => 'Ponto Praca Central', 'latitude' => '-21.40590000', 'longitude' => '-48.50520000', 'ordem_na_linha' => 1, 'linha_id' => 1],
     ['id' => 2, 'nome' => 'Ponto Escola Objetivo', 'latitude' => '-21.41000000', 'longitude' => '-48.51000000', 'ordem_na_linha' => 2, 'linha_id' => 1],
     ['id' => 3, 'nome' => 'Ponto Hospital Unimed', 'latitude' => '-21.41500000', 'longitude' => '-48.52000000', 'ordem_na_linha' => 3, 'linha_id' => 1],
+    ['id' => 4, 'nome' => 'Ponto Terminal Leste', 'latitude' => '-21.40200000', 'longitude' => '-48.49700000', 'ordem_na_linha' => 1, 'linha_id' => 2],
+    ['id' => 5, 'nome' => 'Ponto Colegio Estadual', 'latitude' => '-21.39800000', 'longitude' => '-48.49200000', 'ordem_na_linha' => 2, 'linha_id' => 2],
+    ['id' => 6, 'nome' => 'Ponto Mercado Popular', 'latitude' => '-21.39400000', 'longitude' => '-48.48800000', 'ordem_na_linha' => 3, 'linha_id' => 2],
+    ['id' => 7, 'nome' => 'Ponto Parque das Flores', 'latitude' => '-21.41800000', 'longitude' => '-48.49900000', 'ordem_na_linha' => 1, 'linha_id' => 3],
+    ['id' => 8, 'nome' => 'Ponto Escola Tecnica', 'latitude' => '-21.42200000', 'longitude' => '-48.50300000', 'ordem_na_linha' => 2, 'linha_id' => 3],
+    ['id' => 9, 'nome' => 'Ponto Rodoviaria Nova', 'latitude' => '-21.42800000', 'longitude' => '-48.50900000', 'ordem_na_linha' => 3, 'linha_id' => 3],
+    ['id' => 10, 'nome' => 'Ponto Jardim Europa', 'latitude' => '-21.40900000', 'longitude' => '-48.52100000', 'ordem_na_linha' => 1, 'linha_id' => 4],
+    ['id' => 11, 'nome' => 'Ponto Lago Municipal', 'latitude' => '-21.41300000', 'longitude' => '-48.52600000', 'ordem_na_linha' => 2, 'linha_id' => 4],
+    ['id' => 12, 'nome' => 'Ponto Bairro Verde', 'latitude' => '-21.41850000', 'longitude' => '-48.53100000', 'ordem_na_linha' => 3, 'linha_id' => 4],
 ];
 
 foreach ($pontos as $ponto) {
@@ -132,15 +149,18 @@ $motoristaId = $stmtMotorista->fetchColumn();
 if ($motoristaId) {
     if ($driver === 'mysql') {
         $sqlViagem = "
-            INSERT INTO viagens (horario_base_id, motorista_id, veiculo_id, status, data_viagem, latitude_atual, longitude_atual)
-            VALUES (1, :motorista_id, 1, 'aguardando', CURDATE(), NULL, NULL)
-            ON DUPLICATE KEY UPDATE motorista_id = VALUES(motorista_id), status = 'aguardando'
+            INSERT INTO viagens (horario_base_id, linha_id, motorista_id, veiculo_id, numero_onibus, status, data_viagem, latitude_atual, longitude_atual)
+            VALUES (1, 1, :motorista_id, 1, '302', 'aguardando', CURDATE(), NULL, NULL)
+            ON DUPLICATE KEY UPDATE numero_onibus = VALUES(numero_onibus), linha_id = VALUES(linha_id), status = 'aguardando'
         ";
     } else {
         $sqlViagem = "
-            INSERT INTO viagens (horario_base_id, motorista_id, veiculo_id, status, data_viagem, latitude_atual, longitude_atual)
-            VALUES (1, :motorista_id, 1, 'aguardando', CURRENT_DATE, NULL, NULL)
-            ON CONFLICT ON CONSTRAINT uniq_viagem_dia DO UPDATE SET status = EXCLUDED.status
+            INSERT INTO viagens (horario_base_id, linha_id, motorista_id, veiculo_id, numero_onibus, status, data_viagem, latitude_atual, longitude_atual)
+            VALUES (1, 1, :motorista_id, 1, '302', 'aguardando', CURRENT_DATE, NULL, NULL)
+            ON CONFLICT ON CONSTRAINT uniq_viagem_dia DO UPDATE
+            SET numero_onibus = EXCLUDED.numero_onibus,
+                linha_id = EXCLUDED.linha_id,
+                status = EXCLUDED.status
         ";
     }
 
@@ -151,3 +171,4 @@ if ($motoristaId) {
 
 echo "\n" . str_repeat('-', 50) . "\n";
 echo "Seed concluido com sucesso.\n";
+?>

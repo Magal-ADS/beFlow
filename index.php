@@ -3,7 +3,6 @@
  * BeFlow - Arquivo de Roteamento Principal (index.php)
  */
 
-// Inicia a sess�o globalmente para todo o sistema
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -30,7 +29,6 @@ function resolveBaseUrl() {
     return normalizeBaseUrl($scriptDirectory);
 }
 
-// Define a base do projeto para facilitar redirecionamentos e links
 define('BASE_URL', resolveBaseUrl());
 
 require_once __DIR__ . '/app/Controllers/AuthController.php';
@@ -47,10 +45,6 @@ if ($rota === '' || $rota === false) {
 }
 
 switch ($rota) {
-
-    // ==========================================
-    // ROTAS DE AUTENTICA��O
-    // ==========================================
     case '':
     case '/':
     case '/login':
@@ -58,20 +52,17 @@ switch ($rota) {
         $controller = new AuthController();
         $controller->index();
         break;
-        
+
     case '/autenticar':
         $controller = new AuthController();
         $controller->autenticar();
         break;
-        
+
     case '/logout':
         $controller = new AuthController();
         $controller->logout();
         break;
 
-    // ==========================================
-    // ROTAS DO ALUNO
-    // ==========================================
     case '/home-aluno':
         require_once __DIR__ . '/app/Controllers/AlunoController.php';
         $controller = new AlunoController();
@@ -90,9 +81,6 @@ switch ($rota) {
         $controller->checarStatusViagem();
         break;
 
-    // ==========================================
-    // ROTAS DO MOTORISTA
-    // ==========================================
     case '/home-motorista':
         require_once __DIR__ . '/app/Controllers/MotoristaController.php';
         $controller = new MotoristaController();
@@ -103,6 +91,12 @@ switch ($rota) {
         require_once __DIR__ . '/app/Controllers/MotoristaController.php';
         $controller = new MotoristaController();
         $controller->apiPontos();
+        break;
+
+    case '/motorista/configurar-viagem':
+        require_once __DIR__ . '/app/Controllers/MotoristaController.php';
+        $controller = new MotoristaController();
+        $controller->configurarViagem();
         break;
 
     case '/iniciar-rota':
@@ -117,9 +111,6 @@ switch ($rota) {
         $controller->finalizarRota();
         break;
 
-    // ==========================================
-    // ROTAS DO ADMINISTRADOR (EMPRESA)
-    // ==========================================
     case '/admin/dashboard':
         require_once __DIR__ . '/app/Controllers/AdminController.php';
         $controller = new AdminController();
@@ -156,7 +147,6 @@ switch ($rota) {
         $controller->rotas();
         break;
 
-    // --- NOVAS ROTAS PARA GERENCIAMENTO DE LINHAS E PONTOS ---
     case '/admin/salvar-linha':
         require_once __DIR__ . '/app/Controllers/AdminController.php';
         $controller = new AdminController();
@@ -181,15 +171,13 @@ switch ($rota) {
         $controller->deletarPonto();
         break;
 
-    // ==========================================
-    // ROTA PADR�O (ERRO 404)
-    // ==========================================
     default:
         http_response_code(404);
         echo "<div style='font-family: sans-serif; text-align: center; padding-top: 50px;'>";
         echo "<h1 style='color: #4A7DDF;'>Erro 404</h1>";
-        echo "<p>P�gina n�o encontrada no BeFlow.</p>";
-        echo "<a href='" . BASE_URL . "/login' style='color: #4A7DDF; text-decoration: none; font-weight: bold;'>? Voltar para o in�cio</a>";
+        echo "<p>Pagina nao encontrada no BeFlow.</p>";
+        echo "<a href='" . BASE_URL . "/login' style='color: #4A7DDF; text-decoration: none; font-weight: bold;'>&larr; Voltar para o inicio</a>";
         echo "</div>";
         break;
 }
+?>
