@@ -6,7 +6,7 @@
     <title>BeFlow Admin - Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="min-h-screen bg-gray-50 relative z-10" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+<body class="bg-gray-50 flex h-screen overflow-hidden font-sans" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
 
     <?php include __DIR__ . '/sidebar_admin.php'; ?>
 
@@ -65,8 +65,7 @@
     }, $points));
     ?>
 
-    <div class="lg:flex">
-        <main class="flex-1 min-w-0">
+    <main class="flex-1 overflow-y-auto min-w-0">
             <header class="sticky top-0 z-30 lg:hidden bg-gray-50/95 backdrop-blur border-b border-gray-200 px-4 py-4 flex items-center justify-between">
                 <div>
                     <h1 class="text-lg font-bold text-gray-900">Dashboard</h1>
@@ -174,7 +173,6 @@
                 </section>
             </div>
         </main>
-    </div>
 
 </body>
 </html>
