@@ -4,11 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BeFlow - Inicio</title>
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <style>
         #map { height: 100%; width: 100%; z-index: 0; }
         .leaflet-control-container { z-index: 5 !important; }
@@ -34,20 +32,22 @@
             padding-bottom: 0;
         }
         .bottom-sheet-pontos.aberto .bottom-sheet-conteudo {
-            max-height: 500px;
+            max-height: 520px;
             overflow: visible;
             opacity: 1;
-        }
-        @media (max-width: 767px) {
-            .bottom-sheet-pontos.aberto .bottom-sheet-conteudo {
-                max-height: 500px;
-            }
         }
     </style>
 </head>
 <body class="h-screen w-full relative font-sans overflow-hidden bg-gray-100">
-
     <div id="map" class="absolute inset-0"></div>
+
+    <div id="estadoViagemOverlay" class="hidden absolute inset-0 z-40 bg-slate-950/95 text-white px-8 py-10">
+        <div class="h-full flex flex-col justify-center items-center text-center max-w-xl mx-auto">
+            <p id="estadoViagemTag" class="text-[11px] uppercase tracking-[0.3em] text-blue-200 font-bold"></p>
+            <h1 id="estadoViagemTitulo" class="text-3xl sm:text-4xl font-black mt-4"></h1>
+            <p id="estadoViagemTexto" class="text-slate-300 text-base sm:text-lg mt-4 leading-relaxed"></p>
+        </div>
+    </div>
 
     <div class="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-10 pointer-events-none">
         <button onclick="toggleSidebar()" class="w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-md text-blue-500 pointer-events-auto hover:bg-white transition">
@@ -57,7 +57,6 @@
         <button id="btnNotificacao" onclick="mostrarNotificacao()" class="w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-md text-red-500 relative pointer-events-auto hover:bg-white transition">
             <span id="bolinhaNotificacao" class="hidden absolute top-2 right-2 w-2 h-2 bg-red-600 rounded-full animate-ping"></span>
             <span id="bolinhaEstatica" class="hidden absolute top-2 right-2 w-2 h-2 bg-red-600 rounded-full"></span>
-
             <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
         </button>
     </div>
@@ -100,12 +99,7 @@
                                     </span>
                                 </div>
                                 <p class="text-sm font-semibold text-gray-700"><?= htmlspecialchars($p['nome']); ?></p>
-                                <p class="text-xs text-gray-400 italic">
-                                    Ponto de parada oficial
-                                    <?php if (!empty($p['horario_aproximado'])): ?>
-                                        • Horario aprox.: <?= htmlspecialchars(substr($p['horario_aproximado'], 0, 5)); ?>
-                                    <?php endif; ?>
-                                </p>
+                                <p class="text-xs text-gray-400 italic">Ponto de parada oficial</p>
                             </div>
                             <button onclick="confirmarPonto(<?= $p['id']; ?>)" class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-md active:scale-95 transition">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -132,33 +126,26 @@
             </div>
 
             <h2 class="text-xl">
-                <span class="text-gray-800">Olá, </span><span class="text-blue-600 font-black"><?= htmlspecialchars($currentAluno['nome'] ?? ($_SESSION['usuario_nome'] ?? 'Aluno')) ?>!</span>
+                <span class="text-gray-800">Ola, </span><span class="text-blue-600 font-black"><?= htmlspecialchars($currentAluno['nome'] ?? ($_SESSION['usuario_nome'] ?? 'Aluno')) ?>!</span>
             </h2>
             <p class="text-sm font-black text-gray-900 tracking-wide mt-1"><?= htmlspecialchars(($currentAluno['telefone'] ?? '') !== '' ? $currentAluno['telefone'] : ($currentAluno['email'] ?? 'Sem contato')) ?></p>
 
             <div class="h-px w-full bg-gray-100 my-6"></div>
         </div>
 
-        <div>
-            <button type="button" class="w-full bg-blue-500 text-white rounded-xl py-3.5 flex items-center justify-center gap-3 font-bold shadow-lg shadow-blue-500/30 hover:bg-blue-600 mb-6 transition">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.768-6.768a2.5 2.5 0 113.536 3.536L12.536 16.536A4 4 0 019.707 17.707L6 18l.293-3.707A4 4 0 017.464 11.464L14.232 4.696a2.5 2.5 0 013.536 0"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19a6 6 0 10-6-6"></path></svg>
-                <span>Personalizar Perfil</span>
-            </button>
-
-            <div class="flex flex-col gap-6">
-                <a href="#" class="flex items-center gap-4 text-gray-600 font-bold hover:text-blue-600 transition">
-                    <svg class="w-6 h-6 stroke-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h8m-8 4h8m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                    <span>Viagens</span>
-                </a>
-                <a href="#" class="flex items-center gap-4 text-gray-600 font-bold hover:text-blue-600 transition">
-                    <svg class="w-6 h-6 stroke-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 15v-3a8 8 0 0116 0v3"></path><path stroke-linecap="round" stroke-linejoin="round" d="M18 17a2 2 0 002-2v-1a2 2 0 00-2-2h-1v5h1zM6 17a2 2 0 01-2-2v-1a2 2 0 012-2h1v5H6z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9 19h6"></path></svg>
-                    <span>Ajuda</span>
-                </a>
-                <a href="#" class="flex items-center gap-4 text-gray-600 font-bold hover:text-blue-600 transition">
-                    <svg class="w-6 h-6 stroke-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8m-8 4h5m-7 6l-4 1 1-4V6a2 2 0 012-2h14a2 2 0 012 2v9a2 2 0 01-2 2H8l-3 3z"></path></svg>
-                    <span>Fale Conosco</span>
-                </a>
-            </div>
+        <div class="flex flex-col gap-6">
+            <a href="#" class="flex items-center gap-4 text-gray-600 font-bold hover:text-blue-600 transition">
+                <svg class="w-6 h-6 stroke-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h8m-8 4h8m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <span>Viagens</span>
+            </a>
+            <a href="#" class="flex items-center gap-4 text-gray-600 font-bold hover:text-blue-600 transition">
+                <svg class="w-6 h-6 stroke-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 15v-3a8 8 0 0116 0v3"></path><path stroke-linecap="round" stroke-linejoin="round" d="M18 17a2 2 0 002-2v-1a2 2 0 00-2-2h-1v5h1zM6 17a2 2 0 01-2-2v-1a2 2 0 012-2h1v5H6z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9 19h6"></path></svg>
+                <span>Ajuda</span>
+            </a>
+            <a href="#" class="flex items-center gap-4 text-gray-600 font-bold hover:text-blue-600 transition">
+                <svg class="w-6 h-6 stroke-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8m-8 4h5m-7 6l-4 1 1-4V6a2 2 0 012-2h14a2 2 0 012 2v9a2 2 0 01-2 2H8l-3 3z"></path></svg>
+                <span>Fale Conosco</span>
+            </a>
         </div>
 
         <div class="mt-auto">
@@ -173,6 +160,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         const estadoConfirmacaoInicial = <?= json_encode($estadoConfirmacao ?? null, JSON_UNESCAPED_UNICODE) ?>;
+        const contextoViagemInicial = <?= json_encode($contextoViagemAluno ?? null, JSON_UNESCAPED_UNICODE) ?>;
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebarMenu');
@@ -213,15 +201,14 @@
                 iconPath.setAttribute('d', expanded ? chevronDownPath : chevronUpPath);
             }
 
-            function togglePanel() {
+            handle.addEventListener('click', function () {
                 setExpanded(!container.classList.contains('aberto'));
-            }
+            });
 
-            handle.addEventListener('click', togglePanel);
             setExpanded(true);
         })();
 
-        var map = L.map('map', { zoomControl: false }).setView([-21.4059, -48.5052], 15);
+        const map = L.map('map', { zoomControl: false }).setView([-21.4059, -48.5052], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
@@ -229,47 +216,126 @@
         map.locate({ setView: true, maxZoom: 16 });
         map.on('locationfound', function (e) {
             L.circleMarker(e.latlng, {
-                radius: 8, fillColor: '#4A7DDF', color: '#fff', weight: 3, opacity: 1, fillOpacity: 1
+                radius: 8,
+                fillColor: '#4A7DDF',
+                color: '#fff',
+                weight: 3,
+                opacity: 1,
+                fillOpacity: 1
             }).addTo(map).bindPopup('Voce esta aqui').openPopup();
         });
 
-        var pontosDoBanco = <?= json_encode($pontos); ?>;
-        var buscaInput = document.getElementById('buscarPonto');
-        var cardsPontos = Array.from(document.querySelectorAll('.card-ponto'));
-        var nenhumResultadoPontos = document.getElementById('nenhumResultadoPontos');
-        var listaPontosWrapper = document.getElementById('listaPontosWrapper');
-        var painelEstadoAluno = document.getElementById('painelEstadoAluno');
-        var estadoConfirmacaoAtual = estadoConfirmacaoInicial;
-        var busIcon = L.divIcon({
+        const pontosDoBanco = <?= json_encode($pontos, JSON_UNESCAPED_UNICODE) ?>;
+        const buscaInput = document.getElementById('buscarPonto');
+        const cardsPontos = Array.from(document.querySelectorAll('.card-ponto'));
+        const nenhumResultadoPontos = document.getElementById('nenhumResultadoPontos');
+        const listaPontosWrapper = document.getElementById('listaPontosWrapper');
+        const painelEstadoAluno = document.getElementById('painelEstadoAluno');
+        const overlayEstado = document.getElementById('estadoViagemOverlay');
+        let contextoViagemAtual = contextoViagemInicial || {};
+        let estadoConfirmacaoAtual = estadoConfirmacaoInicial;
+        let viagemAtual = contextoViagemAtual.trip || null;
+        let retornoPlanejado = !!contextoViagemAtual.retorno_planejado;
+        let ultimoStatus = viagemAtual && viagemAtual.status ? viagemAtual.status : 'aguardando';
+        let notificadoSaida = false;
+        let notificadoChegada = false;
+
+        const busIcon = L.divIcon({
             html: `<div style="background-color: #4A7DDF; padding: 6px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">
                     <svg style="width: 14px; height: 14px; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8m-8 4h8m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>
                    </div>`,
-            className: '', iconSize: [28, 28], iconAnchor: [14, 14]
+            className: '',
+            iconSize: [28, 28],
+            iconAnchor: [14, 14]
         });
-        var marcadoresPorPonto = {};
+        const marcadoresPorPonto = {};
 
         pontosDoBanco.forEach(function (ponto) {
             if (ponto.latitude && ponto.longitude) {
                 marcadoresPorPonto[ponto.id] = L.marker([ponto.latitude, ponto.longitude], { icon: busIcon })
                     .addTo(map)
-                    .bindPopup(`<strong>${ponto.nome}</strong><br><span style="color: #666;">${ponto.nome_linha || 'Linha BeFlow'}</span>${ponto.horario_aproximado ? `<br><span style="color: #b45309;">Horario aprox.: ${String(ponto.horario_aproximado).slice(0, 5)}</span>` : ''}`);
+                    .bindPopup(`<strong>${ponto.nome}</strong><br><span style="color: #666;">${ponto.nome_linha || 'Linha BeFlow'}</span>`);
             }
         });
+
+        function getTripStatus() {
+            return (viagemAtual && viagemAtual.status) || 'aguardando';
+        }
+
+        function getTripDirection() {
+            return (viagemAtual && viagemAtual.direcao) || 'ida';
+        }
+
+        function formatarHora(hora) {
+            if (!hora) {
+                return '--:--';
+            }
+
+            return String(hora).slice(0, 5);
+        }
+
+        function esconderFluxoPrincipal() {
+            document.getElementById('map').classList.add('hidden');
+            document.getElementById('bottomSheet').classList.add('hidden');
+            document.getElementById('btnNotificacao').classList.add('hidden');
+        }
+
+        function mostrarFluxoPrincipal() {
+            document.getElementById('map').classList.remove('hidden');
+            document.getElementById('bottomSheet').classList.remove('hidden');
+            document.getElementById('btnNotificacao').classList.remove('hidden');
+            overlayEstado.classList.add('hidden');
+        }
+
+        function mostrarTelaEstado(tag, titulo, texto) {
+            esconderFluxoPrincipal();
+            document.getElementById('estadoViagemTag').innerText = tag;
+            document.getElementById('estadoViagemTitulo').innerText = titulo;
+            document.getElementById('estadoViagemTexto').innerText = texto;
+            overlayEstado.classList.remove('hidden');
+        }
+
+        function atualizarTelaDeCiclo() {
+            if (!viagemAtual) {
+                mostrarFluxoPrincipal();
+                return;
+            }
+
+            if (getTripDirection() === 'ida' && getTripStatus() === 'finalizada' && retornoPlanejado) {
+                mostrarTelaEstado(
+                    'Ida concluida',
+                    'Viagem de ida concluida.',
+                    `Seu onibus de Volta sai as ${formatarHora(contextoViagemAtual.hora_volta)}.`
+                );
+                return;
+            }
+
+            if (getTripDirection() === 'volta' && getTripStatus() === 'finalizada') {
+                mostrarTelaEstado(
+                    'Dia concluido',
+                    'Viagem concluida.',
+                    'Ate a proxima!'
+                );
+                return;
+            }
+
+            mostrarFluxoPrincipal();
+        }
 
         function filtrarPontos() {
             if (estadoConfirmacaoAtual) {
                 return;
             }
 
-            var termo = (buscaInput.value || '').trim().toLowerCase();
-            var idsVisiveis = [];
+            const termo = (buscaInput.value || '').trim().toLowerCase();
+            const idsVisiveis = [];
 
             cardsPontos.forEach(function (card) {
-                var textoBusca = (card.dataset.search || '').toLowerCase();
-                var pontoId = card.dataset.pontoId;
-                var corresponde = termo === '' || textoBusca.indexOf(termo) !== -1;
+                const textoBusca = (card.dataset.search || '').toLowerCase();
+                const pontoId = card.dataset.pontoId;
+                const corresponde = termo === '' || textoBusca.indexOf(termo) !== -1;
 
                 card.classList.toggle('hidden', !corresponde);
 
@@ -286,9 +352,7 @@
                 }
             });
 
-            nenhumResultadoPontos.classList.toggle('hidden', cardsPontos.some(function (card) {
-                return !card.classList.contains('hidden');
-            }));
+            nenhumResultadoPontos.classList.toggle('hidden', cardsPontos.some(card => !card.classList.contains('hidden')));
 
             if (idsVisiveis.length === 1) {
                 map.setView(marcadoresPorPonto[idsVisiveis[0]].getLatLng(), 16);
@@ -302,19 +366,50 @@
             document.getElementById('bolinhaEstatica').classList.add('hidden');
         }
 
+        function atualizarContextoLocal(data) {
+            if (data && data.trip) {
+                viagemAtual = data.trip;
+            }
+
+            if (data && data.state !== undefined) {
+                estadoConfirmacaoAtual = data.state;
+            }
+
+            if (data && data.retorno_planejado !== undefined) {
+                retornoPlanejado = !!data.retorno_planejado;
+            }
+
+            if (data && data.hora_volta !== undefined) {
+                contextoViagemAtual.hora_volta = data.hora_volta;
+            }
+
+            if (data) {
+                contextoViagemAtual = Object.assign({}, contextoViagemAtual, data);
+            }
+        }
+
         function enviarAcaoConfirmacao(payload) {
-            return fetch('confirmar-presenca', {
+            return fetch('<?= BASE_URL ?>/confirmar-presenca', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
-            })
-            .then(async response => {
+            }).then(async response => {
                 const text = await response.text();
+                let data;
+
                 try {
-                    return JSON.parse(text);
+                    data = JSON.parse(text);
                 } catch (e) {
                     throw new Error('O servidor enviou um erro em vez de JSON.');
                 }
+
+                if (!response.ok) {
+                    const error = new Error(data.erro || data.message || 'Operacao bloqueada.');
+                    error.payload = data;
+                    throw error;
+                }
+
+                return data;
             });
         }
 
@@ -326,7 +421,7 @@
                 return 'Embarque informado. Agora diga se voce vai voltar de onibus.';
             }
             if (tipo === 'retorno_sim') {
-                return 'Seu retorno de onibus foi registrado e sera contabilizado.';
+                return 'Seu retorno de onibus foi registrado e sera contabilizado na viagem de volta.';
             }
             if (tipo === 'retorno_nao') {
                 return 'Voce informou que nao vai voltar de onibus.';
@@ -340,19 +435,24 @@
                 painelEstadoAluno.innerHTML = '';
                 listaPontosWrapper.classList.remove('hidden');
                 filtrarPontos();
+                atualizarTelaDeCiclo();
                 return;
             }
 
             const pontoNome = estadoConfirmacaoAtual.ponto_nome || 'Ponto selecionado';
             const linhaNome = estadoConfirmacaoAtual.linha_nome || 'Linha ativa';
             const resumo = getResumoEstado(estadoConfirmacaoAtual.tipo);
+            const statusViagem = estadoConfirmacaoAtual.viagem_status || getTripStatus();
+            const bloqueado = statusViagem === 'aguardando' || statusViagem === 'agendada';
             let acoes = '';
 
             if (estadoConfirmacaoAtual.tipo === 'embarque') {
                 acoes = `
                     <div class="grid grid-cols-2 gap-3 mt-4">
                         <button type="button" onclick="cancelarPresenca()" class="rounded-2xl border border-red-200 text-red-600 font-bold py-3 hover:bg-red-50 transition">Cancelar</button>
-                        <button type="button" onclick="informarEmbarque()" class="rounded-2xl bg-blue-600 text-white font-bold py-3 shadow-md hover:bg-blue-700 transition">Estou no onibus</button>
+                        <button type="button" onclick="${bloqueado ? '' : 'informarEmbarque()'}" class="rounded-2xl ${bloqueado ? 'bg-slate-200 text-slate-500 opacity-50 pointer-events-none cursor-not-allowed' : 'bg-blue-600 text-white shadow-md hover:bg-blue-700'} font-bold py-3 transition">
+                            ${bloqueado ? 'Aguardando partida...' : 'Entrei no Onibus'}
+                        </button>
                     </div>
                 `;
             } else if (estadoConfirmacaoAtual.tipo === 'embarcado') {
@@ -390,6 +490,7 @@
             painelEstadoAluno.classList.remove('hidden');
             listaPontosWrapper.classList.add('hidden');
             nenhumResultadoPontos.classList.add('hidden');
+            atualizarTelaDeCiclo();
         }
 
         function confirmarPonto(pontoId) {
@@ -410,18 +511,13 @@
                 enviarAcaoConfirmacao({ acao: 'confirmar_ponto', ponto_id: pontoId })
                     .then(data => {
                         limparNotificacao();
-
-                        if (data.success) {
-                            estadoConfirmacaoAtual = data.state || null;
-                            renderizarEstadoAluno();
-                            Swal.fire('Confirmado!', data.message, 'success');
-                        } else {
-                            Swal.fire('Ops!', data.message, 'error');
-                        }
+                        atualizarContextoLocal(data);
+                        renderizarEstadoAluno();
+                        Swal.fire('Confirmado!', data.message, 'success');
                     })
                     .catch(() => {
                         limparNotificacao();
-                        Swal.fire('Erro de Servidor', 'Nao foi possivel confirmar.', 'warning');
+                        Swal.fire('Erro de servidor', 'Nao foi possivel confirmar.', 'warning');
                     });
             });
         }
@@ -443,13 +539,9 @@
 
                 enviarAcaoConfirmacao({ acao: 'cancelar_ponto' })
                     .then(data => {
-                        if (data.success) {
-                            estadoConfirmacaoAtual = data.state || null;
-                            renderizarEstadoAluno();
-                            Swal.fire('Cancelado', data.message, 'success');
-                        } else {
-                            Swal.fire('Ops!', data.message, 'error');
-                        }
+                        atualizarContextoLocal(data);
+                        renderizarEstadoAluno();
+                        Swal.fire('Cancelado', data.message, 'success');
                     });
             });
         }
@@ -457,84 +549,64 @@
         function informarEmbarque() {
             enviarAcaoConfirmacao({ acao: 'informar_embarque' })
                 .then(data => {
-                    if (data.success) {
-                        estadoConfirmacaoAtual = data.state || null;
+                    atualizarContextoLocal(data);
+                    renderizarEstadoAluno();
+                    Swal.fire('Perfeito', data.message, 'success');
+                })
+                .catch(error => {
+                    if (error.payload) {
+                        atualizarContextoLocal(error.payload);
                         renderizarEstadoAluno();
-                        Swal.fire('Perfeito', data.message, 'success');
-                    } else {
-                        Swal.fire('Ops!', data.message, 'error');
                     }
+                    Swal.fire('Acao bloqueada', error.message, 'error');
                 });
         }
 
         function informarRetorno(vaiVoltar) {
             enviarAcaoConfirmacao({ acao: vaiVoltar ? 'retorno_sim' : 'retorno_nao' })
                 .then(data => {
-                    if (data.success) {
-                        estadoConfirmacaoAtual = data.state || null;
-                        renderizarEstadoAluno();
-                        Swal.fire('Informacao salva', data.message, 'success');
-                    } else {
-                        Swal.fire('Ops!', data.message, 'error');
-                    }
+                    atualizarContextoLocal(data);
+                    renderizarEstadoAluno();
+                    Swal.fire('Informacao salva', data.message, 'success');
                 });
         }
-
-        renderizarEstadoAluno();
-
-        var notificadoSaida = false;
-        var notificadoChegada = false;
-        var ultimoStatus = 'aguardando';
 
         function mostrarNotificacao() {
             if (ultimoStatus === 'em_rota') {
                 Swal.fire({ title: 'O onibus ja saiu!', text: 'Fique atento ao seu ponto de embarque.', icon: 'info', confirmButtonColor: '#4A7DDF' });
             } else if (ultimoStatus === 'aguardando_encerramento' || ultimoStatus === 'finalizada') {
-                Swal.fire({ title: 'Viagem Concluida', text: 'O onibus ja finalizou a rota de hoje.', icon: 'success', confirmButtonColor: '#4A7DDF' });
+                Swal.fire({ title: 'Viagem concluida', text: 'O motorista ja finalizou a etapa atual.', icon: 'success', confirmButtonColor: '#4A7DDF' });
             } else {
-                Swal.fire({ title: 'Sem Novidades', text: 'O onibus ainda nao iniciou a rota.', icon: 'question', confirmButtonColor: '#4A7DDF' });
+                Swal.fire({ title: 'Sem novidades', text: 'O onibus ainda nao iniciou a rota.', icon: 'question', confirmButtonColor: '#4A7DDF' });
             }
             limparNotificacao();
         }
 
-        setInterval(function () {
+        function atualizarStatus() {
             fetch('<?= BASE_URL ?>/status-viagem')
-            .then(response => response.json())
-            .then(data => {
-                ultimoStatus = data.status;
+                .then(response => response.json())
+                .then(data => {
+                    atualizarContextoLocal(data);
+                    ultimoStatus = data.status;
 
-                if (data.status === 'em_rota' && !notificadoSaida) {
-                    notificadoSaida = true;
-                    notificadoChegada = false;
+                    if (data.status === 'em_rota' && !notificadoSaida) {
+                        notificadoSaida = true;
+                        notificadoChegada = false;
+                        document.getElementById('bolinhaNotificacao').classList.remove('hidden');
+                        document.getElementById('bolinhaEstatica').classList.remove('hidden');
+                    } else if ((data.status === 'aguardando_encerramento' || data.status === 'finalizada') && !notificadoChegada && notificadoSaida) {
+                        notificadoChegada = true;
+                        notificadoSaida = false;
+                        limparNotificacao();
+                    }
 
-                    document.getElementById('bolinhaNotificacao').classList.remove('hidden');
-                    document.getElementById('bolinhaEstatica').classList.remove('hidden');
+                    renderizarEstadoAluno();
+                })
+                .catch(erro => console.error('Erro ao buscar status:', erro));
+        }
 
-                    Swal.fire({
-                        title: 'O onibus saiu!',
-                        text: 'O motorista acabou de iniciar a rota. Dirija-se ao seu ponto.',
-                        iconHtml: '<img src="https://media.giphy.com/media/l0HlU5b1A0rXgPzH2/giphy.gif" style="width: 150px; border-radius: 50%;">',
-                        customClass: { icon: 'no-border' },
-                        confirmButtonColor: '#4A7DDF',
-                        confirmButtonText: 'Beleza, to indo!'
-                    });
-                } else if ((data.status === 'aguardando_encerramento' || data.status === 'finalizada') && !notificadoChegada && notificadoSaida) {
-                    notificadoChegada = true;
-                    notificadoSaida = false;
-
-                    limparNotificacao();
-
-                    Swal.fire({
-                        title: 'Viagem Finalizada',
-                        text: 'O motorista encerrou a rota.',
-                        icon: 'info',
-                        confirmButtonColor: '#4A7DDF',
-                        confirmButtonText: 'Ok'
-                    });
-                }
-            })
-            .catch(erro => console.error('Erro ao buscar status:', erro));
-        }, 10000);
+        renderizarEstadoAluno();
+        setInterval(atualizarStatus, 10000);
     </script>
 </body>
 </html>

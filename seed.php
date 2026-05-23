@@ -108,10 +108,10 @@ upsert($pdo, $driver, 'veiculo', [
 ], ['id']);
 
 $horarios = [
-    ['id' => 1, 'linha_id' => 1, 'turno' => 'Matutino', 'hora_saida_garagem' => '06:30:00'],
-    ['id' => 2, 'linha_id' => 2, 'turno' => 'Matutino', 'hora_saida_garagem' => '06:45:00'],
-    ['id' => 3, 'linha_id' => 3, 'turno' => 'Matutino', 'hora_saida_garagem' => '07:00:00'],
-    ['id' => 4, 'linha_id' => 4, 'turno' => 'Matutino', 'hora_saida_garagem' => '07:15:00'],
+    ['id' => 1, 'linha_id' => 1, 'turno' => 'Matutino', 'hora_ida' => '06:30:00', 'hora_volta' => '17:30:00'],
+    ['id' => 2, 'linha_id' => 2, 'turno' => 'Matutino', 'hora_ida' => '06:45:00', 'hora_volta' => '17:45:00'],
+    ['id' => 3, 'linha_id' => 3, 'turno' => 'Matutino', 'hora_ida' => '07:00:00', 'hora_volta' => '18:00:00'],
+    ['id' => 4, 'linha_id' => 4, 'turno' => 'Matutino', 'hora_ida' => '07:15:00', 'hora_volta' => '18:15:00'],
 ];
 
 foreach ($horarios as $horario) {
@@ -149,24 +149,24 @@ $motoristaId = $stmtMotorista->fetchColumn();
 if ($motoristaId) {
     if ($driver === 'mysql') {
         $sqlViagem = "
-            INSERT INTO viagens (horario_base_id, linha_id, motorista_id, veiculo_id, numero_onibus, status, data_viagem, latitude_atual, longitude_atual)
-            VALUES (1, 1, :motorista_id, 1, '302', 'aguardando', CURDATE(), NULL, NULL)
+            INSERT INTO viagens (horario_base_id, linha_id, motorista_id, veiculo_id, direcao, status, data_viagem, latitude_atual, longitude_atual)
+            VALUES (1, 1, :motorista_id, 1, 'ida', 'aguardando', CURDATE(), NULL, NULL)
             ON DUPLICATE KEY UPDATE
                 horario_base_id = VALUES(horario_base_id),
                 motorista_id = VALUES(motorista_id),
                 veiculo_id = VALUES(veiculo_id),
-                numero_onibus = VALUES(numero_onibus),
+                direcao = VALUES(direcao),
                 status = 'aguardando'
         ";
     } else {
         $sqlViagem = "
-            INSERT INTO viagens (horario_base_id, linha_id, motorista_id, veiculo_id, numero_onibus, status, data_viagem, latitude_atual, longitude_atual)
-            VALUES (1, 1, :motorista_id, 1, '302', 'aguardando', CURRENT_DATE, NULL, NULL)
-            ON CONFLICT ON CONSTRAINT uniq_viagem_linha_dia DO UPDATE
+            INSERT INTO viagens (horario_base_id, linha_id, motorista_id, veiculo_id, direcao, status, data_viagem, latitude_atual, longitude_atual)
+            VALUES (1, 1, :motorista_id, 1, 'ida', 'aguardando', CURRENT_DATE, NULL, NULL)
+            ON CONFLICT ON CONSTRAINT unq_viagem_linha_data_direcao DO UPDATE
             SET horario_base_id = EXCLUDED.horario_base_id,
                 motorista_id = EXCLUDED.motorista_id,
                 veiculo_id = EXCLUDED.veiculo_id,
-                numero_onibus = EXCLUDED.numero_onibus,
+                direcao = EXCLUDED.direcao,
                 status = EXCLUDED.status
         ";
     }

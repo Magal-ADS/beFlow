@@ -7,6 +7,7 @@ class AdminController {
 
     public function index() {
         $this->requireAdminSession();
+        $empresaId = $this->getAdminEmpresaId();
 
         $db = (new Database())->getConnection();
         $stmtAdmin = $db->prepare("SELECT nome, telefone, email FROM usuarios WHERE id = :id LIMIT 1");
@@ -18,10 +19,19 @@ class AdminController {
         ];
         $statusViagem = $db->query("SELECT status FROM viagens ORDER BY data_viagem DESC, id DESC LIMIT 1")->fetchColumn();
         $usuariosTotal = (int) $db->query("SELECT COUNT(*) FROM usuarios")->fetchColumn();
-        $motoristasTotal = (int) $db->query("SELECT COUNT(*) FROM usuarios WHERE tipo_usuario = 'motorista' AND empresa_id = 1")->fetchColumn();
-        $linhas = $db->query("SELECT * FROM linhas WHERE empresa_id = 1 ORDER BY nome ASC")->fetchAll(PDO::FETCH_ASSOC);
+        $stmtMotoristas = $db->prepare("SELECT COUNT(*) FROM usuarios WHERE tipo_usuario = 'motorista' AND empresa_id = :empresa_id");
+        $stmtMotoristas->execute(['empresa_id' => $empresaId]);
+        $motoristasTotal = (int) $stmtMotoristas->fetchColumn();
+        $stmtLinhas = $db->prepare("SELECT * FROM linhas WHERE empresa_id = :empresa_id ORDER BY nome ASC");
+        $stmtLinhas->execute(['empresa_id' => $empresaId]);
+        $linhas = $stmtLinhas->fetchAll(PDO::FETCH_ASSOC);
         $linhasTotal = count($linhas);
-        $onibusTotal = (int) $db->query("SELECT COUNT(*) FROM veiculo WHERE empresa_id = 1")->fetchColumn();
+        $stmtVeiculosCount = $db->prepare("SELECT COUNT(*) FROM veiculo WHERE empresa_id = :empresa_id");
+        $stmtVeiculosCount->execute(['empresa_id' => $empresaId]);
+        $onibusTotal = (int) $stmtVeiculosCount->fetchColumn();
+        $stmtVeiculos = $db->prepare("SELECT * FROM veiculo WHERE empresa_id = :empresa_id ORDER BY numero_identificador ASC, placa ASC");
+        $stmtVeiculos->execute(['empresa_id' => $empresaId]);
+        $veiculos = $stmtVeiculos->fetchAll(PDO::FETCH_ASSOC);
         $pontosTotal = (int) $db->query("SELECT COUNT(*) FROM pontos")->fetchColumn();
         $horariosTotal = (int) $db->query("SELECT COUNT(*) FROM horarios_base")->fetchColumn();
         $empresasTotal = (int) $db->query("SELECT COUNT(*) FROM empresa")->fetchColumn();
@@ -42,7 +52,8 @@ class AdminController {
             'alunos' => $usuariosTotal,
             'usuarios' => $usuariosTotal,
             'motoristas' => $motoristasTotal,
-            'linhas_onibus' => $linhasTotal . '/' . $onibusTotal,
+            'linhas_pontos' => $linhasTotal . '/' . $pontosTotal,
+            'veiculos' => $onibusTotal,
             'pontos' => $pontosTotal,
             'horarios' => $horariosTotal,
             'empresas' => $empresasTotal,
@@ -59,17 +70,17 @@ class AdminController {
                 'icon' => 'users',
             ],
             [
-                'title' => 'Linhas e Onibus',
-                'value' => $linhasTotal . '/' . $onibusTotal,
+                'title' => 'Linhas e Pontos',
+                'value' => $linhasTotal . '/' . $pontosTotal,
                 'change' => 'Operacao cadastrada',
                 'icon_bg' => 'bg-emerald-100',
                 'icon_fg' => 'text-emerald-600',
                 'icon' => 'bus',
             ],
             [
-                'title' => 'Pontos de parada',
-                'value' => (string) $pontosTotal,
-                'change' => 'Mapa operacional',
+                'title' => 'Veiculos',
+                'value' => (string) $onibusTotal,
+                'change' => 'Frota cadastrada',
                 'icon_bg' => 'bg-violet-100',
                 'icon_fg' => 'text-violet-600',
                 'icon' => 'pin',
@@ -253,9 +264,12 @@ class AdminController {
 
     public function rotas() {
         $this->requireAdminSession();
+        $empresaId = $this->getAdminEmpresaId();
 
         $db = (new Database())->getConnection();
-        $linhas = $db->query("SELECT * FROM linhas WHERE empresa_id = 1 ORDER BY nome ASC")->fetchAll(PDO::FETCH_ASSOC);
+        $stmtLinhas = $db->prepare("SELECT * FROM linhas WHERE empresa_id = :empresa_id ORDER BY nome ASC");
+        $stmtLinhas->execute(['empresa_id' => $empresaId]);
+        $linhas = $stmtLinhas->fetchAll(PDO::FETCH_ASSOC);
         $pontos = $db->query("SELECT * FROM pontos ORDER BY linha_id ASC, ordem_na_linha ASC")->fetchAll(PDO::FETCH_ASSOC);
 
         $linhasComPontos = [];
@@ -271,6 +285,7 @@ class AdminController {
 
     public function salvarLinha() {
         $this->requireAdminSessionJson();
+        $empresaId = $this->getAdminEmpresaId();
 
         $id = trim($_POST['id'] ?? '');
         $nome = trim($_POST['nome'] ?? '');
@@ -293,7 +308,7 @@ class AdminController {
                 $linhaId = (int) $id;
             } else {
                 $stmt = $db->prepare("INSERT INTO linhas (nome, cor, empresa_id) VALUES (:nome, :cor, :empresa_id)");
-                $stmt->execute(['nome' => $nome, 'cor' => $cor, 'empresa_id' => 1]);
+                $stmt->execute(['nome' => $nome, 'cor' => $cor, 'empresa_id' => $empresaId]);
                 $linhaId = (int) $db->lastInsertId();
             }
 
@@ -402,6 +417,78 @@ class AdminController {
         }
     }
 
+    public function salvarVeiculo() {
+        $this->requireAdminSessionJson();
+        $empresaId = $this->getAdminEmpresaId();
+
+        $id = trim($_POST['id'] ?? '');
+        $numeroIdentificador = trim($_POST['numero_identificador'] ?? '');
+        $placa = strtoupper(trim($_POST['placa'] ?? ''));
+
+        if ($numeroIdentificador === '' || $placa === '') {
+            $this->jsonResponse(false, 'Informe o identificador e a placa do veiculo.');
+        }
+
+        try {
+            $db = (new Database())->getConnection();
+
+            if ($id !== '') {
+                $stmt = $db->prepare("
+                    UPDATE veiculo
+                    SET numero_identificador = :numero_identificador,
+                        placa = :placa
+                    WHERE id = :id AND empresa_id = :empresa_id
+                ");
+                $stmt->execute([
+                    'numero_identificador' => $numeroIdentificador,
+                    'placa' => $placa,
+                    'id' => $id,
+                    'empresa_id' => $empresaId,
+                ]);
+            } else {
+                $stmt = $db->prepare("
+                    INSERT INTO veiculo (numero_identificador, placa, empresa_id)
+                    VALUES (:numero_identificador, :placa, :empresa_id)
+                ");
+                $stmt->execute([
+                    'numero_identificador' => $numeroIdentificador,
+                    'placa' => $placa,
+                    'empresa_id' => $empresaId,
+                ]);
+            }
+
+            $this->jsonResponse(true, 'Veiculo salvo com sucesso.');
+        } catch (PDOException $e) {
+            $message = $this->isDuplicateKey($e)
+                ? 'Ja existe um veiculo com essa placa.'
+                : 'Erro ao salvar o veiculo.';
+            $this->jsonResponse(false, $message);
+        }
+    }
+
+    public function deletarVeiculo() {
+        $this->requireAdminSessionJson();
+        $empresaId = $this->getAdminEmpresaId();
+
+        $id = trim($_POST['id'] ?? '');
+        if ($id === '') {
+            $this->jsonResponse(false, 'ID do veiculo invalido.');
+        }
+
+        try {
+            $db = (new Database())->getConnection();
+            $stmt = $db->prepare("DELETE FROM veiculo WHERE id = :id AND empresa_id = :empresa_id");
+            $stmt->execute([
+                'id' => $id,
+                'empresa_id' => $empresaId,
+            ]);
+
+            $this->jsonResponse(true, 'Veiculo removido com sucesso.');
+        } catch (PDOException $e) {
+            $this->jsonResponse(false, 'Erro ao remover o veiculo.');
+        }
+    }
+
     private function ensureHorarioBase(PDO $db, $linhaId) {
         $stmt = $db->prepare("SELECT id FROM horarios_base WHERE linha_id = :linha_id LIMIT 1");
         $stmt->execute(['linha_id' => $linhaId]);
@@ -410,11 +497,12 @@ class AdminController {
             return;
         }
 
-        $insert = $db->prepare("INSERT INTO horarios_base (linha_id, turno, hora_saida_garagem) VALUES (:linha_id, :turno, :hora)");
+        $insert = $db->prepare("INSERT INTO horarios_base (linha_id, turno, hora_ida, hora_volta) VALUES (:linha_id, :turno, :hora_ida, :hora_volta)");
         $insert->execute([
             'linha_id' => $linhaId,
             'turno' => 'Matutino',
-            'hora' => '06:30:00',
+            'hora_ida' => '06:30:00',
+            'hora_volta' => '17:30:00',
         ]);
     }
 
@@ -450,6 +538,24 @@ class AdminController {
         $stmt->execute(['id' => $_SESSION['usuario_id']]);
 
         return (string) ($stmt->fetchColumn() ?: '');
+    }
+
+    private function getAdminEmpresaId() {
+        if (!empty($_SESSION['empresa_id'])) {
+            return (int) $_SESSION['empresa_id'];
+        }
+
+        if (!isset($_SESSION['usuario_id'])) {
+            return 1;
+        }
+
+        $db = (new Database())->getConnection();
+        $stmt = $db->prepare("SELECT empresa_id FROM usuarios WHERE id = :id LIMIT 1");
+        $stmt->execute(['id' => $_SESSION['usuario_id']]);
+        $empresaId = (int) ($stmt->fetchColumn() ?: 1);
+        $_SESSION['empresa_id'] = $empresaId;
+
+        return $empresaId;
     }
 
     private function isBeFlowEmail($email) {

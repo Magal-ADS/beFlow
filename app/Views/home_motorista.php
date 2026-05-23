@@ -29,7 +29,6 @@
     </style>
 </head>
 <body class="bg-slate-100 overflow-hidden">
-
     <div class="absolute top-0 left-0 right-0 p-4 z-[1000] pointer-events-none">
         <div class="bg-white/95 backdrop-blur rounded-[2rem] shadow-xl p-4 max-w-md mx-auto pointer-events-auto">
             <div class="flex items-start justify-between gap-3">
@@ -55,51 +54,56 @@
                     </a>
                 </div>
             </div>
-
         </div>
     </div>
 
     <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-[1100] transition-opacity duration-300 hidden opacity-0" onclick="toggleSidebar()"></div>
     <aside id="sidebarMenu" class="fixed top-0 left-0 h-full w-[84%] max-w-sm bg-white rounded-r-[2rem] shadow-2xl z-[1200] transition-transform duration-300 ease-in-out -translate-x-full flex flex-col overflow-hidden">
         <div class="flex-1 min-h-0 overflow-y-auto p-6 pb-36">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-xs uppercase tracking-[0.2em] text-slate-400 font-bold">Motorista</p>
-                <h2 class="text-xl font-black text-slate-900"><?= htmlspecialchars($currentMotorista['nome'] ?? ($_SESSION['usuario_nome'] ?? 'Motorista')) ?></h2>
-                <p class="text-sm text-slate-500 mt-1"><?= htmlspecialchars(($currentMotorista['telefone'] ?? '') !== '' ? $currentMotorista['telefone'] : ($currentMotorista['email'] ?? 'Sem contato')) ?></p>
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs uppercase tracking-[0.2em] text-slate-400 font-bold">Motorista</p>
+                    <h2 class="text-xl font-black text-slate-900"><?= htmlspecialchars($currentMotorista['nome'] ?? ($_SESSION['usuario_nome'] ?? 'Motorista')) ?></h2>
+                    <p class="text-sm text-slate-500 mt-1"><?= htmlspecialchars(($currentMotorista['telefone'] ?? '') !== '' ? $currentMotorista['telefone'] : ($currentMotorista['email'] ?? 'Sem contato')) ?></p>
+                </div>
+                <button type="button" onclick="toggleSidebar()" class="w-10 h-10 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
             </div>
-            <button type="button" onclick="toggleSidebar()" class="w-10 h-10 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
-        </div>
 
-        <div class="mt-8 space-y-3">
-            <div class="rounded-[1.5rem] bg-slate-50 border border-slate-200 p-4">
-                <p class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold">Linha</p>
-                <p id="linhaAtualBadge" class="text-base font-black text-slate-900 mt-2 truncate">
-                    <?= !empty($viagemAtual['nome_linha']) ? htmlspecialchars($viagemAtual['nome_linha']) : 'Nao definida' ?>
-                </p>
+            <div class="mt-8 space-y-3">
+                <div class="rounded-[1.5rem] bg-slate-50 border border-slate-200 p-4">
+                    <p class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold">Linha</p>
+                    <p id="linhaAtualBadge" class="text-base font-black text-slate-900 mt-2 truncate">
+                        <?= !empty($viagemAtual['nome_linha']) ? htmlspecialchars($viagemAtual['nome_linha']) : 'Nao definida' ?>
+                    </p>
+                </div>
+                <div class="rounded-[1.5rem] bg-slate-50 border border-slate-200 p-4">
+                    <p class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold">Veiculo</p>
+                    <p id="veiculoAtualBadge" class="text-base font-black text-slate-900 mt-2">
+                        <?= !empty($viagemAtual['veiculo_identificador']) ? htmlspecialchars($viagemAtual['veiculo_identificador'] . ' • ' . $viagemAtual['veiculo_placa']) : '--' ?>
+                    </p>
+                </div>
+                <div class="rounded-[1.5rem] bg-slate-50 border border-slate-200 p-4">
+                    <p class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold">Direcao</p>
+                    <p id="direcaoAtualBadge" class="text-base font-black text-slate-900 mt-2">
+                        <?= !empty($viagemAtual['direcao']) ? htmlspecialchars(strtoupper($viagemAtual['direcao'])) : '--' ?>
+                    </p>
+                </div>
+                <button type="button" onclick="abrirConfiguracaoViagem(false); toggleSidebar();" class="w-full rounded-2xl bg-blue-50 text-blue-700 border border-blue-100 px-4 py-4 text-left font-bold">
+                    Configurar viagem
+                </button>
+                <button type="button" id="btnEncerrarDia" onclick="confirmarEncerrarDia()" class="w-full rounded-2xl bg-slate-900 text-white px-4 py-4 text-left font-bold disabled:opacity-40 disabled:cursor-not-allowed">
+                    Encerrar ciclo
+                    <p class="text-sm text-slate-300 font-medium mt-1">Conclui a viagem atual depois que a chegada ja foi finalizada.</p>
+                </button>
             </div>
-            <div class="rounded-[1.5rem] bg-slate-50 border border-slate-200 p-4">
-                <p class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold">Onibus</p>
-                <p id="numeroOnibusBadge" class="text-base font-black text-slate-900 mt-2">
-                    <?= !empty($viagemAtual['numero_onibus']) ? htmlspecialchars($viagemAtual['numero_onibus']) : '--' ?>
-                </p>
-            </div>
-            <button type="button" onclick="abrirConfiguracaoViagem(false); toggleSidebar();" class="w-full rounded-2xl bg-blue-50 text-blue-700 border border-blue-100 px-4 py-4 text-left font-bold">
-                Configurar viagem
-            </button>
-            <button type="button" id="btnEncerrarDia" onclick="confirmarEncerrarDia()" class="w-full rounded-2xl bg-slate-900 text-white px-4 py-4 text-left font-bold disabled:opacity-40 disabled:cursor-not-allowed">
-                Encerrar dia
-                <p class="text-sm text-slate-300 font-medium mt-1">Salva a viagem depois que a chegada ja foi finalizada.</p>
-            </button>
-        </div>
 
-        <div class="mt-6 rounded-[1.5rem] bg-slate-50 border border-slate-200 p-4">
-            <p class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold">Retorno confirmado</p>
-            <p class="text-3xl font-black text-slate-900 mt-2" id="contadorRetornoSidebar">0</p>
-            <p class="text-sm text-slate-500 mt-1">Atualiza automaticamente para voce acompanhar no celular.</p>
-        </div>
+            <div class="mt-6 rounded-[1.5rem] bg-slate-50 border border-slate-200 p-4">
+                <p class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold">Retorno confirmado</p>
+                <p class="text-3xl font-black text-slate-900 mt-2" id="contadorRetornoSidebar">0</p>
+                <p class="text-sm text-slate-500 mt-1">A ida contabiliza quem vai voltar. A volta nasce desse lote automaticamente.</p>
+            </div>
         </div>
 
         <div class="absolute bottom-0 left-0 right-0 p-6 bg-white border-t border-slate-100">
@@ -122,18 +126,16 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         const linhasDisponiveis = <?= json_encode($linhasDisponiveis, JSON_UNESCAPED_UNICODE) ?>;
-        const viagemAtual = <?= json_encode($viagemAtual, JSON_UNESCAPED_UNICODE) ?>;
-        let configurado = !!(viagemAtual && viagemAtual.linha_id && viagemAtual.numero_onibus);
-        let viagemStatus = viagemAtual && viagemAtual.status ? viagemAtual.status : 'aguardando';
-        let linhaAtualId = viagemAtual && viagemAtual.linha_id ? Number(viagemAtual.linha_id) : null;
-        let linhaAtualNome = viagemAtual && viagemAtual.nome_linha ? viagemAtual.nome_linha : '';
-        let numeroOnibusAtual = viagemAtual && viagemAtual.numero_onibus ? viagemAtual.numero_onibus : '';
+        const veiculosDisponiveis = <?= json_encode($veiculosDisponiveis, JSON_UNESCAPED_UNICODE) ?>;
+        let viagemAtual = <?= json_encode($viagemAtual, JSON_UNESCAPED_UNICODE) ?>;
+        let configurado = !!(viagemAtual && viagemAtual.linha_id && viagemAtual.veiculo_id && viagemAtual.direcao);
 
         const map = L.map('map', { zoomControl: false }).setView([-21.4059, -48.5052], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
 
         const marcadoresLayer = L.layerGroup().addTo(map);
         let marcadorMotorista = null;
+        let ultimaLocalizacaoEnviada = 0;
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebarMenu');
@@ -150,47 +152,65 @@
             }
         }
 
+        function getViagemStatus() {
+            return viagemAtual && viagemAtual.status ? viagemAtual.status : 'aguardando';
+        }
+
         function getStatusLabel() {
             if (!configurado) {
-                return 'Defina a linha do dia';
+                return 'Defina a viagem do dia';
             }
-            if (viagemStatus === 'em_rota') {
-                return 'Em rota';
+
+            if (getViagemStatus() === 'em_rota') {
+                return `${formatarDirecao(viagemAtual.direcao)} em rota`;
             }
-            if (viagemStatus === 'aguardando_encerramento') {
+
+            if (getViagemStatus() === 'aguardando_encerramento') {
                 return 'Chegada finalizada';
             }
-            if (viagemStatus === 'finalizada') {
-                return 'Dia encerrado';
+
+            if (getViagemStatus() === 'finalizada') {
+                return 'Ciclo encerrado';
             }
-            return 'Aguardando inicio';
+
+            return `${formatarDirecao(viagemAtual.direcao)} aguardando inicio`;
+        }
+
+        function formatarDirecao(direcao) {
+            if (direcao === 'volta') {
+                return 'Volta';
+            }
+            return 'Ida';
+        }
+
+        function getVeiculoLabel(veiculo) {
+            if (!veiculo) {
+                return '--';
+            }
+
+            return `${veiculo.veiculo_identificador || veiculo.numero_identificador || 'Veiculo'} • ${veiculo.veiculo_placa || veiculo.placa || '--'}`;
+        }
+
+        function sincronizarViagem(trip) {
+            if (!trip) {
+                return;
+            }
+
+            viagemAtual = trip;
+            configurado = !!(viagemAtual.linha_id && viagemAtual.veiculo_id && viagemAtual.direcao);
+            atualizarBotaoEstado();
         }
 
         function atualizarCabecalhoViagem() {
-            const linhaBadge = document.getElementById('linhaAtualBadge');
-            const numeroOnibusBadge = document.getElementById('numeroOnibusBadge');
-            const statusMotorista = document.getElementById('statusMotorista');
-
-            if (linhaBadge) {
-                linhaBadge.innerText = linhaAtualNome || 'Nao definida';
-            }
-
-            if (numeroOnibusBadge) {
-                numeroOnibusBadge.innerText = numeroOnibusAtual || '--';
-            }
-
-            if (statusMotorista) {
-                statusMotorista.innerText = getStatusLabel();
-            }
+            document.getElementById('linhaAtualBadge').innerText = viagemAtual && viagemAtual.nome_linha ? viagemAtual.nome_linha : 'Nao definida';
+            document.getElementById('veiculoAtualBadge').innerText = getVeiculoLabel(viagemAtual);
+            document.getElementById('direcaoAtualBadge').innerText = viagemAtual && viagemAtual.direcao ? formatarDirecao(viagemAtual.direcao) : '--';
+            document.getElementById('statusMotorista').innerText = getStatusLabel();
         }
 
         function atualizarContadorRetorno(pontosArray) {
             const totalRetorno = pontosArray.reduce((total, ponto) => total + Number(ponto.total_retorno || 0), 0);
-            const contadorRetornoSidebar = document.getElementById('contadorRetornoSidebar');
-
-            if (contadorRetornoSidebar) {
-                contadorRetornoSidebar.innerText = totalRetorno;
-            }
+            document.getElementById('contadorRetornoSidebar').innerText = totalRetorno;
         }
 
         function desenharPontos(pontosArray) {
@@ -211,7 +231,7 @@
                 });
 
                 const marker = L.marker([ponto.latitude, ponto.longitude], { icon: busIcon })
-                    .bindPopup(`<b>${ponto.nome}</b><br>${ponto.nome_linha}${ponto.horario_aproximado ? `<br>Horario aprox.: ${String(ponto.horario_aproximado).slice(0, 5)}` : ''}<br>${ponto.total_alunos} alunos aguardando.<br>${ponto.total_retorno || 0} alunos confirmaram volta.`);
+                    .bindPopup(`<b>${ponto.nome}</b><br>${ponto.nome_linha}<br>${ponto.total_alunos} alunos aguardando.<br>${ponto.total_retorno || 0} alunos confirmaram volta.`);
                 marcadoresLayer.addLayer(marker);
             });
         }
@@ -221,22 +241,23 @@
             const icon = document.getElementById('iconRota');
             const text = document.getElementById('textRota');
             const btnEncerrarDia = document.getElementById('btnEncerrarDia');
+            const status = getViagemStatus();
 
             btn.disabled = false;
 
-            if (viagemStatus === 'em_rota') {
+            if (status === 'em_rota') {
                 btn.className = 'w-full max-w-sm pointer-events-auto bg-red-500 text-white font-bold py-4 px-6 rounded-full shadow-[0_10px_20px_rgba(239,68,68,0.4)] transform transition active:scale-95 flex items-center justify-center gap-2 text-lg disabled:bg-slate-300 disabled:shadow-none disabled:text-slate-600 disabled:cursor-not-allowed';
                 text.innerText = 'Finalizar chegada';
                 icon.innerHTML = '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd"/>';
-            } else if (viagemStatus === 'aguardando_encerramento') {
+            } else if (status === 'aguardando_encerramento') {
                 btn.disabled = true;
                 btn.className = 'w-full max-w-sm pointer-events-auto bg-slate-300 text-slate-600 font-bold py-4 px-6 rounded-full shadow-none transform transition active:scale-95 flex items-center justify-center gap-2 text-lg disabled:bg-slate-300 disabled:shadow-none disabled:text-slate-600 disabled:cursor-not-allowed';
                 text.innerText = 'Chegada registrada';
                 icon.innerHTML = '<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-7.25 7.25a1 1 0 01-1.414 0l-3.25-3.25a1 1 0 111.414-1.414l2.543 2.543 6.543-6.543a1 1 0 011.414 0z" clip-rule="evenodd"/>';
-            } else if (viagemStatus === 'finalizada') {
+            } else if (status === 'finalizada') {
                 btn.disabled = true;
                 btn.className = 'w-full max-w-sm pointer-events-auto bg-slate-300 text-slate-600 font-bold py-4 px-6 rounded-full shadow-none transform transition active:scale-95 flex items-center justify-center gap-2 text-lg disabled:bg-slate-300 disabled:shadow-none disabled:text-slate-600 disabled:cursor-not-allowed';
-                text.innerText = 'Dia encerrado';
+                text.innerText = 'Ciclo encerrado';
                 icon.innerHTML = '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.172 7.707 8.879a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>';
             } else {
                 btn.className = 'w-full max-w-sm pointer-events-auto bg-green-500 text-white font-bold py-4 px-6 rounded-full shadow-[0_10px_20px_rgba(34,197,94,0.4)] transform transition active:scale-95 flex items-center justify-center gap-2 text-lg disabled:bg-slate-300 disabled:shadow-none disabled:text-slate-600 disabled:cursor-not-allowed';
@@ -244,14 +265,19 @@
                 icon.innerHTML = '<path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"/>';
             }
 
-            btnEncerrarDia.disabled = viagemStatus !== 'aguardando_encerramento';
+            btnEncerrarDia.disabled = status !== 'aguardando_encerramento';
             atualizarCabecalhoViagem();
         }
 
         function abrirConfiguracaoViagem(forcarAbertura) {
-            const options = linhasDisponiveis.map(function (linha) {
-                const selected = linhaAtualId !== null && Number(linha.id) === Number(linhaAtualId) ? 'selected' : '';
+            const linhasOptions = linhasDisponiveis.map(function (linha) {
+                const selected = viagemAtual && Number(viagemAtual.linha_id) === Number(linha.id) ? 'selected' : '';
                 return `<option value="${linha.id}" ${selected}>${linha.nome} (${linha.cor})</option>`;
+            }).join('');
+
+            const veiculosOptions = veiculosDisponiveis.map(function (veiculo) {
+                const selected = viagemAtual && Number(viagemAtual.veiculo_id) === Number(veiculo.id) ? 'selected' : '';
+                return `<option value="${veiculo.id}" ${selected}>${veiculo.numero_identificador} • ${veiculo.placa}</option>`;
             }).join('');
 
             Swal.fire({
@@ -260,11 +286,18 @@
                     <div class="space-y-4 text-left">
                         <div>
                             <label class="block text-sm font-bold text-gray-600 mb-2">Linha do dia</label>
-                            <select id="swalLinha" class="swal2-select !w-full !m-0">${options}</select>
+                            <select id="swalLinha" class="swal2-select !w-full !m-0">${linhasOptions}</select>
                         </div>
                         <div>
-                            <label class="block text-sm font-bold text-gray-600 mb-2">Numero do onibus</label>
-                            <input id="swalOnibus" class="swal2-input !w-full !m-0" placeholder="Ex: 302" value="${numeroOnibusAtual}">
+                            <label class="block text-sm font-bold text-gray-600 mb-2">Veiculo</label>
+                            <select id="swalVeiculo" class="swal2-select !w-full !m-0">${veiculosOptions}</select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-600 mb-2">Direcao</label>
+                            <select id="swalDirecao" class="swal2-select !w-full !m-0">
+                                <option value="ida" ${viagemAtual && viagemAtual.direcao === 'ida' ? 'selected' : ''}>Ida</option>
+                                <option value="volta" ${viagemAtual && viagemAtual.direcao === 'volta' ? 'selected' : ''}>Volta</option>
+                            </select>
                         </div>
                     </div>
                 `,
@@ -276,16 +309,18 @@
                 focusConfirm: false,
                 preConfirm: () => {
                     const linhaId = document.getElementById('swalLinha').value;
-                    const numeroOnibus = document.getElementById('swalOnibus').value.trim();
+                    const veiculoId = document.getElementById('swalVeiculo').value;
+                    const direcao = document.getElementById('swalDirecao').value;
 
-                    if (!linhaId || !numeroOnibus) {
-                        Swal.showValidationMessage('Selecione a linha e informe o numero do onibus.');
+                    if (!linhaId || !veiculoId || !direcao) {
+                        Swal.showValidationMessage('Selecione a linha, o veiculo e a direcao.');
                         return false;
                     }
 
                     const body = new URLSearchParams();
                     body.append('linha_id', linhaId);
-                    body.append('numero_onibus', numeroOnibus);
+                    body.append('veiculo_id', veiculoId);
+                    body.append('direcao', direcao);
 
                     return fetch('<?= BASE_URL ?>/motorista/configurar-viagem', {
                         method: 'POST',
@@ -298,7 +333,7 @@
                             throw new Error(data.message || 'Nao foi possivel configurar a viagem.');
                         }
 
-                        return { linhaId, numeroOnibus };
+                        return data.trip;
                     })
                     .catch(error => {
                         Swal.showValidationMessage(error.message);
@@ -306,15 +341,7 @@
                 }
             }).then((result) => {
                 if (result.isConfirmed && result.value) {
-                    const linhaSelecionada = linhasDisponiveis.find(linha => Number(linha.id) === Number(result.value.linhaId));
-                    linhaAtualId = Number(result.value.linhaId);
-                    linhaAtualNome = linhaSelecionada ? linhaSelecionada.nome : 'Linha definida';
-                    numeroOnibusAtual = result.value.numeroOnibus;
-                    configurado = true;
-                    if (viagemStatus === 'finalizada') {
-                        viagemStatus = 'aguardando';
-                    }
-                    atualizarBotaoEstado();
+                    sincronizarViagem(result.value);
                     atualizarPontos();
                 } else if (forcarAbertura) {
                     setTimeout(() => abrirConfiguracaoViagem(true), 200);
@@ -339,14 +366,21 @@
                 return;
             }
 
-            if (viagemStatus === 'aguardando') {
+            const status = getViagemStatus();
+
+            if (status === 'aguardando' || status === 'agendada') {
                 fetch('<?= BASE_URL ?>/iniciar-rota', { method: 'POST' })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            viagemStatus = 'em_rota';
-                            atualizarBotaoEstado();
-                            Swal.fire({ title: 'Rota iniciada', text: 'A viagem saiu da cidade.', icon: 'success', timer: 1800, showConfirmButton: false });
+                            sincronizarViagem(data.trip);
+                            Swal.fire({
+                                title: 'Rota iniciada',
+                                text: `A ${formatarDirecao(viagemAtual.direcao).toLowerCase()} saiu para a rota.`,
+                                icon: 'success',
+                                timer: 1800,
+                                showConfirmButton: false
+                            });
                         } else {
                             Swal.fire('Ops!', data.message, 'error');
                         }
@@ -355,13 +389,13 @@
                 return;
             }
 
-            if (viagemStatus !== 'em_rota') {
+            if (status !== 'em_rota') {
                 return;
             }
 
             Swal.fire({
                 title: 'Finalizar chegada?',
-                text: 'Confirma que voce chegou na outra cidade?',
+                text: 'Confirma que voce chegou ao destino dessa perna da viagem?',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#4A7DDF',
@@ -377,10 +411,9 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            viagemStatus = 'aguardando_encerramento';
-                            atualizarBotaoEstado();
+                            sincronizarViagem(data.trip);
                             atualizarPontos();
-                            Swal.fire('Chegada registrada', 'Agora acompanhe na tela quantos alunos vao voltar e encerre o dia pela sidebar.', 'success');
+                            Swal.fire('Chegada registrada', 'Agora acompanhe os retornos e encerre o ciclo pela sidebar.', 'success');
                         } else {
                             Swal.fire('Ops!', data.message, 'error');
                         }
@@ -392,18 +425,18 @@
         }
 
         function confirmarEncerrarDia() {
-            if (viagemStatus !== 'aguardando_encerramento') {
+            if (getViagemStatus() !== 'aguardando_encerramento') {
                 return;
             }
 
             Swal.fire({
-                title: 'Encerrar o dia?',
-                text: 'Isso conclui a viagem do dia e salva o fechamento.',
+                title: 'Encerrar o ciclo?',
+                text: 'Isso conclui a viagem atual e preserva as confirmacoes do dia.',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#111827',
                 cancelButtonColor: '#9ca3af',
-                confirmButtonText: 'Encerrar dia',
+                confirmButtonText: 'Encerrar',
                 cancelButtonText: 'Cancelar'
             }).then((result) => {
                 if (!result.isConfirmed) {
@@ -414,10 +447,9 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            viagemStatus = 'finalizada';
-                            atualizarBotaoEstado();
+                            sincronizarViagem(data.trip);
                             toggleSidebar();
-                            Swal.fire('Dia encerrado', data.message, 'success');
+                            Swal.fire('Ciclo encerrado', data.message, 'success');
                         } else {
                             Swal.fire('Ops!', data.message, 'error');
                         }
@@ -428,6 +460,21 @@
             });
         }
 
+        function enviarLocalizacao(latitude, longitude) {
+            const agora = Date.now();
+            if (agora - ultimaLocalizacaoEnviada < 8000) {
+                return;
+            }
+
+            ultimaLocalizacaoEnviada = agora;
+
+            fetch('<?= BASE_URL ?>/motorista/atualizar-localizacao', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ latitude, longitude })
+            }).catch(erro => console.error('Erro ao atualizar localizacao:', erro));
+        }
+
         const pontosIniciais = <?= json_encode($pontos, JSON_UNESCAPED_UNICODE) ?>;
         desenharPontos(Array.isArray(pontosIniciais) ? pontosIniciais : []);
         atualizarBotaoEstado();
@@ -436,7 +483,7 @@
             setTimeout(() => abrirConfiguracaoViagem(true), 300);
         }
 
-        map.locate({ setView: true, maxZoom: 15 });
+        map.locate({ setView: true, maxZoom: 15, watch: true, enableHighAccuracy: true });
         map.on('locationfound', function (e) {
             if (marcadorMotorista) {
                 map.removeLayer(marcadorMotorista);
@@ -449,7 +496,9 @@
                 weight: 3,
                 opacity: 1,
                 fillOpacity: 1
-            }).addTo(map).bindPopup('Seu onibus');
+            }).addTo(map).bindPopup('Seu veiculo');
+
+            enviarLocalizacao(e.latlng.lat, e.latlng.lng);
         });
 
         setInterval(atualizarPontos, 10000);

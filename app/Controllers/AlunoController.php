@@ -10,10 +10,18 @@ class AlunoController {
             exit;
         }
 
-        $pontoModel = new Ponto();
-        $pontos = $pontoModel->buscarPontosDaViagemAtual();
         $confirmacaoModel = new Confirmacao();
-        $estadoConfirmacao = $confirmacaoModel->buscarEstadoAtual($_SESSION['usuario_id']);
+        $contextoViagemAluno = $confirmacaoModel->buscarContextoAtual($_SESSION['usuario_id']);
+        $estadoConfirmacao = $contextoViagemAluno['state'] ?? null;
+        $viagemAtualAluno = $contextoViagemAluno['trip'] ?? null;
+
+        $pontoModel = new Ponto();
+        if ($viagemAtualAluno && !empty($viagemAtualAluno['linha_id'])) {
+            $pontos = $pontoModel->buscarPorLinha((int) $viagemAtualAluno['linha_id']);
+        } else {
+            $pontos = $pontoModel->buscarPontosDaViagemAtual();
+        }
+
         $db = (new Database())->getConnection();
         $stmtAluno = $db->prepare("SELECT nome, telefone, email FROM usuarios WHERE id = :id LIMIT 1");
         $stmtAluno->execute(['id' => $_SESSION['usuario_id']]);
@@ -62,10 +70,27 @@ class AlunoController {
             $message = $ok ? 'Retorno sem onibus registrado com sucesso.' : $confirmacaoModel->getLastError();
         }
 
+        $contextoAtual = $confirmacaoModel->buscarContextoAtual($_SESSION['usuario_id']);
+
+        if (!$ok && $confirmacaoModel->getLastHttpStatus() === 400) {
+            http_response_code(400);
+            echo json_encode([
+                'erro' => $confirmacaoModel->getLastError(),
+                'state' => $contextoAtual['state'] ?? null,
+                'trip' => $contextoAtual['trip'] ?? null,
+                'retorno_planejado' => (bool) ($contextoAtual['retorno_planejado'] ?? false),
+                'hora_volta' => $contextoAtual['hora_volta'] ?? null,
+            ]);
+            exit;
+        }
+
         echo json_encode([
             'success' => $ok,
             'message' => $message,
-            'state' => $confirmacaoModel->buscarEstadoAtual($_SESSION['usuario_id']),
+            'state' => $contextoAtual['state'] ?? null,
+            'trip' => $contextoAtual['trip'] ?? null,
+            'retorno_planejado' => (bool) ($contextoAtual['retorno_planejado'] ?? false),
+            'hora_volta' => $contextoAtual['hora_volta'] ?? null,
         ]);
         exit;
     }
@@ -73,10 +98,18 @@ class AlunoController {
     public function checarStatusViagem() {
         header('Content-Type: application/json');
 
-        $pontoModel = new Ponto();
-        $status = $pontoModel->lerStatusViagem();
+        $confirmacaoModel = new Confirmacao();
+        $contexto = $confirmacaoModel->buscarContextoAtual($_SESSION['usuario_id'] ?? 0);
+        $trip = $contexto['trip'] ?? null;
 
-        echo json_encode(['status' => $status]);
+        echo json_encode([
+            'status' => $trip['status'] ?? 'aguardando',
+            'trip' => $trip,
+            'state' => $contexto['state'] ?? null,
+            'retorno_planejado' => (bool) ($contexto['retorno_planejado'] ?? false),
+            'hora_volta' => $contexto['hora_volta'] ?? null,
+        ]);
         exit;
     }
 }
+?>

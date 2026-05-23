@@ -99,6 +99,12 @@ switch ($rota) {
         $controller->configurarViagem();
         break;
 
+    case '/motorista/atualizar-localizacao':
+        require_once __DIR__ . '/app/Controllers/MotoristaController.php';
+        $controller = new MotoristaController();
+        $controller->atualizarLocalizacao();
+        break;
+
     case '/iniciar-rota':
         require_once __DIR__ . '/app/Controllers/MotoristaController.php';
         $controller = new MotoristaController();
@@ -175,6 +181,18 @@ switch ($rota) {
         require_once __DIR__ . '/app/Controllers/AdminController.php';
         $controller = new AdminController();
         $controller->deletarPonto();
+        break;
+
+    case '/admin/salvar-veiculo':
+        require_once __DIR__ . '/app/Controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->salvarVeiculo();
+        break;
+
+    case '/admin/deletar-veiculo':
+        require_once __DIR__ . '/app/Controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->deletarVeiculo();
         break;
 
     default:

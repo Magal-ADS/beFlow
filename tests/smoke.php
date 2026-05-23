@@ -27,6 +27,7 @@ $pontoId = $db->query("SELECT id FROM pontos ORDER BY id ASC LIMIT 1")->fetchCol
 
 assertTrue(count($pontoModel->buscarTodos()) >= 3, 'Lista de pontos carregada');
 assertTrue($pontoModel->lerStatusViagem() === 'aguardando', 'Status inicial da viagem e aguardando');
+assertTrue(($pontoModel->buscarViagemAtual($motoristaId)['direcao'] ?? null) === 'ida', 'Viagem base inicia na direcao ida');
 
 $db->exec('DELETE FROM confirmacoes');
 assertTrue($confirmacaoModel->registrar($alunoUsuarioId, $pontoId) === true, 'Aluno confirma presenca na viagem do dia');

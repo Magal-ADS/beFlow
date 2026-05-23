@@ -1,8 +1,10 @@
 <?php
 $uri = $_SERVER['REQUEST_URI'];
-$isDashboard = strpos($uri, '/admin/dashboard') !== false;
+$section = $_GET['section'] ?? '';
+$isDashboard = strpos($uri, '/admin/dashboard') !== false && $section !== 'veiculos';
 $isUsuarios = strpos($uri, '/admin/usuarios') !== false;
 $isRotas = strpos($uri, '/admin/rotas') !== false;
+$isVeiculos = strpos($uri, '/admin/dashboard') !== false && $section === 'veiculos';
 
 if (!isset($currentAdmin) && isset($_SESSION['usuario_id'])) {
     require_once __DIR__ . '/../../config/database.php';
@@ -78,7 +80,12 @@ function sidebarItemClasses($active) {
 
         <a href="<?= BASE_URL ?>/admin/rotas" class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= sidebarItemClasses($isRotas) ?>">
             <?= renderSidebarIcon('bus') ?>
-            <span>Linhas e Onibus</span>
+            <span>Linhas e Pontos</span>
+        </a>
+
+        <a href="<?= BASE_URL ?>/admin/dashboard?section=veiculos#veiculos" class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= sidebarItemClasses($isVeiculos) ?>">
+            <?= renderSidebarIcon('bus') ?>
+            <span>Veiculos</span>
         </a>
     </nav>
 

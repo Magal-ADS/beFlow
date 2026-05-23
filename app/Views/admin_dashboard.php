@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BeFlow Admin - Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden font-sans" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-
     <?php include __DIR__ . '/sidebar_admin.php'; ?>
 
     <?php
+    $currentSection = $_GET['section'] ?? 'dashboard';
+
     function dashboardIcon($name) {
         switch ($name) {
             case 'users':
@@ -66,16 +68,100 @@
     ?>
 
     <main class="flex-1 overflow-y-auto min-w-0">
-            <header class="sticky top-0 z-30 lg:hidden bg-gray-50/95 backdrop-blur border-b border-gray-200 px-4 py-4 flex items-center justify-between">
-                <div>
-                    <h1 class="text-lg font-bold text-gray-900">Dashboard</h1>
-                    <p class="text-xs text-gray-500">BeFlow Admin</p>
-                </div>
-                <button type="button" onclick="toggleAdminSidebar(true)" class="w-11 h-11 rounded-2xl bg-white shadow-sm border border-gray-200 text-gray-700 flex items-center justify-center">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                </button>
-            </header>
+        <header class="sticky top-0 z-30 lg:hidden bg-gray-50/95 backdrop-blur border-b border-gray-200 px-4 py-4 flex items-center justify-between">
+            <div>
+                <h1 class="text-lg font-bold text-gray-900"><?= $currentSection === 'veiculos' ? 'Veiculos' : 'Dashboard' ?></h1>
+                <p class="text-xs text-gray-500">BeFlow Admin</p>
+            </div>
+            <button type="button" onclick="toggleAdminSidebar(true)" class="w-11 h-11 rounded-2xl bg-white shadow-sm border border-gray-200 text-gray-700 flex items-center justify-center">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+        </header>
 
+        <?php if ($currentSection === 'veiculos'): ?>
+            <div class="p-4 sm:p-6 lg:p-10">
+                <header class="hidden lg:block mb-8">
+                    <h1 class="text-3xl font-bold text-gray-900">Veiculos</h1>
+                    <p class="text-sm text-gray-500">Gerencie a frota separadamente das linhas e pontos.</p>
+                </header>
+
+                <section class="bg-white rounded-[28px] border border-gray-100 shadow-sm p-5 sm:p-6 lg:p-8">
+                    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
+                        <div class="max-w-2xl">
+                            <p class="text-[11px] uppercase tracking-[0.28em] text-slate-400 font-bold">Frota</p>
+                            <h2 class="mt-3 text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">Cadastro de Veiculos</h2>
+                            <p class="mt-3 text-sm lg:text-base text-slate-500">Use esta tela para organizar a frota da empresa antes da configuracao das viagens dos motoristas.</p>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                            <a href="<?= BASE_URL ?>/admin/rotas" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 px-5 py-3 font-bold hover:bg-slate-50 transition">
+                                Ver Linhas e Pontos
+                            </a>
+                            <button type="button" onclick="abrirModalVeiculo()" class="inline-flex items-center justify-center rounded-2xl bg-slate-900 text-white px-5 py-3 font-bold shadow-lg shadow-slate-200 hover:bg-slate-800 transition">
+                                + Novo Veiculo
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                        <div class="rounded-[24px] bg-slate-50 border border-slate-100 p-5">
+                            <p class="text-xs uppercase tracking-[0.2em] text-slate-400 font-bold">Veiculos</p>
+                            <p class="mt-3 text-4xl font-black text-slate-900"><?= count($veiculos ?? []) ?></p>
+                        </div>
+                        <div class="rounded-[24px] bg-slate-50 border border-slate-100 p-5">
+                            <p class="text-xs uppercase tracking-[0.2em] text-slate-400 font-bold">Linhas</p>
+                            <p class="mt-3 text-4xl font-black text-slate-900"><?= count($linhas_com_pontos ?? []) ?></p>
+                        </div>
+                        <div class="rounded-[24px] bg-slate-50 border border-slate-100 p-5">
+                            <p class="text-xs uppercase tracking-[0.2em] text-slate-400 font-bold">Pontos</p>
+                            <p class="mt-3 text-4xl font-black text-slate-900"><?= (int) ($stats['pontos'] ?? 0) ?></p>
+                        </div>
+                        <div class="rounded-[24px] bg-slate-50 border border-slate-100 p-5">
+                            <p class="text-xs uppercase tracking-[0.2em] text-slate-400 font-bold">Motoristas</p>
+                            <p class="mt-3 text-4xl font-black text-slate-900"><?= (int) ($stats['motoristas'] ?? 0) ?></p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <div class="relative max-w-xl">
+                            <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                            <input type="text" id="buscaVeiculo" onkeyup="filtrarVeiculos()" placeholder="Buscar por placa ou identificador..." class="w-full pl-10 pr-4 py-3 rounded-2xl bg-gray-50 border border-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+                        </div>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4" id="listaVeiculos">
+                        <?php if (!empty($veiculos)): ?>
+                            <?php foreach ($veiculos as $veiculo): ?>
+                                <article class="card-veiculo rounded-[26px] border border-gray-100 bg-slate-50 p-5 lg:p-6 hover:bg-white hover:shadow-lg transition" data-search="<?= strtolower(htmlspecialchars(($veiculo['numero_identificador'] ?? '') . ' ' . ($veiculo['placa'] ?? ''), ENT_QUOTES, 'UTF-8')) ?>">
+                                    <div class="flex items-start justify-between gap-4">
+                                        <div class="min-w-0">
+                                            <p class="text-[11px] uppercase tracking-[0.25em] text-slate-400 font-bold">Veiculo</p>
+                                            <h3 class="mt-3 text-2xl font-black text-slate-900 break-words"><?= htmlspecialchars($veiculo['numero_identificador']) ?></h3>
+                                            <p class="mt-4 inline-flex items-center rounded-full bg-blue-50 text-blue-700 px-3 py-1 text-sm font-bold border border-blue-100"><?= htmlspecialchars($veiculo['placa']) ?></p>
+                                        </div>
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <button type="button" onclick="abrirModalVeiculo(<?= htmlspecialchars(json_encode($veiculo), ENT_QUOTES, 'UTF-8') ?>)" class="w-11 h-11 rounded-2xl bg-white text-blue-600 border border-blue-100 flex items-center justify-center hover:bg-blue-50 transition" title="Editar veiculo">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                            </button>
+                                            <button type="button" onclick="excluirVeiculo(<?= (int) $veiculo['id'] ?>)" class="w-11 h-11 rounded-2xl bg-white text-red-500 border border-red-100 flex items-center justify-center hover:bg-red-50 transition" title="Excluir veiculo">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </article>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="md:col-span-2 2xl:col-span-3 rounded-[26px] border-2 border-dashed border-gray-200 bg-slate-50 p-10 text-center">
+                                <p class="text-xl font-black text-slate-700">Nenhum veiculo cadastrado.</p>
+                                <p class="text-sm text-gray-500 mt-2">Crie a frota da empresa para liberar a configuracao dos motoristas.</p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </section>
+            </div>
+        <?php else: ?>
             <div class="p-4 sm:p-6 lg:p-10">
                 <header class="hidden lg:block">
                     <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
@@ -84,27 +170,12 @@
 
                 <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 lg:gap-6 mb-6 lg:mb-8">
                     <?php foreach ($dashboardCards as $card): ?>
-                        <?php
-                        $cardTitle = $card['title'];
-                        $cardValue = $card['value'];
-
-                        if ($cardTitle === 'Usuarios') {
-                            $cardValue = $stats['alunos'] ?? 0;
-                        } elseif ($cardTitle === 'Linhas e Onibus') {
-                            $cardValue = isset($linhas_com_pontos) ? count($linhas_com_pontos) : 0;
-                        } elseif ($cardTitle === 'Pontos de parada') {
-                            $cardValue = $stats['pontos'] ?? 0;
-                        } elseif ($cardTitle === 'Horarios das linhas') {
-                            $cardTitle = 'Motoristas';
-                            $cardValue = $stats['motoristas'] ?? 0;
-                        }
-                        ?>
                         <article class="bg-white rounded-[20px] p-5 lg:p-6 shadow-sm border border-gray-100 flex flex-col">
                             <div class="w-12 h-12 rounded-2xl flex items-center justify-center <?= $card['icon_bg'] ?> <?= $card['icon_fg'] ?>">
                                 <?= dashboardIcon($card['icon']) ?>
                             </div>
-                            <p class="mt-6 lg:mt-8 text-sm text-gray-500"><?= htmlspecialchars($cardTitle) ?></p>
-                            <h2 class="mt-2 text-3xl lg:text-4xl font-bold text-gray-900 break-words"><?= htmlspecialchars((string) $cardValue) ?></h2>
+                            <p class="mt-6 lg:mt-8 text-sm text-gray-500"><?= htmlspecialchars($card['title']) ?></p>
+                            <h2 class="mt-2 text-3xl lg:text-4xl font-bold text-gray-900 break-words"><?= htmlspecialchars((string) $card['value']) ?></h2>
                             <span class="mt-4 lg:mt-5 bg-green-100 text-green-600 text-[10px] px-2 py-1 rounded-full w-fit"><?= htmlspecialchars($card['change']) ?></span>
                         </article>
                     <?php endforeach; ?>
@@ -171,8 +242,161 @@
                         </div>
                     </aside>
                 </section>
-            </div>
-        </main>
 
+                <section class="mt-6 lg:mt-8 grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
+                    <article class="bg-white rounded-[24px] p-6 lg:p-8 shadow-sm border border-gray-100">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div>
+                                <p class="text-[11px] uppercase tracking-[0.25em] text-gray-400 font-bold">Operacao</p>
+                                <h3 class="text-2xl font-black text-gray-900 mt-2">Linhas e Pontos</h3>
+                                <p class="text-sm text-gray-500 mt-2">Gerencie as linhas do dia e seus pontos de parada em uma tela dedicada.</p>
+                            </div>
+                            <a href="<?= BASE_URL ?>/admin/rotas" class="inline-flex items-center justify-center rounded-2xl bg-blue-600 text-white px-5 py-3 font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition">
+                                Abrir tela
+                            </a>
+                        </div>
+
+                        <div class="mt-6 grid grid-cols-2 gap-3">
+                            <div class="rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                                <p class="text-xs uppercase tracking-[0.2em] text-slate-400 font-bold">Linhas</p>
+                                <p class="mt-3 text-3xl font-black text-slate-900"><?= count($linhas_com_pontos ?? []) ?></p>
+                            </div>
+                            <div class="rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                                <p class="text-xs uppercase tracking-[0.2em] text-slate-400 font-bold">Pontos</p>
+                                <p class="mt-3 text-3xl font-black text-slate-900"><?= (int) ($stats['pontos'] ?? 0) ?></p>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="bg-white rounded-[24px] p-6 lg:p-8 shadow-sm border border-gray-100">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div>
+                                <p class="text-[11px] uppercase tracking-[0.25em] text-gray-400 font-bold">Frota</p>
+                                <h3 class="text-2xl font-black text-gray-900 mt-2">Veiculos</h3>
+                                <p class="text-sm text-gray-500 mt-2">Acesse a tela exclusiva para cadastrar e administrar a frota da empresa.</p>
+                            </div>
+                            <a href="<?= BASE_URL ?>/admin/dashboard?section=veiculos" class="inline-flex items-center justify-center rounded-2xl bg-slate-900 text-white px-5 py-3 font-bold shadow-lg shadow-slate-200 hover:bg-slate-800 transition">
+                                Abrir tela
+                            </a>
+                        </div>
+
+                        <div class="mt-6 grid grid-cols-2 gap-3">
+                            <div class="rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                                <p class="text-xs uppercase tracking-[0.2em] text-slate-400 font-bold">Veiculos</p>
+                                <p class="mt-3 text-3xl font-black text-slate-900"><?= count($veiculos ?? []) ?></p>
+                            </div>
+                            <div class="rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                                <p class="text-xs uppercase tracking-[0.2em] text-slate-400 font-bold">Status</p>
+                                <p class="mt-3 text-lg font-black text-slate-900"><?= htmlspecialchars((string) ($stats['viagem_status'] ?? 'Sem viagens ativas')) ?></p>
+                            </div>
+                        </div>
+                    </article>
+                </section>
+            </div>
+        <?php endif; ?>
+    </main>
+
+    <div id="modalVeiculo" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl">
+            <h3 id="tituloModalVeiculo" class="text-2xl font-black text-gray-800 mb-6 tracking-tighter">Novo Veiculo</h3>
+            <form id="formVeiculo" class="space-y-4">
+                <input type="hidden" name="id" id="veiculoId">
+                <div>
+                    <label for="veiculoIdentificador" class="block text-sm font-bold text-gray-600 mb-2">Identificador</label>
+                    <input type="text" name="numero_identificador" id="veiculoIdentificador" placeholder="Ex: VAN 03 ou FROTA-BASE" class="w-full p-4 rounded-2xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-blue-400" required>
+                </div>
+                <div>
+                    <label for="veiculoPlaca" class="block text-sm font-bold text-gray-600 mb-2">Placa</label>
+                    <input type="text" name="placa" id="veiculoPlaca" placeholder="Ex: ABC1D23" class="w-full p-4 rounded-2xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-blue-400 uppercase" required>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="fecharModalVeiculo()" class="flex-1 p-4 rounded-2xl font-bold text-gray-400 hover:bg-gray-100 transition">Cancelar</button>
+                    <button type="submit" class="flex-1 p-4 rounded-2xl font-bold bg-slate-900 text-white shadow-lg shadow-slate-200 active:scale-95 transition">Salvar Veiculo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function abrirModalVeiculo(veiculo = null) {
+            const form = document.getElementById('formVeiculo');
+            form.reset();
+
+            document.getElementById('veiculoId').value = veiculo && veiculo.id ? veiculo.id : '';
+            document.getElementById('veiculoIdentificador').value = veiculo && veiculo.numero_identificador ? veiculo.numero_identificador : '';
+            document.getElementById('veiculoPlaca').value = veiculo && veiculo.placa ? veiculo.placa : '';
+            document.getElementById('tituloModalVeiculo').innerText = veiculo && veiculo.id ? 'Editar Veiculo' : 'Novo Veiculo';
+            document.getElementById('modalVeiculo').classList.replace('hidden', 'flex');
+        }
+
+        function fecharModalVeiculo() {
+            document.getElementById('modalVeiculo').classList.replace('flex', 'hidden');
+        }
+
+        function filtrarVeiculos() {
+            const busca = document.getElementById('buscaVeiculo');
+            if (!busca) {
+                return;
+            }
+
+            const termo = busca.value.toLowerCase();
+            document.querySelectorAll('.card-veiculo').forEach(card => {
+                card.style.display = card.getAttribute('data-search').includes(termo) ? 'block' : 'none';
+            });
+        }
+
+        const formVeiculo = document.getElementById('formVeiculo');
+        if (formVeiculo) {
+            formVeiculo.addEventListener('submit', function (e) {
+                e.preventDefault();
+                fetch('<?= BASE_URL ?>/admin/salvar-veiculo', {
+                    method: 'POST',
+                    body: new FormData(this)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                        return;
+                    }
+
+                    Swal.fire('Erro', data.message, 'error');
+                });
+            });
+        }
+
+        function excluirVeiculo(id) {
+            Swal.fire({
+                title: 'Excluir veiculo?',
+                text: 'Essa acao remove o veiculo da frota cadastrada.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#9ca3af',
+                confirmButtonText: 'Sim, excluir'
+            }).then((result) => {
+                if (!result.isConfirmed) {
+                    return;
+                }
+
+                const fd = new FormData();
+                fd.append('id', id);
+
+                fetch('<?= BASE_URL ?>/admin/deletar-veiculo', {
+                    method: 'POST',
+                    body: fd
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                        return;
+                    }
+
+                    Swal.fire('Erro', data.message, 'error');
+                });
+            });
+        }
+    </script>
 </body>
 </html>
