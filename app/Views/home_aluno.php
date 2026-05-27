@@ -515,9 +515,13 @@
                         renderizarEstadoAluno();
                         Swal.fire('Confirmado!', data.message, 'success');
                     })
-                    .catch(() => {
+                    .catch(error => {
                         limparNotificacao();
-                        Swal.fire('Erro de servidor', 'Nao foi possivel confirmar.', 'warning');
+                        if (error.payload) {
+                            atualizarContextoLocal(error.payload);
+                            renderizarEstadoAluno();
+                        }
+                        Swal.fire('Nao foi possivel confirmar', error.message || 'Operacao bloqueada.', 'warning');
                     });
             });
         }

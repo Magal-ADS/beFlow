@@ -88,7 +88,7 @@ class Confirmacao {
         }
 
         if (($estadoAtual['viagem_status'] ?? '') !== 'em_rota') {
-            $this->lastError = 'Ação bloqueada: O motorista ainda não iniciou a rota.';
+            $this->lastError = 'Acao bloqueada: o motorista ainda nao iniciou a rota.';
             $this->lastHttpStatus = 400;
             return false;
         }
