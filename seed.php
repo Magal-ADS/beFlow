@@ -154,7 +154,7 @@ $pontos = [
     ['id' => 7, 'nome' => 'Ponto Parque das Flores', 'latitude' => '-21.41800000', 'longitude' => '-48.49900000', 'ordem_na_linha' => 1, 'linha_id' => 3],
     ['id' => 8, 'nome' => 'Ponto Escola Tecnica', 'latitude' => '-21.42200000', 'longitude' => '-48.50300000', 'ordem_na_linha' => 2, 'linha_id' => 3],
     ['id' => 9, 'nome' => 'Ponto Rodoviaria Nova', 'latitude' => '-21.42800000', 'longitude' => '-48.50900000', 'ordem_na_linha' => 3, 'linha_id' => 3],
-    ['id' => 13, 'nome' => 'Ponto Entrada FATEC Taquaritinga', 'latitude' => '-21.40112730', 'longitude' => '-48.50876820', 'ordem_na_linha' => 4, 'linha_id' => 3],
+    ['id' => 13, 'nome' => 'Ponto Entrada FATEC Taquaritinga', 'latitude' => '-21.429596', 'longitude' => '-48.514786', 'ordem_na_linha' => 4, 'linha_id' => 3],
     ['id' => 10, 'nome' => 'Ponto Jardim Europa', 'latitude' => '-21.40900000', 'longitude' => '-48.52100000', 'ordem_na_linha' => 1, 'linha_id' => 4],
     ['id' => 11, 'nome' => 'Ponto Lago Municipal', 'latitude' => '-21.41300000', 'longitude' => '-48.52600000', 'ordem_na_linha' => 2, 'linha_id' => 4],
     ['id' => 12, 'nome' => 'Ponto Bairro Verde', 'latitude' => '-21.41850000', 'longitude' => '-48.53100000', 'ordem_na_linha' => 3, 'linha_id' => 4],
