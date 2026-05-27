@@ -3,6 +3,7 @@ require_once __DIR__ . '/../../config/database.php';
 
 class Usuario {
     private $conn;
+    private $alunoLinhaColumnExists;
 
     public function __construct() {
         $database = new Database();
@@ -18,7 +19,8 @@ class Usuario {
     }
 
     public function buscarTodosComDadosDeAluno() {
-        $sql = "SELECT u.*, a.turno, a.escola
+        $linhaSql = $this->hasAlunoLinhaColumn() ? 'a.linha_id' : 'NULL AS linha_id';
+        $sql = "SELECT u.*, a.turno, a.escola, {$linhaSql}
                 FROM usuarios u
                 LEFT JOIN alunos a ON a.usuario_id = u.id
                 ORDER BY u.nome ASC";
@@ -46,7 +48,7 @@ class Usuario {
             $usuarioId = $this->conn->lastInsertId();
 
             if ($dados['tipo_usuario'] === 'aluno' && $usuarioId) {
-                $this->salvarOuAtualizarAluno($usuarioId, $dados['turno'], $dados['escola']);
+                $this->salvarOuAtualizarAluno($usuarioId, $dados['turno'], $dados['escola'], $dados['linha_id'] ?? null);
             }
 
             $this->conn->commit();
@@ -87,7 +89,7 @@ class Usuario {
             $stmt->execute($params);
 
             if ($dados['tipo_usuario'] === 'aluno') {
-                $this->salvarOuAtualizarAluno($id, $dados['turno'], $dados['escola']);
+                $this->salvarOuAtualizarAluno($id, $dados['turno'], $dados['escola'], $dados['linha_id'] ?? null);
             } else {
                 $stmtDelete = $this->conn->prepare("DELETE FROM alunos WHERE usuario_id = :usuario_id");
                 $stmtDelete->execute(['usuario_id' => $id]);
@@ -108,21 +110,64 @@ class Usuario {
         return $stmt->execute(['id' => $id]);
     }
 
-    private function salvarOuAtualizarAluno($usuarioId, $turno, $escola) {
+    private function salvarOuAtualizarAluno($usuarioId, $turno, $escola, $linhaId = null) {
         $stmtCheck = $this->conn->prepare("SELECT id FROM alunos WHERE usuario_id = :usuario_id LIMIT 1");
         $stmtCheck->execute(['usuario_id' => $usuarioId]);
         
         if ($stmtCheck->fetchColumn()) {
-            $sql = "UPDATE alunos SET turno = :turno, escola = :escola WHERE usuario_id = :usuario_id";
+            $sql = $this->hasAlunoLinhaColumn()
+                ? "UPDATE alunos SET turno = :turno, escola = :escola, linha_id = :linha_id WHERE usuario_id = :usuario_id"
+                : "UPDATE alunos SET turno = :turno, escola = :escola WHERE usuario_id = :usuario_id";
         } else {
-            $sql = "INSERT INTO alunos (usuario_id, turno, escola) VALUES (:usuario_id, :turno, :escola)";
+            $sql = $this->hasAlunoLinhaColumn()
+                ? "INSERT INTO alunos (usuario_id, turno, escola, linha_id) VALUES (:usuario_id, :turno, :escola, :linha_id)"
+                : "INSERT INTO alunos (usuario_id, turno, escola) VALUES (:usuario_id, :turno, :escola)";
         }
 
         $stmt = $this->conn->prepare($sql);
-        return $stmt->execute([
+        $params = [
             'usuario_id' => $usuarioId,
             'turno' => $turno,
-            'escola' => $escola
-        ]);
+            'escola' => $escola,
+        ];
+
+        if ($this->hasAlunoLinhaColumn()) {
+            $params['linha_id'] = $linhaId !== '' ? $linhaId : null;
+        }
+
+        return $stmt->execute($params);
+    }
+
+    private function hasAlunoLinhaColumn() {
+        if ($this->alunoLinhaColumnExists !== null) {
+            return $this->alunoLinhaColumnExists;
+        }
+
+        $driver = $this->conn->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+        if ($driver === 'pgsql') {
+            $stmt = $this->conn->prepare("
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = CURRENT_SCHEMA()
+                  AND table_name = 'alunos'
+                  AND column_name = 'linha_id'
+                LIMIT 1
+            ");
+        } else {
+            $stmt = $this->conn->prepare("
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = DATABASE()
+                  AND table_name = 'alunos'
+                  AND column_name = 'linha_id'
+                LIMIT 1
+            ");
+        }
+
+        $stmt->execute();
+        $this->alunoLinhaColumnExists = (bool) $stmt->fetchColumn();
+
+        return $this->alunoLinhaColumnExists;
     }
 }

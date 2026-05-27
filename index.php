@@ -81,6 +81,12 @@ switch ($rota) {
         $controller->checarStatusViagem();
         break;
 
+    case '/aluno/selecionar-linha':
+        require_once __DIR__ . '/app/Controllers/AlunoController.php';
+        $controller = new AlunoController();
+        $controller->selecionarLinha();
+        break;
+
     case '/home-motorista':
         require_once __DIR__ . '/app/Controllers/MotoristaController.php';
         $controller = new MotoristaController();

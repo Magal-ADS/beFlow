@@ -86,28 +86,7 @@
                 <h3 class="font-semibold text-gray-700 mb-4 text-center">Selecione seu ponto de embarque:</h3>
                 <div id="painelEstadoAluno" class="hidden mb-4"></div>
                 <div id="listaPontosWrapper">
-                    <div id="listaPontos" class="space-y-3 max-h-48 overflow-y-auto pr-2 pb-4 custom-scroll">
-                    <?php if (empty($pontos)): ?>
-                        <p class="text-center text-gray-400 text-sm py-4">Nenhum ponto encontrado.</p>
-                    <?php else: ?>
-                        <?php foreach ($pontos as $p): ?>
-                        <div class="card-ponto flex items-center justify-between p-4 border border-gray-100 rounded-2xl bg-white shadow-sm hover:border-blue-200 transition" data-ponto-id="<?= $p['id']; ?>" data-search="<?= htmlspecialchars(($p['nome'] ?? '') . ' ' . ($p['nome_linha'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-                            <div>
-                                <div class="flex items-center gap-2 mb-1">
-                                    <span class="bg-blue-500 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase">
-                                        <?= htmlspecialchars($p['nome_linha'] ?? 'Linha'); ?>
-                                    </span>
-                                </div>
-                                <p class="text-sm font-semibold text-gray-700"><?= htmlspecialchars($p['nome']); ?></p>
-                                <p class="text-xs text-gray-400 italic">Ponto de parada oficial</p>
-                            </div>
-                            <button onclick="confirmarPonto(<?= $p['id']; ?>)" class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-md active:scale-95 transition">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                            </button>
-                        </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                    </div>
+                    <div id="listaPontos" class="space-y-3 max-h-48 overflow-y-auto pr-2 pb-4 custom-scroll"></div>
                     <p id="nenhumResultadoPontos" class="hidden text-center text-gray-400 text-sm py-4">Nenhum ponto corresponde a busca.</p>
                 </div>
             </div>
@@ -131,6 +110,22 @@
             <p class="text-sm font-black text-gray-900 tracking-wide mt-1"><?= htmlspecialchars(($currentAluno['telefone'] ?? '') !== '' ? $currentAluno['telefone'] : ($currentAluno['email'] ?? 'Sem contato')) ?></p>
 
             <div class="h-px w-full bg-gray-100 my-6"></div>
+
+            <div class="rounded-[1.5rem] border border-blue-100 bg-blue-50/70 p-4">
+                <p class="text-[11px] uppercase tracking-[0.2em] font-bold text-blue-600">Linha do aluno</p>
+                <p id="linhaAtualAluno" class="mt-2 text-sm font-semibold text-slate-700">
+                    <?= $linhaSelecionadaId ? htmlspecialchars(($pontos[0]['nome_linha'] ?? 'Linha selecionada')) : 'Nenhuma linha selecionada' ?>
+                </p>
+                <select id="selectLinhaAluno" class="mt-3 w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-400">
+                    <option value="">Selecione uma linha</option>
+                    <?php foreach ($linhasDisponiveis as $linha): ?>
+                        <option value="<?= (int) $linha['id'] ?>" <?= $linhaSelecionadaId === (int) $linha['id'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($linha['nome']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <p class="mt-2 text-xs text-slate-500">Voce pode trocar a linha a qualquer momento. Os pontos abaixo acompanham a linha escolhida.</p>
+            </div>
         </div>
 
         <div class="flex flex-col gap-6">
@@ -161,6 +156,9 @@
     <script>
         const estadoConfirmacaoInicial = <?= json_encode($estadoConfirmacao ?? null, JSON_UNESCAPED_UNICODE) ?>;
         const contextoViagemInicial = <?= json_encode($contextoViagemAluno ?? null, JSON_UNESCAPED_UNICODE) ?>;
+        const pontosIniciais = <?= json_encode($pontos, JSON_UNESCAPED_UNICODE) ?>;
+        const linhasDisponiveis = <?= json_encode($linhasDisponiveis ?? [], JSON_UNESCAPED_UNICODE) ?>;
+        const linhaSelecionadaInicial = <?= json_encode($linhaSelecionadaId ?? null, JSON_UNESCAPED_UNICODE) ?>;
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebarMenu');
@@ -225,17 +223,21 @@
             }).addTo(map).bindPopup('Voce esta aqui').openPopup();
         });
 
-        const pontosDoBanco = <?= json_encode($pontos, JSON_UNESCAPED_UNICODE) ?>;
         const buscaInput = document.getElementById('buscarPonto');
-        const cardsPontos = Array.from(document.querySelectorAll('.card-ponto'));
+        const listaPontos = document.getElementById('listaPontos');
         const nenhumResultadoPontos = document.getElementById('nenhumResultadoPontos');
         const listaPontosWrapper = document.getElementById('listaPontosWrapper');
         const painelEstadoAluno = document.getElementById('painelEstadoAluno');
         const overlayEstado = document.getElementById('estadoViagemOverlay');
+        const selectLinhaAluno = document.getElementById('selectLinhaAluno');
+        const linhaAtualAluno = document.getElementById('linhaAtualAluno');
         let contextoViagemAtual = contextoViagemInicial || {};
         let estadoConfirmacaoAtual = estadoConfirmacaoInicial;
         let viagemAtual = contextoViagemAtual.trip || null;
         let retornoPlanejado = !!contextoViagemAtual.retorno_planejado;
+        let linhaSelecionadaId = linhaSelecionadaInicial ? Number(linhaSelecionadaInicial) : null;
+        let pontosDoBanco = Array.isArray(pontosIniciais) ? pontosIniciais : [];
+        let cardsPontos = [];
         let ultimoStatus = viagemAtual && viagemAtual.status ? viagemAtual.status : 'aguardando';
         let notificadoSaida = false;
         let notificadoChegada = false;
@@ -250,15 +252,7 @@
             iconSize: [28, 28],
             iconAnchor: [14, 14]
         });
-        const marcadoresPorPonto = {};
-
-        pontosDoBanco.forEach(function (ponto) {
-            if (ponto.latitude && ponto.longitude) {
-                marcadoresPorPonto[ponto.id] = L.marker([ponto.latitude, ponto.longitude], { icon: busIcon })
-                    .addTo(map)
-                    .bindPopup(`<strong>${ponto.nome}</strong><br><span style="color: #666;">${ponto.nome_linha || 'Linha BeFlow'}</span>`);
-            }
-        });
+        const marcadoresLayer = L.layerGroup().addTo(map);
 
         function getTripStatus() {
             return (viagemAtual && viagemAtual.status) || 'aguardando';
@@ -324,13 +318,100 @@
             mostrarFluxoPrincipal();
         }
 
+        function getLinhaSelecionadaNome() {
+            const linhaAtual = linhasDisponiveis.find(function (linha) {
+                return Number(linha.id) === Number(linhaSelecionadaId);
+            });
+
+            return linhaAtual ? linhaAtual.nome : 'Nenhuma linha selecionada';
+        }
+
+        function atualizarResumoLinha() {
+            linhaAtualAluno.innerText = getLinhaSelecionadaNome();
+            if (selectLinhaAluno.value !== String(linhaSelecionadaId || '')) {
+                selectLinhaAluno.value = linhaSelecionadaId ? String(linhaSelecionadaId) : '';
+            }
+        }
+
+        function renderizarMarcadores(idsVisiveis) {
+            marcadoresLayer.clearLayers();
+
+            const pontosParaExibir = Array.isArray(idsVisiveis)
+                ? pontosDoBanco.filter(function (ponto) { return idsVisiveis.includes(String(ponto.id)); })
+                : pontosDoBanco;
+
+            pontosParaExibir.forEach(function (ponto) {
+                if (!ponto.latitude || !ponto.longitude) {
+                    return;
+                }
+
+                L.marker([ponto.latitude, ponto.longitude], { icon: busIcon })
+                    .bindPopup(`<strong>${ponto.nome}</strong><br><span style="color: #666;">${ponto.nome_linha || 'Linha BeFlow'}</span>`)
+                    .addTo(marcadoresLayer);
+            });
+
+            if (pontosParaExibir.length === 1 && pontosParaExibir[0].latitude && pontosParaExibir[0].longitude) {
+                map.setView([pontosParaExibir[0].latitude, pontosParaExibir[0].longitude], 16);
+            }
+        }
+
+        function renderizarListaPontos() {
+            atualizarResumoLinha();
+
+            if (!linhaSelecionadaId) {
+                listaPontos.innerHTML = '<p class="text-center text-gray-400 text-sm py-4">Selecione uma linha na sidebar para ver os pontos.</p>';
+                cardsPontos = [];
+                nenhumResultadoPontos.classList.add('hidden');
+                renderizarMarcadores([]);
+                return;
+            }
+
+            if (!pontosDoBanco.length) {
+                listaPontos.innerHTML = '<p class="text-center text-gray-400 text-sm py-4">Nenhum ponto encontrado para esta linha.</p>';
+                cardsPontos = [];
+                nenhumResultadoPontos.classList.add('hidden');
+                renderizarMarcadores([]);
+                return;
+            }
+
+            listaPontos.innerHTML = pontosDoBanco.map(function (ponto) {
+                const nomeLinha = ponto.nome_linha || 'Linha';
+                const termoBusca = `${ponto.nome || ''} ${nomeLinha}`;
+
+                return `
+                    <div class="card-ponto flex items-center justify-between p-4 border border-gray-100 rounded-2xl bg-white shadow-sm hover:border-blue-200 transition" data-ponto-id="${ponto.id}" data-search="${termoBusca.replace(/"/g, '&quot;')}">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="bg-blue-500 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase">${nomeLinha}</span>
+                            </div>
+                            <p class="text-sm font-semibold text-gray-700">${ponto.nome}</p>
+                            <p class="text-xs text-gray-400 italic">Ponto de parada oficial</p>
+                        </div>
+                        <button onclick="confirmarPonto(${ponto.id})" class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-md active:scale-95 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+            cardsPontos = Array.from(document.querySelectorAll('.card-ponto'));
+            renderizarMarcadores();
+        }
+
         function filtrarPontos() {
             if (estadoConfirmacaoAtual) {
                 return;
             }
 
+            if (!linhaSelecionadaId || !cardsPontos.length) {
+                nenhumResultadoPontos.classList.add('hidden');
+                renderizarMarcadores([]);
+                return;
+            }
+
             const termo = (buscaInput.value || '').trim().toLowerCase();
             const idsVisiveis = [];
+            let temVisivel = false;
 
             cardsPontos.forEach(function (card) {
                 const textoBusca = (card.dataset.search || '').toLowerCase();
@@ -339,24 +420,14 @@
 
                 card.classList.toggle('hidden', !corresponde);
 
-                if (marcadoresPorPonto[pontoId]) {
-                    if (corresponde) {
-                        marcadoresPorPonto[pontoId].addTo(map);
-                    } else {
-                        map.removeLayer(marcadoresPorPonto[pontoId]);
-                    }
-                }
-
-                if (corresponde && marcadoresPorPonto[pontoId]) {
+                if (corresponde) {
+                    temVisivel = true;
                     idsVisiveis.push(pontoId);
                 }
             });
 
-            nenhumResultadoPontos.classList.toggle('hidden', cardsPontos.some(card => !card.classList.contains('hidden')));
-
-            if (idsVisiveis.length === 1) {
-                map.setView(marcadoresPorPonto[idsVisiveis[0]].getLatLng(), 16);
-            }
+            nenhumResultadoPontos.classList.toggle('hidden', temVisivel);
+            renderizarMarcadores(idsVisiveis);
         }
 
         buscaInput.addEventListener('input', filtrarPontos);
@@ -407,6 +478,22 @@
                     const error = new Error(data.erro || data.message || 'Operacao bloqueada.');
                     error.payload = data;
                     throw error;
+                }
+
+                return data;
+            });
+        }
+
+        function salvarLinhaSelecionada(linhaId) {
+            return fetch('<?= BASE_URL ?>/aluno/selecionar-linha', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ linha_id: linhaId || null })
+            }).then(async response => {
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Nao foi possivel salvar a linha.');
                 }
 
                 return data;
@@ -575,6 +662,23 @@
                 });
         }
 
+        selectLinhaAluno.addEventListener('change', function () {
+            const novoValor = this.value ? Number(this.value) : null;
+
+            salvarLinhaSelecionada(novoValor)
+                .then(data => {
+                    linhaSelecionadaId = data.selected_line_id ? Number(data.selected_line_id) : null;
+                    pontosDoBanco = Array.isArray(data.points) ? data.points : [];
+                    buscaInput.value = '';
+                    renderizarListaPontos();
+                    filtrarPontos();
+                })
+                .catch(error => {
+                    this.value = linhaSelecionadaId ? String(linhaSelecionadaId) : '';
+                    Swal.fire('Nao foi possivel salvar', error.message, 'warning');
+                });
+        });
+
         function mostrarNotificacao() {
             if (ultimoStatus === 'em_rota') {
                 Swal.fire({ title: 'O onibus ja saiu!', text: 'Fique atento ao seu ponto de embarque.', icon: 'info', confirmButtonColor: '#4A7DDF' });
@@ -609,6 +713,7 @@
                 .catch(erro => console.error('Erro ao buscar status:', erro));
         }
 
+        renderizarListaPontos();
         renderizarEstadoAluno();
         setInterval(atualizarStatus, 10000);
     </script>

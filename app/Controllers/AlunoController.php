@@ -4,6 +4,8 @@ require_once __DIR__ . '/../Models/Ponto.php';
 require_once __DIR__ . '/../Models/Confirmacao.php';
 
 class AlunoController {
+    private $alunoLinhaColumnExists;
+
     public function index() {
         if (!isset($_SESSION['usuario_id']) || $_SESSION['tipo_usuario'] !== 'aluno') {
             header('Location: ' . BASE_URL . '/login');
@@ -11,18 +13,16 @@ class AlunoController {
         }
 
         $confirmacaoModel = new Confirmacao();
+        $db = (new Database())->getConnection();
+        $alunoAtual = $this->buscarAlunoAtual($db, (int) $_SESSION['usuario_id']);
         $contextoViagemAluno = $confirmacaoModel->buscarContextoAtual($_SESSION['usuario_id']);
         $estadoConfirmacao = $contextoViagemAluno['state'] ?? null;
-        $viagemAtualAluno = $contextoViagemAluno['trip'] ?? null;
 
         $pontoModel = new Ponto();
-        if ($viagemAtualAluno && !empty($viagemAtualAluno['linha_id'])) {
-            $pontos = $pontoModel->buscarPorLinha((int) $viagemAtualAluno['linha_id']);
-        } else {
-            $pontos = $pontoModel->buscarPontosDaViagemAtual();
-        }
+        $linhasDisponiveis = $pontoModel->buscarLinhasDaEmpresa((int) ($alunoAtual['empresa_id'] ?? 0));
+        $linhaSelecionadaId = !empty($alunoAtual['linha_id']) ? (int) $alunoAtual['linha_id'] : null;
+        $pontos = $linhaSelecionadaId ? $pontoModel->buscarPorLinha($linhaSelecionadaId) : [];
 
-        $db = (new Database())->getConnection();
         $stmtAluno = $db->prepare("SELECT nome, telefone, email FROM usuarios WHERE id = :id LIMIT 1");
         $stmtAluno->execute(['id' => $_SESSION['usuario_id']]);
         $currentAluno = $stmtAluno->fetch(PDO::FETCH_ASSOC) ?: [
@@ -95,6 +95,62 @@ class AlunoController {
         exit;
     }
 
+    public function selecionarLinha() {
+        header('Content-Type: application/json');
+
+        if (!isset($_SESSION['usuario_id']) || $_SESSION['tipo_usuario'] !== 'aluno') {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Acesso negado.']);
+            exit;
+        }
+
+        $data = json_decode(file_get_contents('php://input'), true) ?: [];
+        $linhaId = isset($data['linha_id']) && $data['linha_id'] !== '' ? (int) $data['linha_id'] : null;
+        $db = (new Database())->getConnection();
+        $alunoAtual = $this->buscarAlunoAtual($db, (int) $_SESSION['usuario_id']);
+
+        if (!$alunoAtual) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Aluno nao encontrado.']);
+            exit;
+        }
+
+        if ($linhaId !== null) {
+            $stmtLinha = $db->prepare('SELECT id, nome FROM linhas WHERE id = :id AND empresa_id = :empresa_id LIMIT 1');
+            $stmtLinha->execute([
+                'id' => $linhaId,
+                'empresa_id' => $alunoAtual['empresa_id'],
+            ]);
+            $linhaSelecionada = $stmtLinha->fetch(PDO::FETCH_ASSOC);
+
+            if (!$linhaSelecionada) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Linha invalida para este aluno.']);
+                exit;
+            }
+        }
+
+        if ($this->hasAlunoLinhaColumn($db)) {
+            $stmt = $db->prepare('UPDATE alunos SET linha_id = :linha_id WHERE usuario_id = :usuario_id');
+            $stmt->bindValue(':linha_id', $linhaId, $linhaId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+            $stmt->bindValue(':usuario_id', (int) $_SESSION['usuario_id'], PDO::PARAM_INT);
+            $stmt->execute();
+        }
+
+        $_SESSION['aluno_linha_id'] = $linhaId;
+
+        $pontoModel = new Ponto();
+        $pontos = $linhaId ? $pontoModel->buscarPorLinha($linhaId) : [];
+
+        echo json_encode([
+            'success' => true,
+            'message' => $linhaId ? 'Linha selecionada com sucesso.' : 'Selecao de linha removida.',
+            'selected_line_id' => $linhaId,
+            'points' => $pontos,
+        ]);
+        exit;
+    }
+
     public function checarStatusViagem() {
         header('Content-Type: application/json');
 
@@ -110,6 +166,58 @@ class AlunoController {
             'hora_volta' => $contexto['hora_volta'] ?? null,
         ]);
         exit;
+    }
+
+    private function buscarAlunoAtual(PDO $db, int $usuarioId) {
+        $linhaSql = $this->hasAlunoLinhaColumn($db) ? 'a.linha_id' : 'NULL AS linha_id';
+        $stmt = $db->prepare("
+            SELECT a.id, {$linhaSql}, u.empresa_id
+            FROM alunos a
+            INNER JOIN usuarios u ON u.id = a.usuario_id
+            WHERE a.usuario_id = :usuario_id
+            LIMIT 1
+        ");
+        $stmt->execute(['usuario_id' => $usuarioId]);
+
+        $aluno = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        if ($aluno && array_key_exists('aluno_linha_id', $_SESSION)) {
+            $aluno['linha_id'] = $_SESSION['aluno_linha_id'];
+        }
+
+        return $aluno;
+    }
+
+    private function hasAlunoLinhaColumn(PDO $db) {
+        if ($this->alunoLinhaColumnExists !== null) {
+            return $this->alunoLinhaColumnExists;
+        }
+
+        $driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+        if ($driver === 'pgsql') {
+            $stmt = $db->prepare("
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = CURRENT_SCHEMA()
+                  AND table_name = 'alunos'
+                  AND column_name = 'linha_id'
+                LIMIT 1
+            ");
+        } else {
+            $stmt = $db->prepare("
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = DATABASE()
+                  AND table_name = 'alunos'
+                  AND column_name = 'linha_id'
+                LIMIT 1
+            ");
+        }
+
+        $stmt->execute();
+        $this->alunoLinhaColumnExists = (bool) $stmt->fetchColumn();
+
+        return $this->alunoLinhaColumnExists;
     }
 }
 ?>

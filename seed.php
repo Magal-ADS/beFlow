@@ -59,18 +59,18 @@ $usuarios = [
     ['email' => 'admin@beflow.com', 'nome' => 'Admin BeFlow', 'telefone' => '', 'senha' => password_hash('admin123', PASSWORD_DEFAULT), 'tipo_usuario' => 'admin_empresa', 'empresa_id' => 1],
     ['email' => 'motorista@beflow.com', 'nome' => 'Carlos Motorista', 'telefone' => '', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'motorista', 'empresa_id' => 1],
     ['email' => 'ricardo@beflow.com', 'nome' => 'Ricardo Oliveira', 'telefone' => '16991112233', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'motorista', 'empresa_id' => 1],
-    ['email' => 'amandaaluno@gmail.com', 'nome' => 'Amanda Amorin', 'telefone' => '16997435710', 'senha' => password_hash('123456', PASSWORD_DEFAULT), 'tipo_usuario' => 'aluno', 'empresa_id' => 1, 'turno' => 'Matutino', 'escola' => 'Objetivo'],
-    ['email' => 'joao@gmail.com', 'nome' => 'Joao Vitor', 'telefone' => '16997547649', 'senha' => password_hash('123456', PASSWORD_DEFAULT), 'tipo_usuario' => 'aluno', 'empresa_id' => 1, 'turno' => 'Noturno', 'escola' => 'FATEC'],
-    ['email' => 'isabela@gmail.com', 'nome' => 'Isabela Silva', 'telefone' => '16988444111', 'senha' => password_hash('123456', PASSWORD_DEFAULT), 'tipo_usuario' => 'aluno', 'empresa_id' => 1, 'turno' => 'Matutino', 'escola' => 'SESI'],
+    ['email' => 'amandaaluno@gmail.com', 'nome' => 'Amanda Amorin', 'telefone' => '16997435710', 'senha' => password_hash('123456', PASSWORD_DEFAULT), 'tipo_usuario' => 'aluno', 'empresa_id' => 1, 'turno' => 'Matutino', 'escola' => 'Objetivo', 'linha_id' => 1],
+    ['email' => 'joao@gmail.com', 'nome' => 'Joao Vitor', 'telefone' => '16997547649', 'senha' => password_hash('123456', PASSWORD_DEFAULT), 'tipo_usuario' => 'aluno', 'empresa_id' => 1, 'turno' => 'Noturno', 'escola' => 'FATEC', 'linha_id' => 3],
+    ['email' => 'isabela@gmail.com', 'nome' => 'Isabela Silva', 'telefone' => '16988444111', 'senha' => password_hash('123456', PASSWORD_DEFAULT), 'tipo_usuario' => 'aluno', 'empresa_id' => 1, 'turno' => 'Matutino', 'escola' => 'SESI', 'linha_id' => 2],
     ['email' => 'totalmagal@beflow.com', 'nome' => 'Total Magal Admin', 'telefone' => '', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'admin_empresa', 'empresa_id' => 1],
-    ['email' => 'beatriz@gmail.com', 'nome' => 'Beatriz Aluno', 'telefone' => '', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'aluno', 'empresa_id' => 1, 'turno' => 'Noturno', 'escola' => 'FATEC'],
+    ['email' => 'beatriz@gmail.com', 'nome' => 'Beatriz Aluno', 'telefone' => '', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'aluno', 'empresa_id' => 1, 'turno' => 'Noturno', 'escola' => 'FATEC', 'linha_id' => 3],
     ['email' => 'petito@gmail.com', 'nome' => 'Petito Empresa', 'telefone' => '', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'admin_empresa', 'empresa_id' => 1],
     ['email' => 'felipe@gmail.com', 'nome' => 'Felipe Motorista', 'telefone' => '', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'motorista', 'empresa_id' => 1],
 ];
 
 foreach ($usuarios as $usuario) {
     $baseUsuario = $usuario;
-    unset($baseUsuario['turno'], $baseUsuario['escola']);
+    unset($baseUsuario['turno'], $baseUsuario['escola'], $baseUsuario['linha_id']);
     upsert($pdo, $driver, 'usuarios', $baseUsuario, ['email']);
 
     $stmtUsuario = $pdo->prepare("SELECT id, tipo_usuario FROM usuarios WHERE email = :email LIMIT 1");
@@ -82,6 +82,7 @@ foreach ($usuarios as $usuario) {
             'usuario_id' => $usuarioDb['id'],
             'turno' => $usuario['turno'],
             'escola' => $usuario['escola'],
+            'linha_id' => $usuario['linha_id'] ?? null,
         ], ['usuario_id']);
     }
 
@@ -131,6 +132,7 @@ $pontos = [
     ['id' => 7, 'nome' => 'Ponto Parque das Flores', 'latitude' => '-21.41800000', 'longitude' => '-48.49900000', 'ordem_na_linha' => 1, 'linha_id' => 3],
     ['id' => 8, 'nome' => 'Ponto Escola Tecnica', 'latitude' => '-21.42200000', 'longitude' => '-48.50300000', 'ordem_na_linha' => 2, 'linha_id' => 3],
     ['id' => 9, 'nome' => 'Ponto Rodoviaria Nova', 'latitude' => '-21.42800000', 'longitude' => '-48.50900000', 'ordem_na_linha' => 3, 'linha_id' => 3],
+    ['id' => 13, 'nome' => 'Ponto Entrada FATEC Taquaritinga', 'latitude' => '-21.40112730', 'longitude' => '-48.50876820', 'ordem_na_linha' => 4, 'linha_id' => 3],
     ['id' => 10, 'nome' => 'Ponto Jardim Europa', 'latitude' => '-21.40900000', 'longitude' => '-48.52100000', 'ordem_na_linha' => 1, 'linha_id' => 4],
     ['id' => 11, 'nome' => 'Ponto Lago Municipal', 'latitude' => '-21.41300000', 'longitude' => '-48.52600000', 'ordem_na_linha' => 2, 'linha_id' => 4],
     ['id' => 12, 'nome' => 'Ponto Bairro Verde', 'latitude' => '-21.41850000', 'longitude' => '-48.53100000', 'ordem_na_linha' => 3, 'linha_id' => 4],

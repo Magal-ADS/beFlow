@@ -91,6 +91,8 @@ if ($driver === 'mysql') {
                 usuario_id INT NOT NULL UNIQUE,
                 turno VARCHAR(20),
                 escola VARCHAR(100),
+                linha_id INT NULL,
+                CONSTRAINT fk_alunos_linha FOREIGN KEY (linha_id) REFERENCES linhas (id) ON DELETE SET NULL,
                 CONSTRAINT fk_alunos_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ",
@@ -197,6 +199,8 @@ if ($driver === 'mysql') {
                 usuario_id INT NOT NULL UNIQUE,
                 turno VARCHAR(20),
                 escola VARCHAR(100),
+                linha_id INT NULL,
+                CONSTRAINT fk_alunos_linha FOREIGN KEY (linha_id) REFERENCES linhas (id) ON DELETE SET NULL,
                 CONSTRAINT fk_alunos_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
             );
         ",
