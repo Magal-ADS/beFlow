@@ -82,7 +82,6 @@ foreach ($usuarios as $usuario) {
             'usuario_id' => $usuarioDb['id'],
             'turno' => $usuario['turno'],
             'escola' => $usuario['escola'],
-            'linha_id' => $usuario['linha_id'] ?? null,
         ], ['usuario_id']);
     }
 
@@ -120,6 +119,29 @@ foreach ($horarios as $horario) {
 }
 
 echo "   [OK] Estrutura base criada\n";
+
+echo "\n3.1 Vinculo de linhas dos alunos\n";
+foreach ($usuarios as $usuario) {
+    if (($usuario['tipo_usuario'] ?? '') !== 'aluno' || !isset($usuario['linha_id'])) {
+        continue;
+    }
+
+    $stmtUsuarioLinha = $pdo->prepare("SELECT id FROM usuarios WHERE email = :email LIMIT 1");
+    $stmtUsuarioLinha->execute(['email' => $usuario['email']]);
+    $usuarioLinhaId = $stmtUsuarioLinha->fetchColumn();
+
+    if (!$usuarioLinhaId) {
+        continue;
+    }
+
+    $stmtAlunoLinha = $pdo->prepare("UPDATE alunos SET linha_id = :linha_id WHERE usuario_id = :usuario_id");
+    $stmtAlunoLinha->execute([
+        'linha_id' => $usuario['linha_id'],
+        'usuario_id' => $usuarioLinhaId,
+    ]);
+
+    echo "   [OK] {$usuario['email']} => linha {$usuario['linha_id']}\n";
+}
 
 echo "\n4. Pontos\n";
 $pontos = [
