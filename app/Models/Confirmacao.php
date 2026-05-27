@@ -24,17 +24,22 @@ class Confirmacao {
             return false;
         }
 
-        $viagemAtual = $this->buscarViagemAtual();
-        if (!$viagemAtual) {
-            $this->lastError = 'Nenhuma viagem ativa foi configurada para hoje.';
-            return false;
-        }
-
         $stmtPonto = $this->conn->prepare('SELECT linha_id FROM pontos WHERE id = :id LIMIT 1');
         $stmtPonto->execute(['id' => $pontoId]);
         $linhaDoPonto = $stmtPonto->fetchColumn();
 
-        if (!$linhaDoPonto || (int) $linhaDoPonto !== (int) $viagemAtual['linha_id']) {
+        if (!$linhaDoPonto) {
+            $this->lastError = 'Ponto de embarque invalido.';
+            return false;
+        }
+
+        $viagemAtual = $this->buscarViagemAtualPorLinha((int) $linhaDoPonto);
+        if (!$viagemAtual) {
+            $this->lastError = 'Nenhuma viagem ativa foi configurada para hoje para esta linha.';
+            return false;
+        }
+
+        if ((int) $linhaDoPonto !== (int) $viagemAtual['linha_id']) {
             $this->lastError = 'Este ponto nao esta disponivel na rota ativa de hoje.';
             return false;
         }
@@ -170,7 +175,7 @@ class Confirmacao {
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
-    public function buscarContextoAtual($usuarioId) {
+    public function buscarContextoAtual($usuarioId, $linhaId = null) {
         $estadoAtual = $this->buscarEstadoAtual($usuarioId);
         $retornoPlanejado = false;
         $horaVolta = null;
@@ -194,7 +199,7 @@ class Confirmacao {
         }
 
         if (!$viagem) {
-            $viagem = (new Ponto())->buscarViagemAtual();
+            $viagem = $linhaId ? (new Ponto())->buscarViagemAtual(null, null, (int) $linhaId) : (new Ponto())->buscarViagemAtual();
         }
 
         if (!$horaVolta && $viagem) {
@@ -232,6 +237,11 @@ class Confirmacao {
     private function buscarViagemAtual() {
         $pontoModel = new Ponto();
         return $pontoModel->buscarViagemAtual();
+    }
+
+    private function buscarViagemAtualPorLinha($linhaId) {
+        $pontoModel = new Ponto();
+        return $pontoModel->buscarViagemAtual(null, null, $linhaId);
     }
 
     private function buscarEstadoPorDirecao($alunoId, $direcao) {

@@ -15,12 +15,11 @@ class AlunoController {
         $confirmacaoModel = new Confirmacao();
         $db = (new Database())->getConnection();
         $alunoAtual = $this->buscarAlunoAtual($db, (int) $_SESSION['usuario_id']);
-        $contextoViagemAluno = $confirmacaoModel->buscarContextoAtual($_SESSION['usuario_id']);
-        $estadoConfirmacao = $contextoViagemAluno['state'] ?? null;
-
         $pontoModel = new Ponto();
         $linhasDisponiveis = $pontoModel->buscarLinhasDaEmpresa((int) ($alunoAtual['empresa_id'] ?? 0));
         $linhaSelecionadaId = !empty($alunoAtual['linha_id']) ? (int) $alunoAtual['linha_id'] : null;
+        $contextoViagemAluno = $confirmacaoModel->buscarContextoAtual($_SESSION['usuario_id'], $linhaSelecionadaId);
+        $estadoConfirmacao = $contextoViagemAluno['state'] ?? null;
         $pontos = $linhaSelecionadaId ? $pontoModel->buscarPorLinha($linhaSelecionadaId) : [];
 
         $stmtAluno = $db->prepare("SELECT nome, telefone, email FROM usuarios WHERE id = :id LIMIT 1");
@@ -70,7 +69,8 @@ class AlunoController {
             $message = $ok ? 'Retorno sem onibus registrado com sucesso.' : $confirmacaoModel->getLastError();
         }
 
-        $contextoAtual = $confirmacaoModel->buscarContextoAtual($_SESSION['usuario_id']);
+        $linhaSelecionadaId = $this->buscarLinhaSelecionadaAtual((new Database())->getConnection(), (int) $_SESSION['usuario_id']);
+        $contextoAtual = $confirmacaoModel->buscarContextoAtual($_SESSION['usuario_id'], $linhaSelecionadaId);
 
         if (!$ok && $confirmacaoModel->getLastHttpStatus() === 400) {
             http_response_code(400);
@@ -155,7 +155,9 @@ class AlunoController {
         header('Content-Type: application/json');
 
         $confirmacaoModel = new Confirmacao();
-        $contexto = $confirmacaoModel->buscarContextoAtual($_SESSION['usuario_id'] ?? 0);
+        $db = (new Database())->getConnection();
+        $linhaSelecionadaId = $this->buscarLinhaSelecionadaAtual($db, (int) ($_SESSION['usuario_id'] ?? 0));
+        $contexto = $confirmacaoModel->buscarContextoAtual($_SESSION['usuario_id'] ?? 0, $linhaSelecionadaId);
         $trip = $contexto['trip'] ?? null;
 
         echo json_encode([
@@ -185,6 +187,11 @@ class AlunoController {
         }
 
         return $aluno;
+    }
+
+    private function buscarLinhaSelecionadaAtual(PDO $db, int $usuarioId) {
+        $aluno = $this->buscarAlunoAtual($db, $usuarioId);
+        return !empty($aluno['linha_id']) ? (int) $aluno['linha_id'] : null;
     }
 
     private function hasAlunoLinhaColumn(PDO $db) {

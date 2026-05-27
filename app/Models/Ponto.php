@@ -97,8 +97,8 @@ class Ponto {
         return $this->buscarPorLinha((int) $viagemAtual['linha_id']);
     }
 
-    public function buscarViagemAtual($motoristaId = null, $direcao = null) {
-        $query = $this->buildTripQuery($motoristaId !== null, $direcao !== null);
+    public function buscarViagemAtual($motoristaId = null, $direcao = null, $linhaId = null) {
+        $query = $this->buildTripQuery($motoristaId !== null, $direcao !== null, $linhaId !== null);
         $params = [];
 
         if ($motoristaId !== null) {
@@ -109,6 +109,10 @@ class Ponto {
             $params['direcao'] = $direcao;
         }
 
+        if ($linhaId !== null) {
+            $params['linha_id'] = $linhaId;
+        }
+
         $stmt = $this->conn->prepare($query);
         $stmt->execute($params);
         $viagem = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -116,8 +120,8 @@ class Ponto {
         return $viagem ?: null;
     }
 
-    public function buscarViagemAtualId($motoristaId = null, $direcao = null) {
-        $viagem = $this->buscarViagemAtual($motoristaId, $direcao);
+    public function buscarViagemAtualId($motoristaId = null, $direcao = null, $linhaId = null) {
+        $viagem = $this->buscarViagemAtual($motoristaId, $direcao, $linhaId);
         return $viagem ? (int) $viagem['id'] : null;
     }
 
@@ -388,9 +392,10 @@ class Ponto {
         ";
     }
 
-    private function buildTripQuery($withMotorista, $withDirecao) {
+    private function buildTripQuery($withMotorista, $withDirecao, $withLinha) {
         $motoristaSql = $withMotorista ? ' AND v.motorista_id = :motorista_id' : '';
         $direcaoSql = ($withDirecao && $this->hasTripDirectionColumn()) ? ' AND v.direcao = :direcao' : '';
+        $linhaSql = $withLinha ? ' AND v.linha_id = :linha_id' : '';
         $direcaoOrder = !$this->hasTripDirectionColumn()
             ? '0'
             : ($withMotorista
@@ -409,6 +414,7 @@ class Ponto {
             WHERE v.data_viagem = {$this->currentDateExpression()}
               {$motoristaSql}
               {$direcaoSql}
+              {$linhaSql}
             ORDER BY
                 CASE v.status
                     WHEN 'em_rota' THEN 0

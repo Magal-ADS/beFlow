@@ -241,6 +241,7 @@
         let ultimoStatus = viagemAtual && viagemAtual.status ? viagemAtual.status : 'aguardando';
         let notificadoSaida = false;
         let notificadoChegada = false;
+        let marcadorMotoristaViagem = null;
 
         const busIcon = L.divIcon({
             html: `<div style="background-color: #4A7DDF; padding: 6px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">
@@ -253,6 +254,16 @@
             iconAnchor: [14, 14]
         });
         const marcadoresLayer = L.layerGroup().addTo(map);
+        const motoristaIcon = L.divIcon({
+            html: `<div style="background-color: #16a34a; padding: 7px; border-radius: 9999px; border: 3px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.28);">
+                    <svg style="width: 16px; height: 16px; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8m-8 4h8m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                   </div>`,
+            className: '',
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
+        });
 
         function getTripStatus() {
             return (viagemAtual && viagemAtual.status) || 'aguardando';
@@ -331,6 +342,30 @@
             if (selectLinhaAluno.value !== String(linhaSelecionadaId || '')) {
                 selectLinhaAluno.value = linhaSelecionadaId ? String(linhaSelecionadaId) : '';
             }
+        }
+
+        function atualizarMarcadorMotorista() {
+            const latitude = viagemAtual && viagemAtual.latitude_atual ? Number(viagemAtual.latitude_atual) : null;
+            const longitude = viagemAtual && viagemAtual.longitude_atual ? Number(viagemAtual.longitude_atual) : null;
+
+            if (!latitude || !longitude) {
+                if (marcadorMotoristaViagem) {
+                    map.removeLayer(marcadorMotoristaViagem);
+                    marcadorMotoristaViagem = null;
+                }
+                return;
+            }
+
+            const posicaoMotorista = [latitude, longitude];
+
+            if (!marcadorMotoristaViagem) {
+                marcadorMotoristaViagem = L.marker(posicaoMotorista, { icon: motoristaIcon })
+                    .addTo(map)
+                    .bindPopup('Motorista em rota');
+                return;
+            }
+
+            marcadorMotoristaViagem.setLatLng(posicaoMotorista);
         }
 
         function renderizarMarcadores(idsVisiveis) {
@@ -457,6 +492,8 @@
             if (data) {
                 contextoViagemAtual = Object.assign({}, contextoViagemAtual, data);
             }
+
+            atualizarMarcadorMotorista();
         }
 
         function enviarAcaoConfirmacao(payload) {
@@ -669,9 +706,12 @@
                 .then(data => {
                     linhaSelecionadaId = data.selected_line_id ? Number(data.selected_line_id) : null;
                     pontosDoBanco = Array.isArray(data.points) ? data.points : [];
+                    viagemAtual = null;
                     buscaInput.value = '';
                     renderizarListaPontos();
                     filtrarPontos();
+                    atualizarMarcadorMotorista();
+                    atualizarStatus();
                 })
                 .catch(error => {
                     this.value = linhaSelecionadaId ? String(linhaSelecionadaId) : '';
@@ -713,9 +753,10 @@
                 .catch(erro => console.error('Erro ao buscar status:', erro));
         }
 
+        atualizarMarcadorMotorista();
         renderizarListaPontos();
         renderizarEstadoAluno();
-        setInterval(atualizarStatus, 10000);
+        setInterval(atualizarStatus, 5000);
     </script>
 </body>
 </html>
