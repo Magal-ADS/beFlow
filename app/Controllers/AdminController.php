@@ -4,6 +4,7 @@ require_once __DIR__ . '/../Models/Usuario.php';
 
 class AdminController {
     private $allowedColors = ['azul', 'vermelha', 'amarela', 'verde'];
+    private $schemaColumnCache = [];
 
     public function index() {
         $this->requireAdminSession();
@@ -37,7 +38,8 @@ class AdminController {
         $empresasTotal = (int) $db->query("SELECT COUNT(*) FROM empresa")->fetchColumn();
         $viagensTotal = (int) $db->query("SELECT COUNT(*) FROM viagens")->fetchColumn();
         $confirmacoesTotal = (int) $db->query("SELECT COUNT(*) FROM confirmacoes")->fetchColumn();
-        $pontos = $db->query("SELECT * FROM pontos ORDER BY linha_id ASC, ordem_na_linha ASC")->fetchAll(PDO::FETCH_ASSOC);
+        $this->ensurePontosHorarioAproximadoColumn($db);
+        $pontos = $db->query($this->buildPontosSelectSql())->fetchAll(PDO::FETCH_ASSOC);
 
         $linhasComPontos = [];
         foreach ($linhas as $linha) {
@@ -270,7 +272,8 @@ class AdminController {
         $stmtLinhas = $db->prepare("SELECT * FROM linhas WHERE empresa_id = :empresa_id ORDER BY nome ASC");
         $stmtLinhas->execute(['empresa_id' => $empresaId]);
         $linhas = $stmtLinhas->fetchAll(PDO::FETCH_ASSOC);
-        $pontos = $db->query("SELECT * FROM pontos ORDER BY linha_id ASC, ordem_na_linha ASC")->fetchAll(PDO::FETCH_ASSOC);
+        $this->ensurePontosHorarioAproximadoColumn($db);
+        $pontos = $db->query($this->buildPontosSelectSql())->fetchAll(PDO::FETCH_ASSOC);
 
         $linhasComPontos = [];
         foreach ($linhas as $linha) {
@@ -361,6 +364,7 @@ class AdminController {
 
         try {
             $db = (new Database())->getConnection();
+            $this->ensurePontosHorarioAproximadoColumn($db);
 
             if ($id !== '') {
                 $stmt = $db->prepare("
@@ -378,6 +382,7 @@ class AdminController {
                     'id' => $id,
                 ]);
             } else {
+                $this->syncPontosPrimaryKeySequence($db);
                 $stmt = $db->prepare("
                     INSERT INTO pontos (linha_id, nome, latitude, longitude, ordem_na_linha, horario_aproximado)
                     VALUES (:linha_id, :nome, :latitude, :longitude, :ordem, :horario_aproximado)
@@ -394,7 +399,8 @@ class AdminController {
 
             $this->jsonResponse(true, 'Ponto salvo com sucesso.');
         } catch (PDOException $e) {
-            $this->jsonResponse(false, 'Erro ao salvar o ponto.');
+            error_log('Erro ao salvar ponto: ' . $e->getMessage());
+            $this->jsonResponse(false, 'Erro ao salvar o ponto: ' . $e->getMessage());
         }
     }
 
@@ -597,6 +603,71 @@ class AdminController {
 
     private function normalizeApproximateTime($value) {
         return strlen($value) === 5 ? $value . ':00' : $value;
+    }
+
+    private function buildPontosSelectSql() {
+        return "SELECT id, nome, latitude, longitude, ordem_na_linha, linha_id, horario_aproximado FROM pontos ORDER BY linha_id ASC, ordem_na_linha ASC";
+    }
+
+    private function ensurePontosHorarioAproximadoColumn(PDO $db) {
+        if ($this->hasColumn($db, 'pontos', 'horario_aproximado')) {
+            return;
+        }
+
+        $db->exec("ALTER TABLE pontos ADD COLUMN horario_aproximado TIME NULL");
+        $this->schemaColumnCache['pontos.horario_aproximado'] = true;
+    }
+
+    private function syncPontosPrimaryKeySequence(PDO $db) {
+        if ($db->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'pgsql') {
+            return;
+        }
+
+        $db->query("
+            SELECT setval(
+                pg_get_serial_sequence('pontos', 'id'),
+                COALESCE((SELECT MAX(id) FROM pontos), 1),
+                true
+            )
+        ")->fetchColumn();
+    }
+
+    private function hasColumn(PDO $db, $table, $column) {
+        $cacheKey = $table . '.' . $column;
+        if (array_key_exists($cacheKey, $this->schemaColumnCache)) {
+            return $this->schemaColumnCache[$cacheKey];
+        }
+
+        $driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'pgsql') {
+            $stmt = $db->prepare("
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = CURRENT_SCHEMA()
+                  AND table_name = :table
+                  AND column_name = :column
+                LIMIT 1
+            ");
+        } else {
+            $stmt = $db->prepare("
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = DATABASE()
+                  AND table_name = :table
+                  AND column_name = :column
+                LIMIT 1
+            ");
+        }
+
+        $stmt->execute([
+            'table' => $table,
+            'column' => $column,
+        ]);
+
+        $exists = (bool) $stmt->fetchColumn();
+        $this->schemaColumnCache[$cacheKey] = $exists;
+
+        return $exists;
     }
 }
 ?>

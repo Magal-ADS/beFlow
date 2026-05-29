@@ -50,6 +50,8 @@
                             <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Nome</th>
                             <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">E-mail</th>
                             <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Tipo</th>
+                            <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Escola / Instituicao</th>
+                            <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Turno</th>
                             <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase text-right">Acoes</th>
                         </tr>
                     </thead>
@@ -65,9 +67,15 @@
                                         <?= htmlspecialchars($u['tipo_usuario']) ?>
                                     </span>
                                 </td>
+                                <td class="px-6 py-4 text-gray-500">
+                                    <?= $u['tipo_usuario'] === 'aluno' ? htmlspecialchars($u['escola'] ?? 'Nao informada') : '<span class="text-gray-300">-</span>' ?>
+                                </td>
+                                <td class="px-6 py-4 text-gray-500">
+                                    <?= $u['tipo_usuario'] === 'aluno' ? htmlspecialchars($u['turno'] ?? 'Nao informado') : '<span class="text-gray-300">-</span>' ?>
+                                </td>
                                 <td class="px-6 py-4 text-right flex justify-end gap-3">
                                     <?php if (!$isAdminUser || !empty($canManageAdminUsers)): ?>
-                                    <button onclick="abrirModal('editar', <?= $u['id'] ?>, '<?= addslashes($u['nome']) ?>', '<?= addslashes($u['email']) ?>', '<?= $u['tipo_usuario'] ?>')" class="text-blue-400 hover:text-blue-600 transition" title="Editar Usuario">
+                                    <button onclick="abrirModal('editar', <?= $u['id'] ?>, '<?= addslashes($u['nome']) ?>', '<?= addslashes($u['email']) ?>', '<?= $u['tipo_usuario'] ?>', '<?= addslashes($u['escola'] ?? '') ?>', '<?= addslashes($u['turno'] ?? '') ?>')" class="text-blue-400 hover:text-blue-600 transition" title="Editar Usuario">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                     </button>
                                     <?php else: ?>
@@ -82,7 +90,7 @@
                             </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
-                            <tr><td colspan="4" class="px-6 py-4 text-center text-gray-500 font-bold italic">Nenhum usuario encontrado na base.</td></tr>
+                            <tr><td colspan="6" class="px-6 py-4 text-center text-gray-500 font-bold italic">Nenhum usuario encontrado na base.</td></tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
@@ -115,8 +123,8 @@
                 </select>
 
                 <div id="camposAluno" class="space-y-4 pt-2">
-                    <input type="text" name="escola" placeholder="Escola / Instituicao" class="w-full p-4 rounded-2xl bg-blue-50/50 border border-blue-100 focus:ring-2 focus:ring-blue-400 outline-none">
-                    <select name="turno" class="w-full p-4 rounded-2xl bg-blue-50/50 border border-blue-100 focus:ring-2 focus:ring-blue-400 outline-none">
+                    <input type="text" id="inputEscola" name="escola" placeholder="Escola / Instituicao" class="w-full p-4 rounded-2xl bg-blue-50/50 border border-blue-100 focus:ring-2 focus:ring-blue-400 outline-none">
+                    <select id="inputTurno" name="turno" class="w-full p-4 rounded-2xl bg-blue-50/50 border border-blue-100 focus:ring-2 focus:ring-blue-400 outline-none">
                         <option value="Matutino">Matutino</option>
                         <option value="Vespertino">Vespertino</option>
                         <option value="Noturno">Noturno</option>
@@ -149,7 +157,7 @@
             campos.style.display = tipo === 'aluno' ? 'block' : 'none';
         }
 
-        function abrirModal(modo, id = '', nome = '', email = '', tipo = '') {
+        function abrirModal(modo, id = '', nome = '', email = '', tipo = '', escola = '', turno = '') {
             if (modo === 'editar' && !canManageAdminUsers && (tipo === 'admin_empresa' || tipo === 'admin_geral')) {
                 Swal.fire('Acesso negado', 'Somente usuarios @beflow podem editar administradores.', 'error');
                 return;
@@ -171,12 +179,16 @@
                 document.getElementById('inputNome').value = nome;
                 document.getElementById('inputEmail').value = email;
                 document.getElementById('inputTipo').value = tipo;
+                document.getElementById('inputEscola').value = escola;
+                document.getElementById('inputTurno').value = turno || 'Matutino';
                 inputSenha.required = false;
                 dicaSenha.classList.remove('hidden');
             } else {
                 titulo.innerText = 'Novo Cadastro';
                 acao.value = 'novo';
                 document.getElementById('inputId').value = '';
+                document.getElementById('inputEscola').value = '';
+                document.getElementById('inputTurno').value = 'Matutino';
                 inputSenha.required = true;
                 dicaSenha.classList.add('hidden');
             }

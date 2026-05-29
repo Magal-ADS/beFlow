@@ -45,6 +45,20 @@ function upsert(PDO $pdo, $driver, $table, array $data, array $uniqueColumns) {
     $stmt->execute($data);
 }
 
+function syncPgSequence(PDO $pdo, $driver, $table, $column = 'id') {
+    if ($driver !== 'pgsql') {
+        return;
+    }
+
+    $pdo->query("
+        SELECT setval(
+            pg_get_serial_sequence('{$table}', '{$column}'),
+            COALESCE((SELECT MAX({$column}) FROM {$table}), 1),
+            true
+        )
+    ")->fetchColumn();
+}
+
 echo "1. Empresa base\n";
 upsert($pdo, $driver, 'empresa', [
     'id' => 1,
@@ -56,17 +70,16 @@ echo "   [OK] Empresa configurada\n";
 
 echo "\n2. Usuarios e alunos\n";
 $usuarios = [
-    ['email' => 'admin@beflow.com', 'nome' => 'Admin BeFlow', 'telefone' => '', 'senha' => password_hash('admin123', PASSWORD_DEFAULT), 'tipo_usuario' => 'admin_empresa', 'empresa_id' => 1],
-    ['email' => 'motorista@beflow.com', 'nome' => 'Carlos Motorista', 'telefone' => '', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'motorista', 'empresa_id' => 1],
-    ['email' => 'ricardo@beflow.com', 'nome' => 'Ricardo Oliveira', 'telefone' => '16991112233', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'motorista', 'empresa_id' => 1],
-    ['email' => 'amandaaluno@gmail.com', 'nome' => 'Amanda Amorin', 'telefone' => '16997435710', 'senha' => password_hash('123456', PASSWORD_DEFAULT), 'tipo_usuario' => 'aluno', 'empresa_id' => 1, 'turno' => 'Matutino', 'escola' => 'Objetivo', 'linha_id' => 1],
-    ['email' => 'joao@gmail.com', 'nome' => 'Joao Vitor', 'telefone' => '16997547649', 'senha' => password_hash('123456', PASSWORD_DEFAULT), 'tipo_usuario' => 'aluno', 'empresa_id' => 1, 'turno' => 'Noturno', 'escola' => 'FATEC', 'linha_id' => 3],
-    ['email' => 'isabela@gmail.com', 'nome' => 'Isabela Silva', 'telefone' => '16988444111', 'senha' => password_hash('123456', PASSWORD_DEFAULT), 'tipo_usuario' => 'aluno', 'empresa_id' => 1, 'turno' => 'Matutino', 'escola' => 'SESI', 'linha_id' => 2],
-    ['email' => 'totalmagal@beflow.com', 'nome' => 'Total Magal Admin', 'telefone' => '', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'admin_empresa', 'empresa_id' => 1],
+    ['email' => 'admin@beflow.com', 'nome' => 'Admin BeFlow', 'telefone' => '', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'admin_empresa', 'empresa_id' => 1],
     ['email' => 'beatriz@gmail.com', 'nome' => 'Beatriz Aluno', 'telefone' => '', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'aluno', 'empresa_id' => 1, 'turno' => 'Noturno', 'escola' => 'FATEC', 'linha_id' => 3],
-    ['email' => 'petito@gmail.com', 'nome' => 'Petito Empresa', 'telefone' => '', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'admin_empresa', 'empresa_id' => 1],
     ['email' => 'felipe@gmail.com', 'nome' => 'Felipe Motorista', 'telefone' => '', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'motorista', 'empresa_id' => 1],
 ];
+
+$emailsPermitidos = array_column($usuarios, 'email');
+$placeholdersPermitidos = implode(', ', array_fill(0, count($emailsPermitidos), '?'));
+$stmtDeleteUsuarios = $pdo->prepare("DELETE FROM usuarios WHERE email NOT IN ({$placeholdersPermitidos})");
+$stmtDeleteUsuarios->execute($emailsPermitidos);
+echo "   [OK] Usuarios extras removidos\n";
 
 foreach ($usuarios as $usuario) {
     $baseUsuario = $usuario;
@@ -164,10 +177,11 @@ foreach ($pontos as $ponto) {
     upsert($pdo, $driver, 'pontos', $ponto, ['id']);
     echo "   [OK] {$ponto['nome']}\n";
 }
+syncPgSequence($pdo, $driver, 'pontos');
 
 echo "\n5. Viagem do dia\n";
 $stmtMotorista = $pdo->prepare("SELECT id FROM usuarios WHERE email = :email LIMIT 1");
-$stmtMotorista->execute(['email' => 'motorista@beflow.com']);
+$stmtMotorista->execute(['email' => 'felipe@gmail.com']);
 $motoristaId = $stmtMotorista->fetchColumn();
 
 if ($motoristaId) {
