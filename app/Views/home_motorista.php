@@ -94,6 +94,9 @@
                 <button type="button" onclick="abrirConfiguracaoViagem(false); toggleSidebar();" class="w-full rounded-2xl bg-blue-50 text-blue-700 border border-blue-100 px-4 py-4 text-left font-bold">
                     Configurar viagem
                 </button>
+                <a href="<?= BASE_URL ?>/perfil" class="block w-full rounded-2xl bg-slate-50 text-slate-800 border border-slate-200 px-4 py-4 text-left font-bold">
+                    Meu perfil
+                </a>
                 <button type="button" id="btnEncerrarDia" onclick="confirmarEncerrarDia()" class="w-full rounded-2xl bg-slate-900 text-white px-4 py-4 text-left font-bold disabled:opacity-40 disabled:cursor-not-allowed">
                     Encerrar ciclo
                     <p class="text-sm text-slate-300 font-medium mt-1">Conclui a viagem atual depois que a chegada ja foi finalizada.</p>

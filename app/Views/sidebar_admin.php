@@ -5,6 +5,7 @@ $isDashboard = strpos($uri, '/admin/dashboard') !== false && $section !== 'veicu
 $isUsuarios = strpos($uri, '/admin/usuarios') !== false;
 $isRotas = strpos($uri, '/admin/rotas') !== false;
 $isVeiculos = strpos($uri, '/admin/dashboard') !== false && $section === 'veiculos';
+$isPerfil = !empty($currentSection) && $currentSection === 'perfil';
 
 if (!isset($currentAdmin) && isset($_SESSION['usuario_id'])) {
     require_once __DIR__ . '/../../config/database.php';
@@ -29,6 +30,8 @@ function renderSidebarIcon($name) {
             return '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 11c1.657 0 3-1.79 3-4s-1.343-4-3-4-3 1.79-3 4 1.343 4 3 4zm-8 0c1.657 0 3-1.79 3-4S9.657 3 8 3 5 4.79 5 7s1.343 4 3 4zm0 2c-2.761 0-5 2.239-5 5v2h10v-2c0-2.761-2.239-5-5-5zm8 0c-.697 0-1.359.117-1.975.332A6.979 6.979 0 0117 18v2h4v-2c0-2.761-2.239-5-5-5z"/></svg>';
         case 'bus':
             return '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17h10m-9 3h8m-9-6h10l1-6H6l1 6zm1-6V7a3 3 0 013-3h2a3 3 0 013 3v1"/><circle cx="9" cy="15" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.1" fill="currentColor" stroke="none"/></svg>';
+        case 'profile':
+            return '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zm-8 10a4 4 0 014-4h0a4 4 0 014 4v2H8v-2z"/></svg>';
         default:
             return '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12H3m0 0l4-4m-4 4l4 4m6-9h4a2 2 0 012 2v6a2 2 0 01-2 2h-4"/></svg>';
     }
@@ -84,6 +87,11 @@ function sidebarItemClasses($active) {
         <a href="<?= BASE_URL ?>/admin/dashboard?section=veiculos#veiculos" class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= sidebarItemClasses($isVeiculos) ?>">
             <?= renderSidebarIcon('bus') ?>
             <span>Veiculos</span>
+        </a>
+
+        <a href="<?= BASE_URL ?>/perfil" class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= sidebarItemClasses($isPerfil) ?>">
+            <?= renderSidebarIcon('profile') ?>
+            <span>Meu Perfil</span>
         </a>
     </nav>
 

@@ -134,6 +134,10 @@
                 <svg class="w-6 h-6 stroke-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h8m-8 4h8m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                 <span>Viagens</span>
             </a>
+            <a href="<?= BASE_URL ?>/perfil" class="flex items-center gap-4 text-gray-600 font-bold hover:text-blue-600 transition">
+                <svg class="w-6 h-6 stroke-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zm-8 10a4 4 0 014-4h0a4 4 0 014 4v2H8v-2z"></path></svg>
+                <span>Meu Perfil</span>
+            </a>
             <a href="#" class="flex items-center gap-4 text-gray-600 font-bold hover:text-blue-600 transition">
                 <svg class="w-6 h-6 stroke-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 15v-3a8 8 0 0116 0v3"></path><path stroke-linecap="round" stroke-linejoin="round" d="M18 17a2 2 0 002-2v-1a2 2 0 00-2-2h-1v5h1zM6 17a2 2 0 01-2-2v-1a2 2 0 012-2h1v5H6z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M9 19h6"></path></svg>
                 <span>Ajuda</span>

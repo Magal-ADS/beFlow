@@ -18,6 +18,13 @@ class Usuario {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    public function buscarPorId($id) {
+        $stmt = $this->conn->prepare("SELECT id, nome, email, telefone, tipo_usuario, empresa_id FROM usuarios WHERE id = :id LIMIT 1");
+        $stmt->execute(['id' => $id]);
+
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
     public function buscarTodosComDadosDeAluno() {
         $linhaSql = $this->hasAlunoLinhaColumn() ? 'a.linha_id' : 'NULL AS linha_id';
         $sql = "SELECT u.*, a.turno, a.escola, {$linhaSql}
@@ -108,6 +115,45 @@ class Usuario {
     public function excluir($id) {
         $stmt = $this->conn->prepare("DELETE FROM usuarios WHERE id = :id");
         return $stmt->execute(['id' => $id]);
+    }
+
+    public function atualizarPerfil($id, $dados) {
+        $usuarioAtual = $this->buscarPorId($id);
+        if (!$usuarioAtual) {
+            throw new RuntimeException('Usuario nao encontrado.');
+        }
+
+        $stmtEmail = $this->conn->prepare("SELECT id FROM usuarios WHERE email = :email AND id <> :id LIMIT 1");
+        $stmtEmail->execute([
+            'email' => $dados['email'],
+            'id' => $id,
+        ]);
+
+        if ($stmtEmail->fetchColumn()) {
+            throw new RuntimeException('Ja existe outro usuario com este e-mail.');
+        }
+
+        if (!empty($dados['senha'])) {
+            $sql = "UPDATE usuarios SET nome = :nome, email = :email, telefone = :telefone, senha = :senha WHERE id = :id";
+            $params = [
+                'nome' => $dados['nome'],
+                'email' => $dados['email'],
+                'telefone' => $dados['telefone'],
+                'senha' => password_hash($dados['senha'], PASSWORD_DEFAULT),
+                'id' => $id,
+            ];
+        } else {
+            $sql = "UPDATE usuarios SET nome = :nome, email = :email, telefone = :telefone WHERE id = :id";
+            $params = [
+                'nome' => $dados['nome'],
+                'email' => $dados['email'],
+                'telefone' => $dados['telefone'],
+                'id' => $id,
+            ];
+        }
+
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute($params);
     }
 
     private function salvarOuAtualizarAluno($usuarioId, $turno, $escola, $linhaId = null) {

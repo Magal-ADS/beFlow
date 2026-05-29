@@ -63,6 +63,18 @@ switch ($rota) {
         $controller->logout();
         break;
 
+    case '/perfil':
+        require_once __DIR__ . '/app/Controllers/PerfilController.php';
+        $controller = new PerfilController();
+        $controller->index();
+        break;
+
+    case '/perfil/salvar':
+        require_once __DIR__ . '/app/Controllers/PerfilController.php';
+        $controller = new PerfilController();
+        $controller->salvar();
+        break;
+
     case '/home-aluno':
         require_once __DIR__ . '/app/Controllers/AlunoController.php';
         $controller = new AlunoController();
