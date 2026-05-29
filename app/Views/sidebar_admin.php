@@ -48,11 +48,9 @@ function sidebarItemClasses($active) {
 <aside id="adminSidebar" class="fixed inset-y-0 left-0 z-50 shadow-2xl w-72 max-w-[85vw] bg-[#111827] text-gray-300 flex flex-col min-h-screen p-6 transform -translate-x-full transition-transform duration-300 lg:translate-x-0 lg:sticky lg:top-0">
     <div class="flex items-center justify-between gap-3 mb-8">
         <div class="flex items-center gap-3">
-            <div class="w-11 h-11 rounded-full bg-blue-600 flex items-center justify-center text-white">
-                <?= renderSidebarIcon('bus') ?>
-            </div>
-            <div class="text-white font-bold text-lg leading-tight">
-                BeFlow Admin Panel
+            <img src="<?= BASE_URL ?>/public/assets/branding/logo.webp" alt="BeFlow" class="h-11 w-auto object-contain">
+            <div class="text-white font-bold text-lg leading-tight tracking-tight">
+                Admin Panel
             </div>
         </div>
         <button type="button" class="lg:hidden w-10 h-10 rounded-2xl bg-gray-800 text-white flex items-center justify-center" onclick="toggleAdminSidebar(false)">

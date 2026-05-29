@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BeFlow - Login</title>
+    <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/public/assets/branding/icone.svg">
     <script src="https://cdn.tailwindcss.com"></script>
 
     <link rel="manifest" href="<?= BASE_URL ?>/manifest.json">
@@ -12,6 +13,9 @@
 <body class="bg-blue-500 h-screen flex flex-col items-center justify-center font-sans">
 
     <div class="bg-white w-11/12 max-w-md rounded-[2.5rem] p-8 shadow-2xl mt-8">
+        <div class="flex justify-center mb-6">
+            <img src="<?= BASE_URL ?>/public/assets/branding/logo.webp" alt="BeFlow" class="h-20 w-auto object-contain">
+        </div>
         <h2 class="text-2xl font-semibold text-center text-gray-800 mb-6 mt-4">Entre para continuar</h2>
 
         <form action="<?= BASE_URL ?>/autenticar" method="POST" class="space-y-4">
