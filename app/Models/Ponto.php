@@ -99,7 +99,9 @@ class Ponto {
 
     public function buscarViagemAtual($motoristaId = null, $direcao = null, $linhaId = null) {
         $query = $this->buildTripQuery($motoristaId !== null, $direcao !== null, $linhaId !== null);
-        $params = [];
+        $params = [
+            'current_date' => $this->getOperationalDate(),
+        ];
 
         if ($motoristaId !== null) {
             $params['motorista_id'] = $motoristaId;
@@ -140,12 +142,15 @@ class Ponto {
 
         $stmt = $this->conn->prepare(
             $this->buildTripSelect()
-            . ' WHERE v.data_viagem = ' . $this->currentDateExpression()
+            . ' WHERE v.data_viagem = :current_date'
             . ' AND v.linha_id = :linha_id'
             . ($this->hasTripDirectionColumn() ? ' AND v.direcao = :direcao' : '')
             . ' LIMIT 1'
         );
-        $params = ['linha_id' => $linhaId];
+        $params = [
+            'current_date' => $this->getOperationalDate(),
+            'linha_id' => $linhaId,
+        ];
         if ($this->hasTripDirectionColumn()) {
             $params['direcao'] = $direcao;
         }
@@ -207,11 +212,11 @@ class Ponto {
         $sql = $this->hasTripDirectionColumn()
             ? "
                 INSERT INTO viagens (horario_base_id, linha_id, motorista_id, veiculo_id, direcao, status, data_viagem)
-                VALUES (:horario_base_id, :linha_id, :motorista_id, :veiculo_id, :direcao, 'aguardando', {$this->currentDateExpression()})
+                VALUES (:horario_base_id, :linha_id, :motorista_id, :veiculo_id, :direcao, 'aguardando', :data_viagem)
             "
             : "
                 INSERT INTO viagens (horario_base_id, linha_id, motorista_id, veiculo_id, status, data_viagem)
-                VALUES (:horario_base_id, :linha_id, :motorista_id, :veiculo_id, 'aguardando', {$this->currentDateExpression()})
+                VALUES (:horario_base_id, :linha_id, :motorista_id, :veiculo_id, 'aguardando', :data_viagem)
             ";
 
         $params = [
@@ -219,6 +224,7 @@ class Ponto {
             'linha_id' => $linhaId,
             'motorista_id' => $motoristaId,
             'veiculo_id' => $veiculoId,
+            'data_viagem' => $this->getOperationalDate(),
         ];
         if ($this->hasTripDirectionColumn()) {
             $params['direcao'] = $direcao;
@@ -370,10 +376,6 @@ class Ponto {
         ]);
     }
 
-    private function currentDateExpression() {
-        return $this->driver === 'mysql' ? 'CURDATE()' : 'CURRENT_DATE';
-    }
-
     private function buildTripSelect() {
         $direcaoSelect = $this->hasTripDirectionColumn() ? 'v.direcao' : "'ida' AS direcao";
         $horaIdaSelect = $this->hasHorarioIdaColumn() ? 'hb.hora_ida' : 'hb.hora_saida_garagem AS hora_ida';
@@ -411,7 +413,7 @@ class Ponto {
                END");
 
         return $this->buildTripSelect() . "
-            WHERE v.data_viagem = {$this->currentDateExpression()}
+            WHERE v.data_viagem = :current_date
               {$motoristaSql}
               {$direcaoSql}
               {$linhaSql}
@@ -428,6 +430,13 @@ class Ponto {
                 v.id DESC
             LIMIT 1
         ";
+    }
+
+    private function getOperationalDate() {
+        $timezone = getenv('APP_TIMEZONE') ?: 'America/Sao_Paulo';
+        $now = new DateTimeImmutable('now', new DateTimeZone($timezone));
+
+        return $now->format('Y-m-d');
     }
 
     private function hasTripDirectionColumn() {

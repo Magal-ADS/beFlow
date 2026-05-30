@@ -151,7 +151,7 @@ class Confirmacao {
             INNER JOIN linhas l ON l.id = p.linha_id
             INNER JOIN horarios_base hb ON hb.id = v.horario_base_id
             WHERE c.aluno_id = :aluno_id
-              AND v.data_viagem = " . $this->currentDateExpression() . "
+              AND v.data_viagem = :current_date
             ORDER BY
                 CASE " . $this->tripDirectionOrderExpression() . "
                     WHEN 'volta' THEN 0
@@ -170,7 +170,10 @@ class Confirmacao {
                 c.id DESC
             LIMIT 1
         ");
-        $stmt->execute(['aluno_id' => $alunoId]);
+        $stmt->execute([
+            'aluno_id' => $alunoId,
+            'current_date' => $this->getOperationalDate(),
+        ]);
 
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
@@ -255,12 +258,15 @@ class Confirmacao {
             INNER JOIN linhas l ON l.id = p.linha_id
             INNER JOIN horarios_base hb ON hb.id = v.horario_base_id
             WHERE c.aluno_id = :aluno_id
-              AND v.data_viagem = " . $this->currentDateExpression() . "
+              AND v.data_viagem = :current_date
               " . ($this->hasTripDirectionColumn() ? 'AND v.direcao = :direcao' : '') . "
             ORDER BY c.created_at DESC, c.id DESC
             LIMIT 1
         ");
-        $params = ['aluno_id' => $alunoId];
+        $params = [
+            'aluno_id' => $alunoId,
+            'current_date' => $this->getOperationalDate(),
+        ];
         if ($this->hasTripDirectionColumn()) {
             $params['direcao'] = $direcao;
         }
@@ -309,10 +315,6 @@ class Confirmacao {
             || stripos($message, 'uniq_confirmacao') !== false;
     }
 
-    private function currentDateExpression() {
-        return $this->driver === 'mysql' ? 'CURDATE()' : 'CURRENT_DATE';
-    }
-
     private function hasTripDirectionColumn() {
         return $this->hasColumn('viagens', 'direcao');
     }
@@ -339,6 +341,13 @@ class Confirmacao {
 
     private function horaVoltaSelect() {
         return $this->hasHorarioVoltaColumn() ? 'hb.hora_volta' : 'hb.hora_saida_garagem AS hora_volta';
+    }
+
+    private function getOperationalDate() {
+        $timezone = getenv('APP_TIMEZONE') ?: 'America/Sao_Paulo';
+        $now = new DateTimeImmutable('now', new DateTimeZone($timezone));
+
+        return $now->format('Y-m-d');
     }
 
     private function hasColumn($table, $column) {

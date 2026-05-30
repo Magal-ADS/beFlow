@@ -3,6 +3,8 @@ require_once __DIR__ . '/../Models/Ponto.php';
 require_once __DIR__ . '/../../config/database.php';
 
 class MotoristaController {
+    private $tripStartWebhookUrl = 'https://webhook.weagles.com.br/webhook/f446e76d-f858-4650-b2f2-3c8db036149c';
+
     private function requireMotoristaJson() {
         header('Content-Type: application/json');
 
@@ -95,11 +97,16 @@ class MotoristaController {
 
         $pontoModel = new Ponto();
         $ok = $pontoModel->atualizarStatusViagem('em_rota', $_SESSION['usuario_id']);
+        $trip = $ok ? $this->tripResponse($pontoModel) : null;
+
+        if ($ok && $trip) {
+            $this->dispatchTripStartWebhook($trip);
+        }
 
         echo json_encode([
             'success' => $ok,
             'message' => $ok ? 'Rota iniciada com sucesso.' : 'Configure a viagem do dia antes de iniciar a rota.',
-            'trip' => $ok ? $this->tripResponse($pontoModel) : null,
+            'trip' => $trip,
         ]);
         exit;
     }
@@ -153,6 +160,62 @@ class MotoristaController {
             'message' => $ok ? 'Localizacao atualizada.' : 'Nao foi possivel atualizar a localizacao.',
         ]);
         exit;
+    }
+
+    private function dispatchTripStartWebhook(array $trip) {
+        $payload = [
+            'evento' => 'viagem_iniciada',
+            'motorista' => $_SESSION['usuario_nome'] ?? 'Motorista',
+            'linha' => $trip['nome_linha'] ?? '',
+            'veiculo' => trim(($trip['veiculo_identificador'] ?? '') . ' ' . ($trip['veiculo_placa'] ?? '')),
+            'horario_inicio' => (new DateTime('now'))->format('Y-m-d H:i:s'),
+        ];
+
+        $json = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($json === false) {
+            error_log('Webhook de inicio de viagem: falha ao serializar payload.');
+            return;
+        }
+
+        if (function_exists('curl_init')) {
+            $ch = curl_init($this->tripStartWebhookUrl);
+            curl_setopt_array($ch, [
+                CURLOPT_POST => true,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER => [
+                    'Content-Type: application/json',
+                    'Content-Length: ' . strlen($json),
+                ],
+                CURLOPT_POSTFIELDS => $json,
+                CURLOPT_TIMEOUT => 8,
+            ]);
+
+            $response = curl_exec($ch);
+            $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+            if ($response === false || $httpCode >= 400) {
+                error_log('Webhook de inicio de viagem falhou: ' . curl_error($ch) . ' HTTP ' . $httpCode);
+            }
+
+            curl_close($ch);
+            return;
+        }
+
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' => "Content-Type: application/json\r\n"
+                    . 'Content-Length: ' . strlen($json) . "\r\n",
+                'content' => $json,
+                'timeout' => 8,
+                'ignore_errors' => true,
+            ],
+        ]);
+
+        $response = @file_get_contents($this->tripStartWebhookUrl, false, $context);
+        if ($response === false) {
+            error_log('Webhook de inicio de viagem falhou via file_get_contents.');
+        }
     }
 }
 ?>
