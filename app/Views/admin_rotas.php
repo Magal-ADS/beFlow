@@ -68,10 +68,21 @@
                                             <span class="px-3 py-1 rounded-full text-xs font-bold border uppercase <?= $badgeClass ?>">
                                                 <?= htmlspecialchars($linha['cor']) ?>
                                             </span>
+                                            <?php if (!empty($linha['turno'])): ?>
+                                                <span class="px-3 py-1 rounded-full text-xs font-bold border uppercase bg-slate-100 text-slate-700 border-slate-200">
+                                                    <?= htmlspecialchars($linha['turno']) ?>
+                                                </span>
+                                            <?php endif; ?>
                                         </div>
-                                        <div class="flex gap-3 items-center text-sm">
+                                        <div class="flex flex-wrap gap-3 items-center text-sm">
                                             <span class="text-gray-400 font-bold">ID #<?= $linha['id'] ?></span>
-                                            <button onclick="abrirModalLinha(<?= $linha['id'] ?>, '<?= addslashes($linha['nome']) ?>', '<?= $linha['cor'] ?>')" class="text-blue-500 font-bold hover:underline">Editar Linha</button>
+                                            <?php if (!empty($linha['hora_ida']) || !empty($linha['hora_volta'])): ?>
+                                                <span class="text-amber-600 font-bold">
+                                                    Ida <?= !empty($linha['hora_ida']) ? htmlspecialchars(substr($linha['hora_ida'], 0, 5)) : '--:--' ?>
+                                                    · Volta <?= !empty($linha['hora_volta']) ? htmlspecialchars(substr($linha['hora_volta'], 0, 5)) : '--:--' ?>
+                                                </span>
+                                            <?php endif; ?>
+                                            <button onclick="abrirModalLinha(<?= htmlspecialchars(json_encode(['id' => $linha['id'], 'nome' => $linha['nome'], 'cor' => $linha['cor'], 'turno' => $linha['turno'] ?? 'Matutino', 'hora_ida' => $linha['hora_ida'] ?? '06:30:00', 'hora_volta' => $linha['hora_volta'] ?? '17:30:00']), ENT_QUOTES, 'UTF-8') ?>)" class="text-blue-500 font-bold hover:underline">Editar Linha</button>
                                             <button onclick="excluirLinha(<?= $linha['id'] ?>)" class="text-red-400 font-bold hover:underline">Excluir Linha</button>
                                         </div>
                                     </div>
@@ -136,7 +147,7 @@
     </main>
 
     <div id="modalLinha" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl">
+        <div class="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl">
             <h3 id="tituloModalLinha" class="text-2xl font-black text-gray-800 mb-6 tracking-tighter">Nova Linha</h3>
             <form id="formLinha" class="space-y-4">
                 <input type="hidden" name="id" id="linhaId">
@@ -147,6 +158,24 @@
                     <option value="amarela">Amarela</option>
                     <option value="verde">Verde</option>
                 </select>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="sm:col-span-1">
+                        <label for="linhaTurno" class="block text-sm font-bold text-gray-600 mb-2">Turno</label>
+                        <select name="turno" id="linhaTurno" class="w-full p-4 rounded-2xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-blue-400 font-bold text-gray-600" required>
+                            <option value="Matutino">Matutino</option>
+                            <option value="Vespertino">Vespertino</option>
+                            <option value="Noturno">Noturno</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="linhaHoraIda" class="block text-sm font-bold text-gray-600 mb-2">Hora ida</label>
+                        <input type="time" name="hora_ida" id="linhaHoraIda" class="w-full p-4 rounded-2xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-blue-400" step="60" required>
+                    </div>
+                    <div>
+                        <label for="linhaHoraVolta" class="block text-sm font-bold text-gray-600 mb-2">Hora volta</label>
+                        <input type="time" name="hora_volta" id="linhaHoraVolta" class="w-full p-4 rounded-2xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-blue-400" step="60" required>
+                    </div>
+                </div>
                 <div class="flex gap-3 pt-4">
                     <button type="button" onclick="fecharModais()" class="flex-1 p-4 rounded-2xl font-bold text-gray-400 hover:bg-gray-100 transition">Cancelar</button>
                     <button type="submit" class="flex-1 p-4 rounded-2xl font-bold bg-blue-600 text-white shadow-lg shadow-blue-200 active:scale-95 transition">Salvar Linha</button>
@@ -195,11 +224,18 @@
             });
         }
 
-        function abrirModalLinha(id = '', nome = '', cor = 'azul') {
-            document.getElementById('linhaId').value = id;
-            document.getElementById('linhaNome').value = nome;
-            document.getElementById('linhaCor').value = cor || 'azul';
-            document.getElementById('tituloModalLinha').innerText = id ? 'Editar Linha' : 'Nova Linha';
+        function abrirModalLinha(linha = null) {
+            const form = document.getElementById('formLinha');
+            form.reset();
+
+            const dados = linha || {};
+            document.getElementById('linhaId').value = dados.id || '';
+            document.getElementById('linhaNome').value = dados.nome || '';
+            document.getElementById('linhaCor').value = dados.cor || 'azul';
+            document.getElementById('linhaTurno').value = dados.turno || 'Matutino';
+            document.getElementById('linhaHoraIda').value = dados.hora_ida ? String(dados.hora_ida).slice(0, 5) : '06:30';
+            document.getElementById('linhaHoraVolta').value = dados.hora_volta ? String(dados.hora_volta).slice(0, 5) : '17:30';
+            document.getElementById('tituloModalLinha').innerText = dados.id ? 'Editar Linha' : 'Nova Linha';
             document.getElementById('modalLinha').classList.replace('hidden', 'flex');
         }
 

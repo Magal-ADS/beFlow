@@ -383,7 +383,13 @@ class AdminController {
         $empresaId = $this->getAdminEmpresaId();
 
         $db = (new Database())->getConnection();
-        $stmtLinhas = $db->prepare("SELECT * FROM linhas WHERE empresa_id = :empresa_id ORDER BY nome ASC");
+        $stmtLinhas = $db->prepare("
+            SELECT l.*, hb.turno, hb.hora_ida, hb.hora_volta
+            FROM linhas l
+            LEFT JOIN horarios_base hb ON hb.linha_id = l.id
+            WHERE l.empresa_id = :empresa_id
+            ORDER BY l.nome ASC
+        ");
         $stmtLinhas->execute(['empresa_id' => $empresaId]);
         $linhas = $stmtLinhas->fetchAll(PDO::FETCH_ASSOC);
         $this->ensurePontosHorarioAproximadoColumn($db);
@@ -407,6 +413,9 @@ class AdminController {
         $id = trim($_POST['id'] ?? '');
         $nome = trim($_POST['nome'] ?? '');
         $cor = strtolower(trim($_POST['cor'] ?? 'azul'));
+        $turno = trim($_POST['turno'] ?? 'Matutino');
+        $horaIda = trim($_POST['hora_ida'] ?? '');
+        $horaVolta = trim($_POST['hora_volta'] ?? '');
 
         if ($nome === '') {
             $this->jsonResponse(false, 'Informe o nome da linha.');
@@ -415,6 +424,17 @@ class AdminController {
         if (!in_array($cor, $this->allowedColors, true)) {
             $this->jsonResponse(false, 'Selecione uma cor valida para a linha.');
         }
+
+        if ($turno === '' || !$this->isValidTurno($turno)) {
+            $this->jsonResponse(false, 'Selecione um turno valido para a linha.');
+        }
+
+        if (!$this->isValidApproximateTime($horaIda) || !$this->isValidApproximateTime($horaVolta)) {
+            $this->jsonResponse(false, 'Informe horarios validos para ida e volta.');
+        }
+
+        $horaIda = $this->normalizeApproximateTime($horaIda);
+        $horaVolta = $this->normalizeApproximateTime($horaVolta);
 
         try {
             $db = (new Database())->getConnection();
@@ -429,7 +449,7 @@ class AdminController {
                 $linhaId = (int) $db->lastInsertId();
             }
 
-            $this->ensureHorarioBase($db, $linhaId);
+            $this->salvarHorarioBase($db, $linhaId, $turno, $horaIda, $horaVolta);
             $this->jsonResponse(true, 'Linha salva com sucesso.');
         } catch (PDOException $e) {
             $this->jsonResponse(false, 'Erro ao salvar a linha.');
@@ -609,21 +629,39 @@ class AdminController {
         }
     }
 
-    private function ensureHorarioBase(PDO $db, $linhaId) {
+    private function salvarHorarioBase(PDO $db, $linhaId, $turno = 'Matutino', $horaIda = '06:30:00', $horaVolta = '17:30:00') {
         $stmt = $db->prepare("SELECT id FROM horarios_base WHERE linha_id = :linha_id LIMIT 1");
         $stmt->execute(['linha_id' => $linhaId]);
+        $horarioId = $stmt->fetchColumn();
 
-        if ($stmt->fetchColumn()) {
+        if ($horarioId) {
+            $update = $db->prepare("
+                UPDATE horarios_base
+                SET turno = :turno,
+                    hora_ida = :hora_ida,
+                    hora_volta = :hora_volta
+                WHERE id = :id
+            ");
+            $update->execute([
+                'turno' => $turno,
+                'hora_ida' => $horaIda,
+                'hora_volta' => $horaVolta,
+                'id' => $horarioId,
+            ]);
             return;
         }
 
         $insert = $db->prepare("INSERT INTO horarios_base (linha_id, turno, hora_ida, hora_volta) VALUES (:linha_id, :turno, :hora_ida, :hora_volta)");
         $insert->execute([
             'linha_id' => $linhaId,
-            'turno' => 'Matutino',
-            'hora_ida' => '06:30:00',
-            'hora_volta' => '17:30:00',
+            'turno' => $turno,
+            'hora_ida' => $horaIda,
+            'hora_volta' => $horaVolta,
         ]);
+    }
+
+    private function isValidTurno($turno) {
+        return in_array($turno, ['Matutino', 'Vespertino', 'Noturno'], true);
     }
 
     private function canAssignAdministrativeRole($tipoUsuario, $email) {

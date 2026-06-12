@@ -116,14 +116,17 @@ foreach ($usuarios as $usuario) {
 
 echo "\n3. Linhas, veiculo e horarios base\n";
 $linhas = [
-    ['id' => 1, 'nome' => 'Linha Azul', 'cor' => 'azul', 'empresa_id' => 1],
-    ['id' => 2, 'nome' => 'Linha Vermelha', 'cor' => 'vermelha', 'empresa_id' => 1],
-    ['id' => 3, 'nome' => 'Linha Amarela', 'cor' => 'amarela', 'empresa_id' => 1],
-    ['id' => 4, 'nome' => 'Linha Verde', 'cor' => 'verde', 'empresa_id' => 1],
+    ['id' => 1, 'nome' => 'Linha Azul', 'cor' => 'azul', 'empresa_id' => 1, 'turno' => 'Matutino', 'hora_ida' => '06:30:00', 'hora_volta' => '17:30:00'],
+    ['id' => 2, 'nome' => 'Linha Vermelha', 'cor' => 'vermelha', 'empresa_id' => 1, 'turno' => 'Matutino', 'hora_ida' => '06:45:00', 'hora_volta' => '17:45:00'],
+    ['id' => 3, 'nome' => 'Linha Amarela', 'cor' => 'amarela', 'empresa_id' => 1, 'turno' => 'Noturno', 'hora_ida' => '07:00:00', 'hora_volta' => '18:00:00'],
+    ['id' => 4, 'nome' => 'Linha Verde', 'cor' => 'verde', 'empresa_id' => 1, 'turno' => 'Vespertino', 'hora_ida' => '07:15:00', 'hora_volta' => '18:15:00'],
+    ['id' => 5, 'nome' => 'Linha Petito Centro', 'cor' => 'azul', 'empresa_id' => 2, 'turno' => 'Matutino', 'hora_ida' => '06:40:00', 'hora_volta' => '17:40:00'],
 ];
 
 foreach ($linhas as $linha) {
-    upsert($pdo, $driver, 'linhas', $linha, ['id']);
+    $baseLinha = $linha;
+    unset($baseLinha['turno'], $baseLinha['hora_ida'], $baseLinha['hora_volta']);
+    upsert($pdo, $driver, 'linhas', $baseLinha, ['id']);
 }
 
 upsert($pdo, $driver, 'veiculo', [
@@ -133,15 +136,21 @@ upsert($pdo, $driver, 'veiculo', [
     'empresa_id' => 1,
 ], ['id']);
 
-$horarios = [
-    ['id' => 1, 'linha_id' => 1, 'turno' => 'Matutino', 'hora_ida' => '06:30:00', 'hora_volta' => '17:30:00'],
-    ['id' => 2, 'linha_id' => 2, 'turno' => 'Matutino', 'hora_ida' => '06:45:00', 'hora_volta' => '17:45:00'],
-    ['id' => 3, 'linha_id' => 3, 'turno' => 'Matutino', 'hora_ida' => '07:00:00', 'hora_volta' => '18:00:00'],
-    ['id' => 4, 'linha_id' => 4, 'turno' => 'Matutino', 'hora_ida' => '07:15:00', 'hora_volta' => '18:15:00'],
-];
+upsert($pdo, $driver, 'veiculo', [
+    'id' => 2,
+    'numero_identificador' => 'PETITO-01',
+    'placa' => 'PET2T10',
+    'empresa_id' => 2,
+], ['id']);
 
-foreach ($horarios as $horario) {
-    upsert($pdo, $driver, 'horarios_base', $horario, ['id']);
+foreach ($linhas as $linha) {
+    upsert($pdo, $driver, 'horarios_base', [
+        'id' => $linha['id'],
+        'linha_id' => $linha['id'],
+        'turno' => $linha['turno'],
+        'hora_ida' => $linha['hora_ida'],
+        'hora_volta' => $linha['hora_volta'],
+    ], ['id']);
 }
 
 echo "   [OK] Estrutura base criada\n";
