@@ -82,10 +82,10 @@ foreach ($empresas as $empresa) {
 
 echo "\n2. Usuarios e alunos\n";
 $usuarios = [
-    ['email' => 'admin@beflow.com', 'nome' => 'Admin BeFlow', 'telefone' => '', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'admin_empresa', 'empresa_id' => 1],
+    ['email' => 'admin@beflow.com', 'nome' => 'Admin BeFlow', 'telefone' => '16999111001', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'admin_empresa', 'empresa_id' => 1],
     ['email' => 'petito@gmail.com', 'nome' => 'Petito Empresa', 'telefone' => '16998111222', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'admin_empresa', 'empresa_id' => 2],
-    ['email' => 'beatriz@gmail.com', 'nome' => 'Beatriz Aluno', 'telefone' => '', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'aluno', 'empresa_id' => 1, 'turno' => 'Noturno', 'escola' => 'FATEC', 'linha_id' => 3],
-    ['email' => 'felipe@gmail.com', 'nome' => 'Felipe Motorista', 'telefone' => '', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'motorista', 'empresa_id' => 1],
+    ['email' => 'beatriz@gmail.com', 'nome' => 'Beatriz Aluno', 'telefone' => '16998123045', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'aluno', 'empresa_id' => 1, 'turno' => 'Noturno', 'escola' => 'FATEC', 'linha_id' => 3],
+    ['email' => 'felipe@gmail.com', 'nome' => 'Felipe Motorista', 'telefone' => '16999765432', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'motorista', 'empresa_id' => 1],
 ];
 
 $emailsPermitidos = array_column($usuarios, 'email');

@@ -27,7 +27,7 @@
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
                 <div>
                     <h2 class="text-3xl font-black text-gray-800 tracking-tighter">Gerenciar Usuarios</h2>
-                    <p class="text-gray-500">Listagem de alunos e motoristas cadastrados.</p>
+                    <p class="text-gray-500">Listagem de alunos e motoristas cadastrados na empresa.</p>
                 </div>
 
                 <div class="flex items-center gap-4 w-full md:w-auto">
@@ -49,6 +49,7 @@
                     <thead class="bg-gray-50 border-b border-gray-100">
                         <tr>
                             <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Nome</th>
+                            <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Telefone</th>
                             <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">E-mail</th>
                             <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Tipo</th>
                             <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Escola / Instituicao</th>
@@ -59,9 +60,9 @@
                     <tbody class="divide-y divide-gray-100">
                         <?php if (!empty($listaUsuarios)): ?>
                             <?php foreach ($listaUsuarios as $u): ?>
-                            <?php $isAdminUser = in_array($u['tipo_usuario'], ['admin_empresa', 'admin_geral'], true); ?>
                             <tr class="hover:bg-gray-50 transition linha-usuario">
                                 <td class="px-6 py-4 font-bold text-gray-700"><?= htmlspecialchars($u['nome']) ?></td>
+                                <td class="px-6 py-4 text-gray-500"><?= htmlspecialchars(($u['telefone'] ?? '') !== '' ? $u['telefone'] : 'Nao informado') ?></td>
                                 <td class="px-6 py-4 text-gray-500"><?= htmlspecialchars($u['email']) ?></td>
                                 <td class="px-6 py-4">
                                     <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider <?= $u['tipo_usuario'] === 'motorista' ? 'bg-green-100 text-green-600' : ($u['tipo_usuario'] === 'aluno' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600') ?>">
@@ -75,15 +76,9 @@
                                     <?= $u['tipo_usuario'] === 'aluno' ? htmlspecialchars($u['turno'] ?? 'Nao informado') : '<span class="text-gray-300">-</span>' ?>
                                 </td>
                                 <td class="px-6 py-4 text-right flex justify-end gap-3">
-                                    <?php if (!$isAdminUser || !empty($canManageAdminUsers)): ?>
-                                    <button onclick="abrirModal('editar', <?= $u['id'] ?>, '<?= addslashes($u['nome']) ?>', '<?= addslashes($u['email']) ?>', '<?= $u['tipo_usuario'] ?>', '<?= addslashes($u['escola'] ?? '') ?>', '<?= addslashes($u['turno'] ?? '') ?>')" class="text-blue-400 hover:text-blue-600 transition" title="Editar Usuario">
+                                    <button onclick="abrirModal('editar', <?= $u['id'] ?>, '<?= addslashes($u['nome']) ?>', '<?= addslashes($u['telefone'] ?? '') ?>', '<?= addslashes($u['email']) ?>', '<?= $u['tipo_usuario'] ?>', '<?= addslashes($u['escola'] ?? '') ?>', '<?= addslashes($u['turno'] ?? '') ?>')" class="text-blue-400 hover:text-blue-600 transition" title="Editar Usuario">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                     </button>
-                                    <?php else: ?>
-                                    <span class="text-gray-300 cursor-not-allowed" title="Somente usuarios @beflow podem editar administradores">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                    </span>
-                                    <?php endif; ?>
                                     <button onclick="deletarUsuario(<?= $u['id'] ?>)" class="text-gray-300 hover:text-red-500 transition" title="Excluir Usuario">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                     </button>
@@ -91,7 +86,7 @@
                             </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
-                            <tr><td colspan="6" class="px-6 py-4 text-center text-gray-500 font-bold italic">Nenhum usuario encontrado na base.</td></tr>
+                            <tr><td colspan="7" class="px-6 py-4 text-center text-gray-500 font-bold italic">Nenhum usuario encontrado na base.</td></tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
@@ -108,6 +103,7 @@
                 <input type="hidden" name="acao" id="inputAcao" value="novo">
 
                 <input type="text" id="inputNome" name="nome" placeholder="Nome Completo" class="w-full p-4 rounded-2xl bg-gray-50 border-none focus:ring-2 focus:ring-blue-400 outline-none" required>
+                <input type="text" id="inputTelefone" name="telefone" placeholder="Telefone" class="w-full p-4 rounded-2xl bg-gray-50 border-none focus:ring-2 focus:ring-blue-400 outline-none">
                 <input type="email" id="inputEmail" name="email" placeholder="E-mail" class="w-full p-4 rounded-2xl bg-gray-50 border-none focus:ring-2 focus:ring-blue-400 outline-none" required>
 
                 <div>
@@ -118,9 +114,6 @@
                 <select id="inputTipo" name="tipo_usuario" onchange="toggleCamposAluno()" class="w-full p-4 rounded-2xl bg-gray-50 border-none focus:ring-2 focus:ring-blue-400 outline-none font-bold text-gray-500">
                     <option value="aluno">Aluno</option>
                     <option value="motorista">Motorista</option>
-                    <?php if (!empty($canManageAdminUsers)): ?>
-                    <option value="admin_empresa">Admin Empresa</option>
-                    <?php endif; ?>
                 </select>
 
                 <div id="camposAluno" class="space-y-4 pt-2">
@@ -141,8 +134,6 @@
     </div>
 
     <script>
-        const canManageAdminUsers = <?= !empty($canManageAdminUsers) ? 'true' : 'false' ?>;
-
         function filtrarTabela() {
             let input = document.getElementById('inputPesquisa').value.toLowerCase();
             let linhas = document.querySelectorAll('.linha-usuario');
@@ -158,12 +149,7 @@
             campos.style.display = tipo === 'aluno' ? 'block' : 'none';
         }
 
-        function abrirModal(modo, id = '', nome = '', email = '', tipo = '', escola = '', turno = '') {
-            if (modo === 'editar' && !canManageAdminUsers && (tipo === 'admin_empresa' || tipo === 'admin_geral')) {
-                Swal.fire('Acesso negado', 'Somente usuarios @beflow podem editar administradores.', 'error');
-                return;
-            }
-
+        function abrirModal(modo, id = '', nome = '', telefone = '', email = '', tipo = '', escola = '', turno = '') {
             const modal = document.getElementById('modalUsuario');
             const titulo = document.getElementById('tituloModal');
             const form = document.getElementById('formUsuario');
@@ -178,6 +164,7 @@
                 acao.value = 'editar';
                 document.getElementById('inputId').value = id;
                 document.getElementById('inputNome').value = nome;
+                document.getElementById('inputTelefone').value = telefone;
                 document.getElementById('inputEmail').value = email;
                 document.getElementById('inputTipo').value = tipo;
                 document.getElementById('inputEscola').value = escola;
@@ -188,6 +175,7 @@
                 titulo.innerText = 'Novo Cadastro';
                 acao.value = 'novo';
                 document.getElementById('inputId').value = '';
+                document.getElementById('inputTelefone').value = '';
                 document.getElementById('inputEscola').value = '';
                 document.getElementById('inputTurno').value = 'Matutino';
                 inputSenha.required = true;

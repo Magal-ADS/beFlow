@@ -206,14 +206,20 @@ class AdminController {
         $dados = [
             'nome' => trim($_POST['nome'] ?? ''),
             'email' => trim($_POST['email'] ?? ''),
+            'telefone' => trim($_POST['telefone'] ?? ''),
             'senha' => trim($_POST['senha'] ?? ''),
             'tipo_usuario' => $_POST['tipo_usuario'] ?? 'aluno',
             'turno' => trim($_POST['turno'] ?? 'Nao informado'),
             'escola' => trim($_POST['escola'] ?? 'Nao informada'),
+            'empresa_id' => $this->getAdminEmpresaId(),
         ];
 
         if ($dados['nome'] === '' || $dados['email'] === '' || $dados['senha'] === '') {
             $this->jsonResponse(false, 'Preencha todos os campos obrigatorios.');
+        }
+
+        if (!in_array($dados['tipo_usuario'], ['aluno', 'motorista'], true)) {
+            $this->jsonResponse(false, 'Tipo de usuario invalido para esta tela.');
         }
 
         if (!$this->canAssignAdministrativeRole($dados['tipo_usuario'], $dados['email'])) {
@@ -242,14 +248,20 @@ class AdminController {
         $dados = [
             'nome' => trim($_POST['nome'] ?? ''),
             'email' => trim($_POST['email'] ?? ''),
+            'telefone' => trim($_POST['telefone'] ?? ''),
             'senha' => trim($_POST['senha'] ?? ''),
             'tipo_usuario' => $_POST['tipo_usuario'] ?? 'aluno',
             'turno' => trim($_POST['turno'] ?? 'Nao informado'),
             'escola' => trim($_POST['escola'] ?? 'Nao informada'),
+            'empresa_id' => $this->getAdminEmpresaId(),
         ];
 
         if ($id === '' || $dados['nome'] === '' || $dados['email'] === '') {
             $this->jsonResponse(false, 'ID, nome e e-mail sao obrigatorios.');
+        }
+
+        if (!in_array($dados['tipo_usuario'], ['aluno', 'motorista'], true)) {
+            $this->jsonResponse(false, 'Tipo de usuario invalido para esta tela.');
         }
 
         $usuarioAtual = $this->buscarUsuarioPorId($id);

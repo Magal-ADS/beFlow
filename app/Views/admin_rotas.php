@@ -46,6 +46,18 @@
                         </div>
                         <input type="text" id="buscaLinha" onkeyup="filtrarLinhas()" placeholder="Buscar linha..." class="w-full pl-10 pr-4 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
                     </div>
+                    <select id="filtroLinha" onchange="filtrarLinhas()" class="w-full md:w-56 px-4 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-600 font-bold">
+                        <option value="">Todas as linhas</option>
+                        <?php foreach ($linhas as $linha): ?>
+                            <option value="<?= strtolower($linha['nome']) ?>"><?= htmlspecialchars($linha['nome']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <select id="filtroTurno" onchange="filtrarLinhas()" class="w-full md:w-44 px-4 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-600 font-bold">
+                        <option value="">Todos os turnos</option>
+                        <option value="matutino">Matutino</option>
+                        <option value="vespertino">Vespertino</option>
+                        <option value="noturno">Noturno</option>
+                    </select>
                     <button onclick="abrirModalLinha()" class="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition shrink-0 active:scale-95">
                         + Nova Linha
                     </button>
@@ -56,7 +68,7 @@
                 <?php if (!empty($linhasComPontos)): ?>
                     <?php foreach ($linhasComPontos as $linha): ?>
                         <?php $badgeClass = $colorClasses[$linha['cor']] ?? 'bg-slate-100 text-slate-700 border-slate-200'; ?>
-                        <div class="card-linha bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8" data-nome="<?= strtolower($linha['nome']) ?>">
+                        <div class="card-linha bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8" data-nome="<?= strtolower($linha['nome']) ?>" data-turno="<?= strtolower($linha['turno'] ?? '') ?>">
                             <div class="flex justify-between items-center mb-8 border-b border-gray-100 pb-6 gap-4">
                                 <div class="flex items-center gap-4">
                                     <div class="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl border <?= $badgeClass ?>">
@@ -219,8 +231,16 @@
     <script>
         function filtrarLinhas() {
             let busca = document.getElementById('buscaLinha').value.toLowerCase();
+            let linhaSelecionada = document.getElementById('filtroLinha').value.toLowerCase();
+            let turnoSelecionado = document.getElementById('filtroTurno').value.toLowerCase();
             document.querySelectorAll('.card-linha').forEach(card => {
-                card.style.display = card.getAttribute('data-nome').includes(busca) ? 'block' : 'none';
+                const nome = card.getAttribute('data-nome') || '';
+                const turno = card.getAttribute('data-turno') || '';
+                const matchBusca = nome.includes(busca);
+                const matchLinha = linhaSelecionada === '' || nome === linhaSelecionada;
+                const matchTurno = turnoSelecionado === '' || turno === turnoSelecionado;
+
+                card.style.display = matchBusca && matchLinha && matchTurno ? 'block' : 'none';
             });
         }
 

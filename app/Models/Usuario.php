@@ -65,8 +65,8 @@ class Usuario {
         try {
             $this->conn->beginTransaction();
 
-            $sql = "INSERT INTO usuarios (nome, email, senha, tipo_usuario, empresa_id)
-                    VALUES (:nome, :email, :senha, :tipo, :empresa_id)";
+            $sql = "INSERT INTO usuarios (nome, email, telefone, senha, tipo_usuario, empresa_id)
+                    VALUES (:nome, :email, :telefone, :senha, :tipo, :empresa_id)";
             $stmt = $this->conn->prepare($sql);
             
             $senhaHash = password_hash($dados['senha'], PASSWORD_DEFAULT);
@@ -74,6 +74,7 @@ class Usuario {
             $stmt->execute([
                 'nome' => $dados['nome'],
                 'email' => $dados['email'],
+                'telefone' => $dados['telefone'] ?? null,
                 'senha' => $senhaHash,
                 'tipo' => $dados['tipo_usuario'],
                 'empresa_id' => $dados['empresa_id'] ?? 1,
@@ -101,19 +102,21 @@ class Usuario {
 
             if (!empty($dados['senha'])) {
                 $senhaHash = password_hash($dados['senha'], PASSWORD_DEFAULT);
-                $sql = "UPDATE usuarios SET nome = :nome, email = :email, senha = :senha, tipo_usuario = :tipo WHERE id = :id";
+                $sql = "UPDATE usuarios SET nome = :nome, email = :email, telefone = :telefone, senha = :senha, tipo_usuario = :tipo WHERE id = :id";
                 $params = [
                     'nome' => $dados['nome'],
                     'email' => $dados['email'],
+                    'telefone' => $dados['telefone'] ?? null,
                     'senha' => $senhaHash,
                     'tipo' => $dados['tipo_usuario'],
                     'id' => $id
                 ];
             } else {
-                $sql = "UPDATE usuarios SET nome = :nome, email = :email, tipo_usuario = :tipo WHERE id = :id";
+                $sql = "UPDATE usuarios SET nome = :nome, email = :email, telefone = :telefone, tipo_usuario = :tipo WHERE id = :id";
                 $params = [
                     'nome' => $dados['nome'],
                     'email' => $dados['email'],
+                    'telefone' => $dados['telefone'] ?? null,
                     'tipo' => $dados['tipo_usuario'],
                     'id' => $id
                 ];
