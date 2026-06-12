@@ -3,6 +3,7 @@ $uri = $_SERVER['REQUEST_URI'];
 $section = $_GET['section'] ?? '';
 $isDashboard = strpos($uri, '/admin/dashboard') !== false && $section !== 'veiculos';
 $isUsuarios = strpos($uri, '/admin/usuarios') !== false;
+$isEmpresas = strpos($uri, '/admin/empresas') !== false;
 $isRotas = strpos($uri, '/admin/rotas') !== false;
 $isVeiculos = strpos($uri, '/admin/dashboard') !== false && $section === 'veiculos';
 $isPerfil = !empty($currentSection) && $currentSection === 'perfil';
@@ -77,6 +78,11 @@ function sidebarItemClasses($active) {
         <a href="<?= BASE_URL ?>/admin/usuarios" class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= sidebarItemClasses($isUsuarios) ?>">
             <?= renderSidebarIcon('users') ?>
             <span>Usuarios</span>
+        </a>
+
+        <a href="<?= BASE_URL ?>/admin/empresas" class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= sidebarItemClasses($isEmpresas) ?>">
+            <?= renderSidebarIcon('dashboard') ?>
+            <span>Empresas</span>
         </a>
 
         <a href="<?= BASE_URL ?>/admin/rotas" class="flex items-center gap-3 px-4 py-3 rounded-xl transition <?= sidebarItemClasses($isRotas) ?>">

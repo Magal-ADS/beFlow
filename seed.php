@@ -59,18 +59,31 @@ function syncPgSequence(PDO $pdo, $driver, $table, $column = 'id') {
     ")->fetchColumn();
 }
 
-echo "1. Empresa base\n";
-upsert($pdo, $driver, 'empresa', [
-    'id' => 1,
-    'nome' => 'Viacao BeFlow',
-    'cnpj' => '12.345.678/0001-99',
-    'telefone' => '16999999999',
-], ['id']);
-echo "   [OK] Empresa configurada\n";
+echo "1. Empresas base\n";
+$empresas = [
+    [
+        'id' => 1,
+        'nome' => 'Viacao BeFlow',
+        'cnpj' => '12.345.678/0001-99',
+        'telefone' => '16999999999',
+    ],
+    [
+        'id' => 2,
+        'nome' => 'Petito Transportes',
+        'cnpj' => '98.765.432/0001-10',
+        'telefone' => '16997443322',
+    ],
+];
+
+foreach ($empresas as $empresa) {
+    upsert($pdo, $driver, 'empresa', $empresa, ['id']);
+    echo "   [OK] {$empresa['nome']}\n";
+}
 
 echo "\n2. Usuarios e alunos\n";
 $usuarios = [
     ['email' => 'admin@beflow.com', 'nome' => 'Admin BeFlow', 'telefone' => '', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'admin_empresa', 'empresa_id' => 1],
+    ['email' => 'petito@gmail.com', 'nome' => 'Petito Empresa', 'telefone' => '16998111222', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'admin_empresa', 'empresa_id' => 2],
     ['email' => 'beatriz@gmail.com', 'nome' => 'Beatriz Aluno', 'telefone' => '', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'aluno', 'empresa_id' => 1, 'turno' => 'Noturno', 'escola' => 'FATEC', 'linha_id' => 3],
     ['email' => 'felipe@gmail.com', 'nome' => 'Felipe Motorista', 'telefone' => '', 'senha' => password_hash('123', PASSWORD_DEFAULT), 'tipo_usuario' => 'motorista', 'empresa_id' => 1],
 ];

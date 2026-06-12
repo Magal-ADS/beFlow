@@ -25,13 +25,40 @@ class Usuario {
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
-    public function buscarTodosComDadosDeAluno() {
+    public function buscarTodosComDadosDeAluno($empresaId = null, array $tiposUsuario = []) {
         $linhaSql = $this->hasAlunoLinhaColumn() ? 'a.linha_id' : 'NULL AS linha_id';
+        $where = [];
+        $params = [];
+
+        if ($empresaId !== null) {
+            $where[] = 'u.empresa_id = :empresa_id';
+            $params['empresa_id'] = (int) $empresaId;
+        }
+
+        if (!empty($tiposUsuario)) {
+            $placeholders = [];
+            foreach (array_values($tiposUsuario) as $index => $tipoUsuario) {
+                $placeholder = ':tipo_' . $index;
+                $placeholders[] = $placeholder;
+                $params['tipo_' . $index] = $tipoUsuario;
+            }
+            $where[] = 'u.tipo_usuario IN (' . implode(', ', $placeholders) . ')';
+        }
+
         $sql = "SELECT u.*, a.turno, a.escola, {$linhaSql}
                 FROM usuarios u
-                LEFT JOIN alunos a ON a.usuario_id = u.id
-                ORDER BY u.nome ASC";
-        return $this->conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+                LEFT JOIN alunos a ON a.usuario_id = u.id";
+
+        if (!empty($where)) {
+            $sql .= ' WHERE ' . implode(' AND ', $where);
+        }
+
+        $sql .= ' ORDER BY u.nome ASC';
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function salvar($dados) {

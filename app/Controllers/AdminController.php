@@ -160,12 +160,44 @@ class AdminController {
 
     public function usuarios() {
         $this->requireAdminSession();
+        $empresaId = $this->getAdminEmpresaId();
 
         $usuarioModel = new Usuario();
-        $listaUsuarios = $usuarioModel->buscarTodosComDadosDeAluno();
+        $listaUsuarios = $usuarioModel->buscarTodosComDadosDeAluno($empresaId, ['aluno', 'motorista']);
         $canManageAdminUsers = $this->currentUserCanManageAdminUsers();
 
         require_once __DIR__ . '/../Views/admin_usuarios.php';
+    }
+
+    public function empresas() {
+        $this->requireAdminSession();
+
+        $db = (new Database())->getConnection();
+        $stmt = $db->query("
+            SELECT
+                e.*,
+                (
+                    SELECT COUNT(*)
+                    FROM usuarios u
+                    WHERE u.empresa_id = e.id
+                ) AS total_usuarios,
+                (
+                    SELECT COUNT(*)
+                    FROM linhas l
+                    WHERE l.empresa_id = e.id
+                ) AS total_linhas,
+                (
+                    SELECT COUNT(*)
+                    FROM veiculo v
+                    WHERE v.empresa_id = e.id
+                ) AS total_veiculos
+            FROM empresa e
+            ORDER BY e.nome ASC
+        ");
+        $empresas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $canManageCompanies = $this->currentUserCanManageCompanies();
+
+        require_once __DIR__ . '/../Views/admin_empresas.php';
     }
 
     public function salvarUsuario() {
@@ -261,6 +293,88 @@ class AdminController {
             $this->jsonResponse(true, 'Usuario removido da base de dados.');
         } catch (PDOException $e) {
             $this->jsonResponse(false, 'Nao foi possivel excluir este usuario.');
+        }
+    }
+
+    public function salvarEmpresa() {
+        $this->requireAdminSessionJson();
+        $this->requireGeneralAdminJson();
+
+        $db = (new Database())->getConnection();
+        $id = trim($_POST['id'] ?? '');
+        $nome = trim($_POST['nome'] ?? '');
+        $cnpj = $this->normalizeCnpj($_POST['cnpj'] ?? '');
+        $telefone = trim($_POST['telefone'] ?? '');
+
+        if ($nome === '' || $cnpj === '') {
+            $this->jsonResponse(false, 'Informe o nome e o CNPJ da empresa.');
+        }
+
+        if (!$this->isValidCnpj($cnpj)) {
+            $this->jsonResponse(false, 'Informe um CNPJ valido com 14 digitos.');
+        }
+
+        if ($telefone !== '' && strlen(preg_replace('/\D+/', '', $telefone)) < 10) {
+            $this->jsonResponse(false, 'Informe um telefone valido para a empresa.');
+        }
+
+        try {
+            if ($id !== '') {
+                $stmt = $db->prepare("
+                    UPDATE empresa
+                    SET nome = :nome,
+                        cnpj = :cnpj,
+                        telefone = :telefone
+                    WHERE id = :id
+                ");
+                $stmt->execute([
+                    'nome' => $nome,
+                    'cnpj' => $cnpj,
+                    'telefone' => $telefone !== '' ? $telefone : null,
+                    'id' => $id,
+                ]);
+            } else {
+                $stmt = $db->prepare("
+                    INSERT INTO empresa (nome, cnpj, telefone)
+                    VALUES (:nome, :cnpj, :telefone)
+                ");
+                $stmt->execute([
+                    'nome' => $nome,
+                    'cnpj' => $cnpj,
+                    'telefone' => $telefone !== '' ? $telefone : null,
+                ]);
+            }
+
+            $this->jsonResponse(true, 'Empresa salva com sucesso.');
+        } catch (PDOException $e) {
+            $message = $this->isDuplicateKey($e)
+                ? 'Ja existe uma empresa cadastrada com este CNPJ.'
+                : 'Erro ao salvar a empresa.';
+            $this->jsonResponse(false, $message);
+        }
+    }
+
+    public function deletarEmpresa() {
+        $this->requireAdminSessionJson();
+        $this->requireGeneralAdminJson();
+
+        $id = trim($_POST['id'] ?? '');
+        if ($id === '') {
+            $this->jsonResponse(false, 'ID da empresa invalido.');
+        }
+
+        if ($this->empresaPossuiDependencias((int) $id)) {
+            $this->jsonResponse(false, 'Remova ou reatribua usuarios, linhas e veiculos desta empresa antes de exclui-la.');
+        }
+
+        try {
+            $db = (new Database())->getConnection();
+            $stmt = $db->prepare('DELETE FROM empresa WHERE id = :id');
+            $stmt->execute(['id' => $id]);
+
+            $this->jsonResponse(true, 'Empresa removida com sucesso.');
+        } catch (PDOException $e) {
+            $this->jsonResponse(false, 'Erro ao remover a empresa.');
         }
     }
 
@@ -520,6 +634,16 @@ class AdminController {
         return $this->currentUserCanManageAdminUsers() && $this->isBeFlowEmail($email);
     }
 
+    private function currentUserCanManageCompanies() {
+        $tipoUsuario = $_SESSION['tipo_usuario'] ?? '';
+
+        if ($tipoUsuario === 'admin_geral') {
+            return true;
+        }
+
+        return $this->currentUserCanManageAdminUsers();
+    }
+
     private function currentUserCanManageAdminUsers() {
         $email = $this->getCurrentSessionUserEmail();
 
@@ -580,6 +704,14 @@ class AdminController {
         $this->requireAdminSession();
     }
 
+    private function requireGeneralAdminJson() {
+        if ($this->currentUserCanManageCompanies()) {
+            return;
+        }
+
+        $this->jsonResponse(false, 'Somente o Administrador Geral pode gerenciar empresas.');
+    }
+
     private function jsonResponse($success, $message) {
         echo json_encode([
             'success' => $success,
@@ -603,6 +735,31 @@ class AdminController {
 
     private function normalizeApproximateTime($value) {
         return strlen($value) === 5 ? $value . ':00' : $value;
+    }
+
+    private function normalizeCnpj($value) {
+        return preg_replace('/\D+/', '', (string) $value);
+    }
+
+    private function isValidCnpj($value) {
+        return preg_match('/^\d{14}$/', (string) $value) === 1;
+    }
+
+    private function empresaPossuiDependencias(int $empresaId) {
+        $db = (new Database())->getConnection();
+
+        $stmtUsuarios = $db->prepare('SELECT COUNT(*) FROM usuarios WHERE empresa_id = :empresa_id');
+        $stmtUsuarios->execute(['empresa_id' => $empresaId]);
+
+        $stmtLinhas = $db->prepare('SELECT COUNT(*) FROM linhas WHERE empresa_id = :empresa_id');
+        $stmtLinhas->execute(['empresa_id' => $empresaId]);
+
+        $stmtVeiculos = $db->prepare('SELECT COUNT(*) FROM veiculo WHERE empresa_id = :empresa_id');
+        $stmtVeiculos->execute(['empresa_id' => $empresaId]);
+
+        return ((int) $stmtUsuarios->fetchColumn()) > 0
+            || ((int) $stmtLinhas->fetchColumn()) > 0
+            || ((int) $stmtVeiculos->fetchColumn()) > 0;
     }
 
     private function buildPontosSelectSql() {

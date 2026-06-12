@@ -153,10 +153,28 @@ switch ($rota) {
         $controller->usuarios();
         break;
 
+    case '/admin/empresas':
+        require_once __DIR__ . '/app/Controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->empresas();
+        break;
+
     case '/admin/salvar-usuario':
         require_once __DIR__ . '/app/Controllers/AdminController.php';
         $controller = new AdminController();
         $controller->salvarUsuario();
+        break;
+
+    case '/admin/salvar-empresa':
+        require_once __DIR__ . '/app/Controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->salvarEmpresa();
+        break;
+
+    case '/admin/deletar-empresa':
+        require_once __DIR__ . '/app/Controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->deletarEmpresa();
         break;
 
     case '/admin/editar-usuario':

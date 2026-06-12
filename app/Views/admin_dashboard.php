@@ -248,6 +248,30 @@
                     <article class="bg-white rounded-[24px] p-6 lg:p-8 shadow-sm border border-gray-100">
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                             <div>
+                                <p class="text-[11px] uppercase tracking-[0.25em] text-gray-400 font-bold">Institucional</p>
+                                <h3 class="text-2xl font-black text-gray-900 mt-2">Empresas</h3>
+                                <p class="text-sm text-gray-500 mt-2">Gerencie os dados cadastrais das empresas que operam dentro da plataforma.</p>
+                            </div>
+                            <a href="<?= BASE_URL ?>/admin/empresas" class="inline-flex items-center justify-center rounded-2xl bg-slate-900 text-white px-5 py-3 font-bold shadow-lg shadow-slate-200 hover:bg-slate-800 transition">
+                                Abrir tela
+                            </a>
+                        </div>
+
+                        <div class="mt-6 grid grid-cols-2 gap-3">
+                            <div class="rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                                <p class="text-xs uppercase tracking-[0.2em] text-slate-400 font-bold">Empresas</p>
+                                <p class="mt-3 text-3xl font-black text-slate-900"><?= (int) ($stats['empresas'] ?? 0) ?></p>
+                            </div>
+                            <div class="rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                                <p class="text-xs uppercase tracking-[0.2em] text-slate-400 font-bold">Usuarios</p>
+                                <p class="mt-3 text-3xl font-black text-slate-900"><?= (int) ($stats['usuarios'] ?? 0) ?></p>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="bg-white rounded-[24px] p-6 lg:p-8 shadow-sm border border-gray-100">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div>
                                 <p class="text-[11px] uppercase tracking-[0.25em] text-gray-400 font-bold">Operacao</p>
                                 <h3 class="text-2xl font-black text-gray-900 mt-2">Linhas e Pontos</h3>
                                 <p class="text-sm text-gray-500 mt-2">Gerencie as linhas do dia e seus pontos de parada em uma tela dedicada.</p>
