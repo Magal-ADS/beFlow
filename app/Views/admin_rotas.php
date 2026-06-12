@@ -36,7 +36,7 @@
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
                 <div>
                     <h2 class="text-3xl font-black text-gray-800 tracking-tighter">Linhas e Pontos</h2>
-                    <p class="text-gray-500">Cadastre as linhas que o motorista podera selecionar ao entrar no painel.</p>
+                    <p class="text-gray-500">Cadastre as linhas e organize os pontos de parada. Os horarios agora sao gerenciados em uma tela separada.</p>
                 </div>
 
                 <div class="flex items-center gap-4 w-full md:w-auto">
@@ -52,12 +52,6 @@
                             <option value="<?= strtolower($linha['nome']) ?>"><?= htmlspecialchars($linha['nome']) ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <select id="filtroTurno" onchange="filtrarLinhas()" class="w-full md:w-44 px-4 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-600 font-bold">
-                        <option value="">Todos os turnos</option>
-                        <option value="matutino">Matutino</option>
-                        <option value="vespertino">Vespertino</option>
-                        <option value="noturno">Noturno</option>
-                    </select>
                     <button onclick="abrirModalLinha()" class="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition shrink-0 active:scale-95">
                         + Nova Linha
                     </button>
@@ -68,7 +62,7 @@
                 <?php if (!empty($linhasComPontos)): ?>
                     <?php foreach ($linhasComPontos as $linha): ?>
                         <?php $badgeClass = $colorClasses[$linha['cor']] ?? 'bg-slate-100 text-slate-700 border-slate-200'; ?>
-                        <div class="card-linha bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8" data-nome="<?= strtolower($linha['nome']) ?>" data-turno="<?= strtolower($linha['turno'] ?? '') ?>">
+                        <div class="card-linha bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8" data-nome="<?= strtolower($linha['nome']) ?>">
                             <div class="flex justify-between items-center mb-8 border-b border-gray-100 pb-6 gap-4">
                                 <div class="flex items-center gap-4">
                                     <div class="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl border <?= $badgeClass ?>">
@@ -80,21 +74,11 @@
                                             <span class="px-3 py-1 rounded-full text-xs font-bold border uppercase <?= $badgeClass ?>">
                                                 <?= htmlspecialchars($linha['cor']) ?>
                                             </span>
-                                            <?php if (!empty($linha['turno'])): ?>
-                                                <span class="px-3 py-1 rounded-full text-xs font-bold border uppercase bg-slate-100 text-slate-700 border-slate-200">
-                                                    <?= htmlspecialchars($linha['turno']) ?>
-                                                </span>
-                                            <?php endif; ?>
                                         </div>
                                         <div class="flex flex-wrap gap-3 items-center text-sm">
                                             <span class="text-gray-400 font-bold">ID #<?= $linha['id'] ?></span>
-                                            <?php if (!empty($linha['hora_ida']) || !empty($linha['hora_volta'])): ?>
-                                                <span class="text-amber-600 font-bold">
-                                                    Ida <?= !empty($linha['hora_ida']) ? htmlspecialchars(substr($linha['hora_ida'], 0, 5)) : '--:--' ?>
-                                                    · Volta <?= !empty($linha['hora_volta']) ? htmlspecialchars(substr($linha['hora_volta'], 0, 5)) : '--:--' ?>
-                                                </span>
-                                            <?php endif; ?>
-                                            <button onclick="abrirModalLinha(<?= htmlspecialchars(json_encode(['id' => $linha['id'], 'nome' => $linha['nome'], 'cor' => $linha['cor'], 'turno' => $linha['turno'] ?? 'Matutino', 'hora_ida' => $linha['hora_ida'] ?? '06:30:00', 'hora_volta' => $linha['hora_volta'] ?? '17:30:00']), ENT_QUOTES, 'UTF-8') ?>)" class="text-blue-500 font-bold hover:underline">Editar Linha</button>
+                                            <a href="<?= BASE_URL ?>/admin/horarios" class="text-amber-600 font-bold hover:underline">Gerenciar Horarios</a>
+                                            <button onclick="abrirModalLinha(<?= htmlspecialchars(json_encode(['id' => $linha['id'], 'nome' => $linha['nome'], 'cor' => $linha['cor']]), ENT_QUOTES, 'UTF-8') ?>)" class="text-blue-500 font-bold hover:underline">Editar Linha</button>
                                             <button onclick="excluirLinha(<?= $linha['id'] ?>)" class="text-red-400 font-bold hover:underline">Excluir Linha</button>
                                         </div>
                                     </div>
@@ -170,24 +154,6 @@
                     <option value="amarela">Amarela</option>
                     <option value="verde">Verde</option>
                 </select>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="sm:col-span-1">
-                        <label for="linhaTurno" class="block text-sm font-bold text-gray-600 mb-2">Turno</label>
-                        <select name="turno" id="linhaTurno" class="w-full p-4 rounded-2xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-blue-400 font-bold text-gray-600" required>
-                            <option value="Matutino">Matutino</option>
-                            <option value="Vespertino">Vespertino</option>
-                            <option value="Noturno">Noturno</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="linhaHoraIda" class="block text-sm font-bold text-gray-600 mb-2">Hora ida</label>
-                        <input type="time" name="hora_ida" id="linhaHoraIda" class="w-full p-4 rounded-2xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-blue-400" step="60" required>
-                    </div>
-                    <div>
-                        <label for="linhaHoraVolta" class="block text-sm font-bold text-gray-600 mb-2">Hora volta</label>
-                        <input type="time" name="hora_volta" id="linhaHoraVolta" class="w-full p-4 rounded-2xl bg-gray-50 border-none outline-none focus:ring-2 focus:ring-blue-400" step="60" required>
-                    </div>
-                </div>
                 <div class="flex gap-3 pt-4">
                     <button type="button" onclick="fecharModais()" class="flex-1 p-4 rounded-2xl font-bold text-gray-400 hover:bg-gray-100 transition">Cancelar</button>
                     <button type="submit" class="flex-1 p-4 rounded-2xl font-bold bg-blue-600 text-white shadow-lg shadow-blue-200 active:scale-95 transition">Salvar Linha</button>
@@ -232,15 +198,12 @@
         function filtrarLinhas() {
             let busca = document.getElementById('buscaLinha').value.toLowerCase();
             let linhaSelecionada = document.getElementById('filtroLinha').value.toLowerCase();
-            let turnoSelecionado = document.getElementById('filtroTurno').value.toLowerCase();
             document.querySelectorAll('.card-linha').forEach(card => {
                 const nome = card.getAttribute('data-nome') || '';
-                const turno = card.getAttribute('data-turno') || '';
                 const matchBusca = nome.includes(busca);
                 const matchLinha = linhaSelecionada === '' || nome === linhaSelecionada;
-                const matchTurno = turnoSelecionado === '' || turno === turnoSelecionado;
 
-                card.style.display = matchBusca && matchLinha && matchTurno ? 'block' : 'none';
+                card.style.display = matchBusca && matchLinha ? 'block' : 'none';
             });
         }
 
@@ -252,9 +215,6 @@
             document.getElementById('linhaId').value = dados.id || '';
             document.getElementById('linhaNome').value = dados.nome || '';
             document.getElementById('linhaCor').value = dados.cor || 'azul';
-            document.getElementById('linhaTurno').value = dados.turno || 'Matutino';
-            document.getElementById('linhaHoraIda').value = dados.hora_ida ? String(dados.hora_ida).slice(0, 5) : '06:30';
-            document.getElementById('linhaHoraVolta').value = dados.hora_volta ? String(dados.hora_volta).slice(0, 5) : '17:30';
             document.getElementById('tituloModalLinha').innerText = dados.id ? 'Editar Linha' : 'Nova Linha';
             document.getElementById('modalLinha').classList.replace('hidden', 'flex');
         }

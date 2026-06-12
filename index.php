@@ -195,6 +195,12 @@ switch ($rota) {
         $controller->rotas();
         break;
 
+    case '/admin/horarios':
+        require_once __DIR__ . '/app/Controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->horarios();
+        break;
+
     case '/admin/salvar-linha':
         require_once __DIR__ . '/app/Controllers/AdminController.php';
         $controller = new AdminController();
@@ -205,6 +211,18 @@ switch ($rota) {
         require_once __DIR__ . '/app/Controllers/AdminController.php';
         $controller = new AdminController();
         $controller->deletarLinha();
+        break;
+
+    case '/admin/salvar-horario':
+        require_once __DIR__ . '/app/Controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->salvarHorario();
+        break;
+
+    case '/admin/deletar-horario':
+        require_once __DIR__ . '/app/Controllers/AdminController.php';
+        $controller = new AdminController();
+        $controller->deletarHorario();
         break;
 
     case '/admin/salvar-ponto':
